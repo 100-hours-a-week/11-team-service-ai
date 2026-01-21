@@ -1,4 +1,7 @@
-from shared.schema.job_posting import JobPostingAnalyzeRequest, JobPostingAnalyzeResponse
+from shared.schema.job_posting import (
+    JobPostingAnalyzeRequest,
+    JobPostingAnalyzeResponse,
+)
 from shared.pipeline_bridge import call_job_analysis
 
 

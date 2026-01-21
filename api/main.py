@@ -40,7 +40,7 @@ async def default_exception_handler(request: Request, exc: Exception):
         details=error_msg,
     )
 
-    response = ApiResponse(success=False, error=error_detail)
+    response: ApiResponse[None] = ApiResponse(success=False, error=error_detail)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=response.model_dump(mode="json"),
@@ -53,7 +53,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     details = []
     for error in exc.errors():
         msg = error["msg"].replace("Value error, ", "")
-        loc = ".".join(str(l) for l in error["loc"])
+        loc = ".".join(str(loc_part) for loc_part in error["loc"])
         details.append(f"{loc}: {msg}")
 
     error_detail = ErrorDetail(
@@ -62,20 +62,22 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         details="; ".join(details),
     )
 
-    response = ApiResponse(success=False, error=error_detail)
+    response: ApiResponse[None] = ApiResponse(success=False, error=error_detail)
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump(mode="json")
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=response.model_dump(mode="json"),
     )
 
 
 @app.exception_handler(CustomException)
 async def custom_exception_handler(request: Request, exc: CustomException):
     error_detail = ErrorDetail(code=exc.code, message=exc.message)
-    response = ApiResponse(success=False, error=error_detail)
+    response: ApiResponse[None] = ApiResponse(success=False, error=error_detail)
     # Defaulting CustomException to 400 or mapping could be better, keeping 400 for now or 404 based on context
     # Original code had 404, let's stick to 400 typically for business logic errors unless specified
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump(mode="json")
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=response.model_dump(mode="json"),
     )
 
 

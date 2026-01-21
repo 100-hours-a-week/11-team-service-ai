@@ -1,8 +1,6 @@
 from shared.schema.applicant import (
     CompareRequest,
     CompareResponse,
-    ComparisonMetric,
-    CompetencyScore,
     EvaluateRequest,
     EvaluateResponse,
 )

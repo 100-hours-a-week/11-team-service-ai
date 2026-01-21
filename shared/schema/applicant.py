@@ -17,7 +17,9 @@ class CompetencyScore(BaseModel):
 
 class EvaluateResponse(BaseModel):
     overall_score: float = Field(..., description="종합 직무 적합도 점수 (0-100)")
-    competency_scores: List[CompetencyScore] = Field(..., description="세부 역량별 점수 리스트")
+    competency_scores: List[CompetencyScore] = Field(
+        ..., description="세부 역량별 점수 리스트"
+    )
     one_line_review: str = Field(..., description="AI 한 줄 평가")
     feedback_detail: str = Field(..., description="상세 피드백 (강점 및 보완점 통합)")
 
@@ -36,6 +38,8 @@ class ComparisonMetric(BaseModel):
 
 
 class CompareResponse(BaseModel):
-    comparison_metrics: List[ComparisonMetric] = Field(..., description="비교 지표 리스트")
+    comparison_metrics: List[ComparisonMetric] = Field(
+        ..., description="비교 지표 리스트"
+    )
     strengths_report: str = Field(..., description="경쟁 우위 요소 요약")
     weaknesses_report: str = Field(..., description="보완 필요 요소 요약")

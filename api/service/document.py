@@ -1,4 +1,3 @@
-
 from shared.schema.document import (
     PortfolioAnalyzeRequest,
     PortfolioAnalyzeResponse,
@@ -12,7 +11,9 @@ from shared.pipeline_bridge import (
 
 
 class DocumentService:
-    def analyze_resume(self, user_id: str, job_posting_id: str) -> ResumeAnalyzeResponse:
+    def analyze_resume(
+        self, user_id: str, job_posting_id: str
+    ) -> ResumeAnalyzeResponse:
         """
         Analyze resume details.
         """

@@ -3,8 +3,6 @@ from fastapi import APIRouter, status
 from shared.schema.applicant import (
     CompareRequest,
     CompareResponse,
-    ComparisonMetric,
-    CompetencyScore,
     EvaluateRequest,
     EvaluateResponse,
 )
@@ -34,5 +32,7 @@ async def evaluate_applicant(request: EvaluateRequest):
 )
 async def compare_applicants(request: CompareRequest):
     service = ApplicantService()
-    result = service.compare_applicants(request.user_id, request.job_posting_id, request.competitor)
+    result = service.compare_applicants(
+        request.user_id, request.job_posting_id, request.competitor
+    )
     return ApiResponse(success=True, data=result)

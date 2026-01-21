@@ -52,6 +52,11 @@ uv run pytest
 
 # 특정 테스트 파일 실행
 uv run pytest tests/api/test_job_posting_router.py
+
+# 정적 분석 (Linting, Formatting, Type Checking)
+uv run ruff check .
+uv run black --check .
+uv run mypy .
 ```
 
 - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)

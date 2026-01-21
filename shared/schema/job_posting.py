@@ -21,5 +21,7 @@ class JobPostingAnalyzeResponse(BaseModel):
     main_responsibilities: List[str] = Field(..., description="주요 업무 리스트")
     required_skills: List[str] = Field(..., description="필요 기술 스택 리스트")
     recruitment_status: str = Field(..., description="채용 진행 상태")
-    recruitment_period: Optional[RecruitmentPeriod] = Field(None, description="채용 기간")
+    recruitment_period: Optional[RecruitmentPeriod] = Field(
+        None, description="채용 기간"
+    )
     ai_summary: str = Field(..., description="AI가 요약한 공고 핵심 내용")

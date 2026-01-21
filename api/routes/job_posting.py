@@ -1,7 +1,10 @@
 from fastapi import APIRouter, status
 
 from shared.schema.common_schema import ApiResponse
-from shared.schema.job_posting import JobPostingAnalyzeRequest, JobPostingAnalyzeResponse
+from shared.schema.job_posting import (
+    JobPostingAnalyzeRequest,
+    JobPostingAnalyzeResponse,
+)
 from api.service.job_posting import JobPostingService
 
 router = APIRouter(prefix="/api/v1/job-posting", tags=["Job Posting"])
