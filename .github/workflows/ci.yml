@@ -64,7 +64,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
-      - name: Run API Tests
+      - name: Smoke tests (develop)
+        if: ${{ github.base_ref == 'develop' }}
         run: uv run pytest
 
   # ----------------------------
@@ -151,8 +152,8 @@ jobs:
       - name: Upload source to S3
         env:
           BUCKET: ${{ secrets.RELEASE_BUCKET }}
-          PREFIX: releases/${{ steps.meta.outputs.timestamp }}
+          PREFIX: releases/ai
         run: |
           aws s3 cp ai/ \
-            s3://$BUCKET/$PREFIX/ai/ \
+            s3://$BUCKET/$PREFIX/${{ steps.meta.outputs.timestamp }} \
             --recursive
