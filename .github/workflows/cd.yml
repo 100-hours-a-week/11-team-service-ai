@@ -59,11 +59,14 @@ jobs:
             uv sync
 
             # 기존 프로세스 종료 (uvicorn 기준)
-            pkill -f "uvicorn.*--port 8000" || true
-            sleep 2
-
-            # 새 버전 실행
+            if [ -f uvicorn.pid ]; then
+              kill "$(cat uvicorn.pid)" 2>/dev/null || true
+              rm -f uvicorn.pid
+            fi
+            
+            # 새로 실행하고 PID 저장
             nohup uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 > ai.log 2>&1 &
+            echo $! > uvicorn.pid
             echo "FastAPI restarted"
 
       - name: Notify Discord - Success
