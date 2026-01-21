@@ -59,7 +59,7 @@ jobs:
             uv sync
 
             # 기존 프로세스 종료 (uvicorn 기준)
-            pkill -f "uvicorn" || true
+            pkill -f "uvicorn.*--port 8000" || true
             sleep 2
 
             # 새 버전 실행
