@@ -19,7 +19,7 @@ jobs:
       - name: Download artifact from CI
         uses: actions/download-artifact@v4
         with:
-          name: verified-ai-source
+          name: ai-source
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
           path: ./ai
