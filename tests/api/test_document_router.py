@@ -16,7 +16,7 @@ def test_analyze_resume_success():
         experience_clarity_score="Clear",
         readability_score="Good",
     )
-    
+
     # 2. Patch: api.service.document.call_resume_analysis
     with patch("api.service.document.call_resume_analysis") as mock_call:
         mock_call.return_value = mock_response

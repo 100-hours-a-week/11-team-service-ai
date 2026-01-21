@@ -37,7 +37,7 @@ def test_analyze_job_posting_success():
         assert json_data["success"] is True
         assert json_data["data"]["company_name"] == "Test Company"
         assert json_data["data"]["job_posting_id"] == 999
-        
+
         # Mock 함수가 한 번 호출되었는지 확인
         mock_call.assert_called_once()
         # 전달된 인자 확인 (선택 사항)
@@ -47,7 +47,7 @@ def test_analyze_job_posting_success():
 
 def test_analyze_job_posting_invalid_input():
     # URL 필드 누락
-    payload = {} 
+    payload = {}
     response = client.post("/api/v1/job-posting/analyze", json=payload)
 
     # RequestValidationError 핸들러에 의해 400 Bad Request 반환 예상 (main.py 설정)

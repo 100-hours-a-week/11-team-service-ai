@@ -1,4 +1,8 @@
-from shared.schema.job_posting import JobPostingAnalyzeRequest, JobPostingAnalyzeResponse
+from shared.schema.job_posting import (
+    JobPostingAnalyzeRequest,
+    JobPostingAnalyzeResponse,
+)
+
 
 def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeResponse:
     """
@@ -6,7 +10,7 @@ def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeResponse
     Currently returns dummy data directly.
     """
     print(f"Running Job Analysis Pipeline for url: {request.url}")
-    
+
     return JobPostingAnalyzeResponse(
         job_posting_id=12345,
         is_existing=False,
@@ -18,6 +22,7 @@ def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeResponse
         recruitment_period=None,
         ai_summary=f"Analysis of {request.url} completed by Job Analysis Pipeline.",
     )
+
 
 if __name__ == "__main__":
     # Test execution

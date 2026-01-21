@@ -20,24 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.11"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Setup uv cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --frozen
 
       - name: Import Check
         run: uv run python -c "import api.main"
@@ -65,28 +55,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.11"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Setup uv cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --frozen
 
       - name: Smoke tests (develop)
         if: ${{ github.base_ref == 'develop' }}
-        run: uv run pytest -q -m smoke
+        run: uv run pytest
 
   # ----------------------------
   # 3. Static Analysis
@@ -100,26 +80,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.11"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Setup uv cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: true
 
       - name: Install dependencies
-        run: |
-          uv sync
-          uv pip install black mypy
+        run: uv sync --frozen
 
       - name: Ruff (lint)
         run: uv run ruff check .
@@ -184,8 +152,8 @@ jobs:
       - name: Upload source to S3
         env:
           BUCKET: ${{ secrets.RELEASE_BUCKET }}
-          PREFIX: releases/${{ steps.meta.outputs.timestamp }}
+          PREFIX: releases/ai
         run: |
           aws s3 cp ai/ \
-            s3://$BUCKET/$PREFIX/ai/ \
+            s3://$BUCKET/$PREFIX/${{ steps.meta.outputs.timestamp }} \
             --recursive

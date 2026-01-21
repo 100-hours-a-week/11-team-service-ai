@@ -10,7 +10,10 @@ from shared.schema.document import (
     ResumeAnalyzeRequest,
     ResumeAnalyzeResponse,
 )
-from shared.schema.job_posting import JobPostingAnalyzeRequest, JobPostingAnalyzeResponse
+from shared.schema.job_posting import (
+    JobPostingAnalyzeRequest,
+    JobPostingAnalyzeResponse,
+)
 from pipelines.applicant_evaluation.main import run_pipeline as run_applicant_evaluation
 from pipelines.candidate_comparison.main import run_pipeline as run_candidate_comparison
 from pipelines.job_analysis.main import run_pipeline as run_job_analysis
