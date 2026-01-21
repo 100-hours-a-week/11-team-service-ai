@@ -39,6 +39,10 @@ jobs:
           path: |
             **/*.py
             pyproject.toml
+            README.md
+            api/**
+            shared/**
+            pipelines/**
             uv.lock
             pytest.ini
           retention-days: 1
