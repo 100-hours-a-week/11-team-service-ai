@@ -184,8 +184,8 @@ jobs:
       - name: Upload source to S3
         env:
           BUCKET: ${{ secrets.RELEASE_BUCKET }}
-          PREFIX: releases/${{ steps.meta.outputs.timestamp }}
+          PREFIX: releases/ai
         run: |
           aws s3 cp ai/ \
-            s3://$BUCKET/$PREFIX/ai/ \
+            s3://$BUCKET/$PREFIX/${{ steps.meta.outputs.timestamp }} \
             --recursive
