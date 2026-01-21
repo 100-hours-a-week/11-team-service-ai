@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["FastAPI CI"]
     types: [completed]
-    branches: [main]
+    branches: [ develop ]
 
 permissions:
   contents: read
