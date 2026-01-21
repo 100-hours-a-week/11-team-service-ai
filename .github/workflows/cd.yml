@@ -46,22 +46,21 @@ jobs:
           script: |
             cd /home/ubuntu/ai
 
-            # (선택) 가상환경 없으면 생성
-            if [ ! -d ".venv" ]; then
-              python3 -m venv .venv
+            # uv 설치 (없으면)
+            if ! command -v uv &> /dev/null; then
+              curl -LsSf https://astral.sh/uv/install.sh | sh
+              export PATH="$HOME/.local/bin:$PATH"
             fi
 
             # 의존성 설치/업데이트
-            source .venv/bin/activate
-            pip install --upgrade pip
-            pip install -r requirements.txt
+            uv sync
 
             # 기존 프로세스 종료 (uvicorn 기준)
             pkill -f "uvicorn" || true
             sleep 2
 
-            # 새 버전 실행 (포트/모듈명은 프로젝트에 맞게 수정)
-            nohup uvicorn main:app --host 0.0.0.0 --port 8000 > ai.log 2>&1 &
+            # 새 버전 실행
+            nohup uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 > ai.log 2>&1 &
             echo "FastAPI restarted"
 
       - name: Notify Discord - Success
