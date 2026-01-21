@@ -86,7 +86,7 @@ jobs:
 
       - name: Smoke tests (develop)
         if: ${{ github.base_ref == 'develop' }}
-        run: uv run pytest -q -m smoke
+        run: uv run pytest
 
   # ----------------------------
   # 3. Static Analysis
