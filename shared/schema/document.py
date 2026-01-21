@@ -23,5 +23,7 @@ class PortfolioAnalyzeRequest(BaseModel):
 class PortfolioAnalyzeResponse(BaseModel):
     ai_analysis_report: str = Field(..., description="AI 포트폴리오 종합 분석 결과")
     problem_solving_score: str = Field(..., description="문제 해결 능력 평가")
-    contribution_clarity_score: str = Field(..., description="기여도 및 역할 명확성 평가")
+    contribution_clarity_score: str = Field(
+        ..., description="기여도 및 역할 명확성 평가"
+    )
     technical_depth_score: str = Field(..., description="기술 깊이 및 실무성 평가")
