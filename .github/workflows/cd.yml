@@ -44,8 +44,11 @@ jobs:
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           timeout: 60s
-          
+
           script: |
+            set -x
+            PS4='+ [${LINENO}] '
+            
             cd /home/ubuntu/ai
 
             # uv 설치 (없으면)
