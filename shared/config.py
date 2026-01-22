@@ -16,8 +16,22 @@ class Settings(BaseSettings):
     WEAVIATE_PORT: int = 8080
     WEAVIATE_GRPC_PORT: int = 50051
 
-    # RecordManager configs
-    RECORD_MANAGER_DB_URL: str = "postgresql://user:password@localhost:5432/rag"
+    # Database configs
+    DB_USER: str = "user"
+    DB_PASSWORD: str = "password"
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 3306
+    DB_NAME: str = "ai_db"
+
+    @property
+    def DATABASE_URL(self) -> str:
+        """Constructs the MariaDB connection URL asynchronously."""
+        return f"mysql+asyncmy://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    @property
+    def WEAVIATE_URL(self) -> str:
+        """Constructs the Weaviate connection URL."""
+        return f"http://{self.WEAVIATE_HOST}:{self.WEAVIATE_PORT}"
 
     # External APIs
     OPENAI_API_KEY: str
