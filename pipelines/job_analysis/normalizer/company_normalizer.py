@@ -1,33 +1,16 @@
 """Company Name Normalization Logic"""
 import logging
-from typing import Optional, Tuple
-from dataclasses import dataclass
-from enum import Enum
+from typing import Optional
 
 from weaviate.classes.query import MetadataQuery
-from shared.vector_db.client import get_weaviate_client
+from datetime import datetime
+from job_analysis.data.models import Company
+from job_analysis.data.vector_repository.company_vector_repo import CompanyVectorRepository
+from job_analysis.utils.ai_agent import get_ai_agent
 
 logger = logging.getLogger(__name__)
 
 COMPANY_COLLECTION = "Company"
-
-
-class SimilarityLevel(Enum):
-    """유사도 수준"""
-    HIGH = "high"       # 0.85 이상 - 자동 매핑
-    MEDIUM = "medium"   # 0.70 ~ 0.84 - 에이전트 판단 필요
-    LOW = "low"         # 0.70 미만 - 신규 등록
-
-
-@dataclass
-class CompanyMatchResult:
-    """회사명 매칭 결과"""
-    company_id: Optional[int]
-    company_name: str
-    normalized_name: str
-    similarity_score: float
-    similarity_level: SimilarityLevel
-    requires_agent_review: bool
 
 
 class CompanyNormalizer:
@@ -35,178 +18,120 @@ class CompanyNormalizer:
 
     # 유사도 임계값
     HIGH_SIMILARITY_THRESHOLD = 0.85
-    MEDIUM_SIMILARITY_THRESHOLD = 0.70
+    MEDIUM_SIMILARITY_THRESHOLD = 0.50
 
-    def __init__(self):
-        self.client = get_weaviate_client()
-        self._ensure_collection()
-
-    def _ensure_collection(self):
-        """Company 컬렉션이 존재하는지 확인하고 없으면 생성합니다"""
-        try:
-            if not self.client.collections.exists(COMPANY_COLLECTION):
-                logger.info(f"Creating {COMPANY_COLLECTION} collection...")
-
-                self.client.collections.create(
-                    name=COMPANY_COLLECTION,
-                    vectorizer_config=None,
-                    properties=[
-                        {
-                            "name": "company_id",
-                            "dataType": ["int"],
-                            "description": "Database company ID"
-                        },
-                        {
-                            "name": "name",
-                            "dataType": ["text"],
-                            "description": "Original company name"
-                        },
-                        {
-                            "name": "normalized_name",
-                            "dataType": ["text"],
-                            "description": "Normalized company name"
-                        },
-                        {
-                            "name": "domain",
-                            "dataType": ["text"],
-                            "description": "Company domain"
-                        }
-                    ]
-                )
-                logger.info(f"✅ {COMPANY_COLLECTION} collection created")
-
-        except Exception as e:
-            logger.error(f"❌ Failed to ensure collection: {e}")
-            raise
-
-    async def normalize(self, raw_company_name: str) -> CompanyMatchResult:
+    def __init__(self, repo=None):
         """
-        회사명을 정규화합니다.
+        Args:
+            repo: CompanyRepository (Service에서 주입)
+        """
+        self.vector_repo = CompanyVectorRepository()
+        self.repo = repo
 
-        1. 벡터 DB에서 유사한 회사명 검색
-        2. 유사도 수준 판단 (HIGH/MEDIUM/LOW)
-        3. 매칭 결과 반환
+    async def get_or_create(self, raw_company_name: str) -> int:
+        """
+        회사 ID를 반환하거나 불가능할 경우 새로 생성합니다. (Get or Create)
+        """
+        # 1. ID 조회 (Find) - rdb alias + vector db를 통한 유사도 조회 및 alias 학습
+        company_id = await self.find_id(raw_company_name)
+        if company_id:
+            return company_id
+
+        # 2. 신규 생성 (Create) - rdb + vector db를 통한 유사도 조회 결과가 없을 경우
+        logger.info(f"🆕 Creating new company via Normalizer: {raw_company_name}")
+        
+        new_company = Company(
+            name=raw_company_name,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+        saved_company = await self.repo.create(new_company)
+
+        # 3. Vector DB 등록 (검색용)
+        try:
+            await self.vector_repo.add_company(saved_company.company_id, saved_company.name)
+            logger.info(f"✅ Added new company to Vector DB: {saved_company.name}")
+        except Exception as e:
+            logger.error(f"❌ Failed to add new company to Vector DB: {e}")
+
+        return saved_company.company_id
+
+    async def find_id(self, raw_company_name: str) -> Optional[int]:
+        """
+        회사명을 분석하여 기존 회사 ID를 찾습니다.
+
+        Flow:
+        1. RDB Alias 조회 (정확 일치)
+        2. Vector DB 조회 (유사도 검색)
+           - HIGH: 즉시 반환
+           - MEDIUM: AI 판단 후 반환
+           - LOW: None 반환
         """
         logger.info(f"🔍 Normalizing company name: {raw_company_name}")
 
-        # 1. 벡터 DB 검색
-        similar_companies = await self._search_similar(raw_company_name, limit=5)
+        # 1. RDB Alias 조회 (Exact Match)
+        if self.repo:
+            alias = await self.repo.find_alias_by_name(raw_company_name)
+            if alias:
+                logger.info(f"✅ Found exact match in Alias: {raw_company_name} -> ID: {alias.company_id}")
+                return alias.company_id
+
+        # 2. 벡터 DB 검색 (전처리된 이름 사용)
+        similar_companies = await self.vector_repo.search_similar(raw_company_name, limit=1)
 
         if not similar_companies:
-            # 유사한 회사가 없으면 신규 등록 필요
-            logger.info(f"📝 No similar companies found. New registration required.")
-            return CompanyMatchResult(
-                company_id=None,
-                company_name=raw_company_name,
-                normalized_name=self._preprocess(raw_company_name),
-                similarity_score=0.0,
-                similarity_level=SimilarityLevel.LOW,
-                requires_agent_review=False
-            )
+            logger.info(f"📝 No similar companies found in Vector DB.")
+            return None
 
-        # 2. 가장 유사한 회사 선택
+        # 4. 유사도 기반 판단
         best_match = similar_companies[0]
         similarity = best_match["similarity_score"]
+        company_id = best_match["company_id"]
+        normalized_name = best_match["name"]
 
-        # 3. 유사도 수준 판단
         if similarity >= self.HIGH_SIMILARITY_THRESHOLD:
-            level = SimilarityLevel.HIGH
-            requires_review = False
-            logger.info(f"✅ High similarity match found: {best_match['name']} (score: {similarity:.2f})")
+            logger.info(f"✅ High similarity match: {normalized_name} (score: {similarity:.2f}) -> ID: {company_id}")
+            
+            # [Self-Learning] 이름이 완전히 똑같지 않다면 별칭으로 등록
+            if best_match["name"] != raw_company_name:
+                 await self._learn_new_alias(company_id, raw_company_name)
+
+            return company_id
 
         elif similarity >= self.MEDIUM_SIMILARITY_THRESHOLD:
-            level = SimilarityLevel.MEDIUM
-            requires_review = True
-            logger.warning(f"⚠️ Medium similarity match found: {best_match['name']} (score: {similarity:.2f}). Agent review required.")
+            logger.warning(f"⚠️ Medium similarity match: {normalized_name} (score: {similarity:.2f}). Asking Agent...")
+
+            # AI 판단 요청
+            ai_agent = get_ai_agent()
+            is_same = await ai_agent.is_same_company(raw_company_name, normalized_name)
+            
+            if is_same:
+                logger.info(f"✅ Agent confirmed match. Using ID: {company_id}")
+                await self._learn_new_alias(company_id, raw_company_name)
+                return company_id
+            else:
+                logger.info(f"❌ Agent denied match. Treating as new company.")
+                return None
 
         else:
-            level = SimilarityLevel.LOW
-            requires_review = False
-            logger.info(f"📝 Low similarity. New registration required.")
-            best_match = None
+            logger.info(f"📝 Low similarity ({similarity:.2f}). Treating as new company.")
+            return None
 
-        # 4. 결과 반환
-        if best_match and level != SimilarityLevel.LOW:
-            return CompanyMatchResult(
-                company_id=best_match["company_id"],
-                company_name=best_match["name"],
-                normalized_name=best_match["normalized_name"],
-                similarity_score=similarity,
-                similarity_level=level,
-                requires_agent_review=requires_review
-            )
-        else:
-            return CompanyMatchResult(
-                company_id=None,
-                company_name=raw_company_name,
-                normalized_name=self._preprocess(raw_company_name),
-                similarity_score=similarity if best_match else 0.0,
-                similarity_level=level,
-                requires_agent_review=False
-            )
+    async def _learn_new_alias(self, company_id: int, raw_name: str):
+        """새로운 별칭을 학습합니다 (RDB & Vector DB)."""
+        if not self.repo:
+            return
 
-    async def _search_similar(self, query: str, limit: int = 5) -> list:
-        """벡터 DB에서 유사한 회사 검색"""
+        # RDB Alias 추가
         try:
-            collection = self.client.collections.get(COMPANY_COLLECTION)
-
-            response = collection.query.near_text(
-                query=query,
-                limit=limit,
-                return_metadata=MetadataQuery(distance=True)
-            )
-
-            results = []
-            for obj in response.objects:
-                similarity = 1.0 - obj.metadata.distance
-                results.append({
-                    "company_id": obj.properties["company_id"],
-                    "name": obj.properties["name"],
-                    "normalized_name": obj.properties["normalized_name"],
-                    "domain": obj.properties.get("domain", ""),
-                    "similarity_score": similarity
-                })
-
-            return results
-
+            await self.repo.add_alias(company_id, raw_name)
+            logger.info(f"📚 Learned new alias (RDB): {raw_name} -> ID {company_id}")
         except Exception as e:
-            logger.error(f"❌ Failed to search similar companies: {e}")
-            return []
+            logger.warning(f"⚠️ Failed to add alias to RDB: {e}")
 
-    async def add_to_vector_db(
-        self,
-        company_id: int,
-        name: str,
-        normalized_name: str,
-        domain: Optional[str] = None
-    ) -> bool:
-        """벡터 DB에 회사를 추가합니다"""
+        # Vector DB 추가
         try:
-            collection = self.client.collections.get(COMPANY_COLLECTION)
-
-            properties = {
-                "company_id": company_id,
-                "name": name,
-                "normalized_name": normalized_name,
-                "domain": domain or ""
-            }
-
-            collection.data.insert(properties=properties)
-
-            logger.info(f"✅ Added company to vector DB: {name} (ID: {company_id})")
-            return True
-
+            await self.vector_repo.add_company(company_id, raw_name)
+            logger.info(f"📚 Learned new alias (Vector): {raw_name}")
         except Exception as e:
-            logger.error(f"❌ Failed to add company to vector DB: {e}")
-            return False
-
-    def _preprocess(self, company_name: str) -> str:
-        """회사명 전처리 (정규화)"""
-        # 간단한 전처리 예시
-        normalized = company_name.strip().lower()
-
-        # 법인 형태 제거 (주식회사, (주), 등)
-        normalized = normalized.replace("주식회사", "").replace("(주)", "")
-        normalized = normalized.replace("㈜", "").strip()
-
-        return normalized
+            logger.warning(f"⚠️ Failed to add alias to Vector DB: {e}")

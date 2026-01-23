@@ -14,8 +14,7 @@ class JobPostRepository:
     async def create(self, job_post: JobPost) -> JobPost:
         """새로운 채용 공고를 저장합니다."""
         self.session.add(job_post)
-        await self.session.commit()
-        await self.session.refresh(job_post)
+        await self.session.flush()
         return job_post
 
     async def find_by_id(self, job_post_id: int) -> Optional[JobPost]:
@@ -35,3 +34,9 @@ class JobPostRepository:
         stmt = select(JobPost).where(JobPost.fingerprint_hash == fingerprint_hash)
         result = await self.session.execute(stmt)
         return result.scalars().first()
+
+    async def delete_by_master_id(self, job_master_id: int) -> None:
+        """JobMaster ID에 연결된 모든 JobPost를 물리 삭제합니다."""
+        from sqlalchemy import delete
+        stmt = delete(JobPost).where(JobPost.job_master_id == job_master_id)
+        await self.session.execute(stmt)

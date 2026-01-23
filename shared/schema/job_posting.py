@@ -25,3 +25,7 @@ class JobPostingAnalyzeResponse(BaseModel):
         None, description="채용 기간"
     )
     ai_summary: str = Field(..., description="AI가 요약한 공고 핵심 내용")
+
+
+class JobPostingDeleteResponse(BaseModel):
+    deleted_id: int = Field(..., description="삭제된 채용 공고 ID")

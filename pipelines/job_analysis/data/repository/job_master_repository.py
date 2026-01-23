@@ -14,8 +14,7 @@ class JobMasterRepository:
     async def create(self, job_master: JobMaster) -> JobMaster:
         """새로운 JobMaster를 저장합니다."""
         self.session.add(job_master)
-        await self.session.commit()
-        await self.session.refresh(job_master)
+        await self.session.flush()
         return job_master
 
     async def find_by_id(self, job_master_id: int) -> Optional[JobMaster]:
@@ -26,6 +25,11 @@ class JobMasterRepository:
 
     async def update(self, job_master: JobMaster) -> JobMaster:
         """JobMaster를 업데이트합니다."""
-        await self.session.commit()
-        await self.session.refresh(job_master)
+        await self.session.flush()
         return job_master
+
+    async def delete(self, job_master_id: int) -> None:
+        """JobMaster를 물리 삭제합니다."""
+        from sqlalchemy import delete
+        stmt = delete(JobMaster).where(JobMaster.job_master_id == job_master_id)
+        await self.session.execute(stmt)

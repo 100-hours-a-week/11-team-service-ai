@@ -6,6 +6,18 @@ from sqlalchemy.dialects.mysql import JSON
 
 from shared.db.connection import Base
 
+class User(Base):
+    __tablename__ = "users"
+
+    user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    profile_image_file_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    nickname: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+
 class Company(Base):
     __tablename__ = "companies"
 
