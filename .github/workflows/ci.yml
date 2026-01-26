@@ -21,6 +21,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    outputs:
+      artifact_name: ${{ steps.meta.outputs.artifact_name }}
+      build_dir: ${{ steps.meta.outputs.build_dir }}
+      version: ${{ steps.meta.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -37,17 +41,25 @@ jobs:
       - name: Import Check
         run: uv run python -c "import api.main"
 
+      - name: Set metadata (artifact name / version)
+        id: meta
+        run: |
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          ARTIFACT_NAME="ai-${VERSION}-${GITHUB_SHA::7}"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
       - name: Upload source snapshot (temporary for downstream job)
         uses: actions/upload-artifact@v4
         with:
-          name: ai-source
+          name: ${{ steps.meta.outputs.artifact_name }}
           path: |
-            **/*.py
-            pyproject.toml
-            README.md
             api/**
             shared/**
             pipelines/**
+            **/*.py
+            pyproject.toml
             uv.lock
             pytest.ini
           retention-days: 1
