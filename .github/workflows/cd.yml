@@ -139,7 +139,7 @@ jobs:
             # 3회 재시도 (10초 간격)
             for i in 1 2 3; do
               echo "Health Check 시도 $i/3"
-              if curl -sf http://localhost:8000/health > /dev/null; then
+              if curl -sf http://localhost:8000 > /dev/null; then
                 echo "Health Check 성공"
                 exit 0
               fi
