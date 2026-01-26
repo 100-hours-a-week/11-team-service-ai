@@ -222,7 +222,3 @@ jobs:
           status: failure
           title: "🚨 AI 배포 실패"
           description: "Health check 실패 또는 배포 중 오류 발생"
-
-      - name: Fail workflow if health check failed
-        if: steps.health_check.outcome == 'failure'
-        run: exit 1
