@@ -76,7 +76,7 @@ jobs:
 
 
       - name: List AI files
-        run: ls -la ai && find ai -maxdepth 2 -type f | head
+        run: ls -la artifact && find artifact -maxdepth 2 -type f | head
 
       # ----------------------------
       # 4. artifact 업로드
