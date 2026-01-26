@@ -1,6 +1,7 @@
 name: FastAPI CI
 
 on:
+  workflow_dispatch: # 수동 실행
   pull_request:
     branches: [develop, main]
     types: [opened, synchronize, reopened]
