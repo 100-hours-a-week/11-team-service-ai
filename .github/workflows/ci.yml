@@ -121,7 +121,7 @@ jobs:
   # ----------------------------
   # 4. Main -> S3 Release Archive (develop)
   # ----------------------------
-  release_archive:
+  snapshot_archive:
     name: Archive to S3
     runs-on: ubuntu-latest
     needs: [build, test, static_analysis]
@@ -164,7 +164,7 @@ jobs:
   # -----------------------------------
   # 5. Main -> S3 Release Archive (main)
   # -------------------------------------
-  snapshot_archive:
+  release_archive:
     name: Archive release to S3
     runs-on: ubuntu-latest
     needs: [build, test]
