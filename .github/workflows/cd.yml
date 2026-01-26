@@ -2,8 +2,8 @@ name: FastAPI CD
 
 on:
   workflow_run:
-    workflows: ["FastAPI CI"]
-    types: [completed]
+    workflows: [ "FastAPI CI" ]
+    types: [ completed ]
     branches: [ develop ]
 
 permissions:
