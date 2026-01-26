@@ -42,11 +42,7 @@ jobs:
 
           echo "Downloaded from s3://$BUCKET/$PREFIX/latest/"
           ls -la ./artifact | head
-
-      - name: Prepare release name
-        id: meta
-        run: echo "release=$(TZ='Asia/Seoul' date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
-
+          
       # ----------------------------
       # 3. 서버로 배포 (백업/롤백 대비)
       # ----------------------------
