@@ -2,8 +2,8 @@ name: FastAPI CD
 
 on:
   workflow_run:
-    workflows: ["FastAPI CI"]
-    types: [completed]
+    workflows: [ "FastAPI CI" ]
+    types: [ completed ]
     branches: [ develop ]
 
 permissions:
@@ -32,7 +32,7 @@ jobs:
       - name: Download artifact from S3
         env:
           BUCKET: ${{ secrets.RELEASE_BUCKET }}
-          PREFIX: snapshots/ai
+          PREFIX: releases/ai
         run: |
           rm -rf ./artifact
           mkdir -p ./artifact
