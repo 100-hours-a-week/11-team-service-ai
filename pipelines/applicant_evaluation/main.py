@@ -1,36 +1,39 @@
-from shared.schema.applicant import EvaluateRequest, EvaluateResponse, CompetencyScore
+from sqlalchemy.orm import Session
+from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
+from .infrastructure.persistence.doc_repository import SqlAlchemyDocRepository
+from .infrastructure.persistence.report_repository import SqlAlchemyReportRepository
+from .infrastructure.adapters.openai_agent import OpenAiAnalyst
+from .infrastructure.adapters.s3_storage import S3FileStorage
+from .infrastructure.adapters.pdf_extractor import PyPdfExtractor
+from .application.services.analyzer import ApplicationAnalyzer
+from .application.dtos import PipelineEvaluateResponse
 
-# Note: This pipeline serves both 'Applicant Evaluate' and 'Resume Analyze' APIs internally.
-# For now, let's keep it generic or handle types.
-# Given API structure, Applicant Evaluate uses EvaluateRequest.
-# Document Resume Analyze uses ResumeAnalyzeRequest.
-# Let's support union or make separate entry points if logic diverges.
-# The user wants "each pipeline input as schema".
-# Let's use EvaluateRequest as primary for "Evaluation".
-
-
-def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
+def evaluate_applicant(user_id: int, job_id: int, db_session: Session) -> PipelineEvaluateResponse:
     """
-    Execute the Applicant Evaluation Pipeline.
-    Currently returns dummy data directly.
+    지원자 평가 파이프라인의 메인 진입점 (Entrypoint)
+    외부(API Router)에서 호출할 때 이 함수를 사용합니다.
     """
-    print(
-        f"Running Applicant Evaluation Pipeline for user {request.user_id}, job {request.job_posting_id}"
+    
+    # 1. Infrastructure Layer의 구현체 생성 (Dependencies)
+    job_repo = SqlAlchemyJobRepository(db_session)
+    doc_repo = SqlAlchemyDocRepository(db_session)
+    report_repo = SqlAlchemyReportRepository(db_session)
+    
+    file_storage = S3FileStorage()
+    extractor = PyPdfExtractor()
+    agent = OpenAiAnalyst()
+    
+    # 2. Application Layer 서비스에 의존성 주입 (Wiring)
+    analyzer = ApplicationAnalyzer(
+        job_repo=job_repo,
+        doc_repo=doc_repo,
+        report_repo=report_repo,
+        file_storage=file_storage,
+        extractor=extractor,
+        agent=agent
     )
-
-    return EvaluateResponse(
-        overall_score=85.5,
-        competency_scores=[
-            CompetencyScore(
-                name="Skill Match (Pipeline)", score=90, description="Good match"
-            ),
-            CompetencyScore(name="Experience", score=80, description="Decent"),
-        ],
-        one_line_review="Promising candidate (Pipeline Evaluated).",
-        feedback_detail=f"Detailed feedback for user {request.user_id} based on pipeline analysis.",
-    )
-
-
-if __name__ == "__main__":
-    # Test execution
-    print(run_pipeline(EvaluateRequest(user_id="test_user", job_posting_id="12345")))
+    
+    # 3. 비즈니스 로직 실행
+    result = analyzer.run(user_id, job_id)
+    
+    return result
