@@ -205,7 +205,12 @@ class JobRegistrationService:
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
-        return await self.job_master_repo.create(new_job_master)
+        try:
+            async with self.job_master_repo.session.begin_nested():
+                 return await self.job_master_repo.create(new_job_master)
+        except Exception as e:
+            logger.error(f"❌ Failed to create JobMaster: {e}")
+            raise
 
     async def _link_skills_to_job_master(self, job_master_id: int, skill_ids: List[int]) -> None:
         """JobMaster와 Skills를 연결합니다."""
@@ -241,7 +246,8 @@ class JobRegistrationService:
             end_date=None,
             created_at=datetime.now(),
             updated_at=datetime.now(),
-            fingerprint_hash=fingerprint
+            fingerprint_hash=fingerprint,
+            ai_job_id=0 # Required by DB schema but not used in this pipeline logic yet
         )
         return await self.job_post_repo.create(new_job_post)
 

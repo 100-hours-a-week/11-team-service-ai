@@ -92,6 +92,13 @@ class CompanyNormalizer:
         if similarity >= self.HIGH_SIMILARITY_THRESHOLD:
             logger.info(f"✅ High similarity match: {normalized_name} (score: {similarity:.2f}) -> ID: {company_id}")
             
+            # [Validation] RDB에 실제로 존재하는지 확인
+            if self.repo:
+                exists = await self.repo.find_by_id(company_id)
+                if not exists:
+                        logger.warning(f"⚠️ Company ID {company_id} found in VectorDB but missing in RDB. Treating as new.")
+                        return None
+
             # [Self-Learning] 이름이 완전히 똑같지 않다면 별칭으로 등록
             if best_match["name"] != raw_company_name:
                  await self._learn_new_alias(company_id, raw_company_name)
@@ -106,6 +113,13 @@ class CompanyNormalizer:
             is_same = await ai_agent.is_same_company(raw_company_name, normalized_name)
             
             if is_same:
+                # [Validation] RDB에 실제로 존재하는지 확인
+                if self.repo:
+                    exists = await self.repo.find_by_id(company_id)
+                    if not exists:
+                         logger.warning(f"⚠️ Company ID {company_id} found in VectorDB but missing in RDB. Treating as new.")
+                         return None
+
                 logger.info(f"✅ Agent confirmed match. Using ID: {company_id}")
                 await self._learn_new_alias(company_id, raw_company_name)
                 return company_id
@@ -124,7 +138,9 @@ class CompanyNormalizer:
 
         # RDB Alias 추가
         try:
-            await self.repo.add_alias(company_id, raw_name)
+            # 트랜잭션의 Savepoint를 생성하여, 에러 발생 시 이 블록만 롤백하고 전체 세션은 유지합니다.
+            async with self.repo.session.begin_nested():
+                await self.repo.add_alias(company_id, raw_name)
             logger.info(f"📚 Learned new alias (RDB): {raw_name} -> ID {company_id}")
         except Exception as e:
             logger.warning(f"⚠️ Failed to add alias to RDB: {e}")

@@ -144,3 +144,4 @@ class JobPost(Base):
     
     # Fingerprint
     fingerprint_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True) # CHAR(64)
+    ai_job_id: Mapped[int] = mapped_column(BigInteger, nullable=True) # Temporary fix for missing column mapping
