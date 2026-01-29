@@ -1,6 +1,6 @@
 from typing import Optional, List
 from sqlalchemy.orm import Session, joinedload
-from ai.shared.db.model.models import JobMaster, Company, JobMasterSkill, Skill
+from shared.db.model.models import JobMaster, Company, JobMasterSkill, Skill
 from ...domain.interface.repository_interfaces import JobRepository
 from ...domain.models.job import JobInfo, EvaluationCriteria
 

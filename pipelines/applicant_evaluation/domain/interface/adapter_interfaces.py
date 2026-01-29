@@ -1,6 +1,6 @@
 from typing import Protocol, List
 from ..models.job import EvaluationCriteria, JobInfo
-from ..models.evaluation import CompetencyResult, OverallFeedback
+from ..models.report import CompetencyResult, OverallFeedback
 
 class FileStorage(Protocol):
     """파일 스토리지 (S3 등) 인터페이스 (Async)"""

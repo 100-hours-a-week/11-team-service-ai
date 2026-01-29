@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
-from ai.shared.db.model.models import AiApplicantEvaluation, JobApplication
+from shared.db.model.models import AiApplicantEvaluation, JobApplication
 from ...domain.interface.repository_interfaces import ReportRepository
 from ...domain.models.report import AnalysisReport
 

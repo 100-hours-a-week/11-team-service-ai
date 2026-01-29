@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import NoResultFound
 
-from ai.shared.db.model.models import (
+from shared.db.model.models import (
     JobApplication, ApplicationDocument, ApplicationDocumentParsed, FileObject
 )
 from ...domain.interface.repository_interfaces import DocRepository

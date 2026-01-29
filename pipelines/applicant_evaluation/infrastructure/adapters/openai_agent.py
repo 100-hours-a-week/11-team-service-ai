@@ -1,10 +1,10 @@
 from typing import List
 import json
 from openai import OpenAI
-from ai.shared.config import settings
+from shared.config import settings
 from ...domain.interface.adapter_interfaces import AnalystAgent
 from ...domain.models.job import JobInfo, EvaluationCriteria
-from ...domain.models.evaluation import CompetencyResult, OverallFeedback
+from ...domain.models.report import CompetencyResult, OverallFeedback
 
 class OpenAiAnalyst(AnalystAgent):
     """

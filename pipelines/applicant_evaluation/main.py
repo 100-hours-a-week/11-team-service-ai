@@ -8,7 +8,7 @@ from .infrastructure.adapters.pdf_extractor import PyPdfExtractor
 from .application.services.analyzer import ApplicationAnalyzer
 from .application.dtos import PipelineEvaluateResponse
 
-def evaluate_applicant(user_id: int, job_id: int, db_session: Session) -> PipelineEvaluateResponse:
+def run_pipeline(user_id: int, job_id: int) -> PipelineEvaluateResponse:
     """
     지원자 평가 파이프라인의 메인 진입점 (Entrypoint)
     외부(API Router)에서 호출할 때 이 함수를 사용합니다.
