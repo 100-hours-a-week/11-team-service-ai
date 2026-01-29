@@ -6,7 +6,6 @@ class EvaluationCriteria:
     """평가 기준 (예: 직무 적합성, 성장 가능성 등)"""
     name: str
     description: str
-    # TODO: 가중치(weight) 속성 추가 고려 (기본값 1.0)
 
 @dataclass
 class JobInfo:
@@ -19,5 +18,9 @@ class JobInfo:
     # 지원자 평가기준 4가지
     evaluation_criteria: List[EvaluationCriteria] = field(default_factory=list)
 
-    # TODO: 데이터 유효성 검증 메서드
-    # 예: evaluation_criteria가 비어있으면 안 된다 등
+    def validate(self):
+        """JobInfo 데이터 유효성 검증"""
+        if not self.company_name:
+            raise ValueError("Company name must not be empty.")
+        if not self.evaluation_criteria:
+            raise ValueError("Evaluation criteria must not be empty.")

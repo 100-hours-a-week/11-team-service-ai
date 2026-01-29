@@ -1,7 +1,7 @@
 from shared.schema.document import PortfolioAnalyzeRequest, PortfolioAnalyzeResponse
 
 
-def run_pipeline(request: PortfolioAnalyzeRequest) -> PortfolioAnalyzeResponse:
+async def run_pipeline(request: PortfolioAnalyzeRequest) -> PortfolioAnalyzeResponse:
     """
     Execute the Portfolio Analysis Pipeline.
     Currently returns dummy data directly.

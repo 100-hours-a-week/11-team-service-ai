@@ -7,8 +7,8 @@ class CompetencyResult:
     score: float         # 역량 점수
     description: str     # 역량 평가 상세 (reason)
 
-    # TODO: 점수 유효성 검증 로직 구현
-    # def validate_score(self):
-    #     if not (0 <= self.score <= 100):
-    #         raise ValueError("Score must be between 0 and 100")
+    # 점수 유효성 검증 로직 구현
+    def validate_score(self):
+        if not (0 <= self.score <= 100):
+            raise ValueError("Score must be between 0 and 100")
 

@@ -2,9 +2,6 @@ from dataclasses import dataclass, field
 from typing import List, Set
 from .evaluation import CompetencyResult
 from .job import JobInfo
-# 도메인 예외를 참조하기 위해 상대 경로 import 필요 (exceptions.py가 domain 폴더에 있다고 가정)
-# 만약 exceptions.py 위치가 다르다면 경로 수정 필요
-# from ..exceptions import ReportGenerationError  <- 이 부분은 실제 파일 트리에 맞춰 수정 필요
 
 # 임시 예외 클래스 정의 (또는 별도 예외 파일 import)
 class AnalysisReportError(Exception):

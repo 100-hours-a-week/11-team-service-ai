@@ -1,6 +1,6 @@
 from typing import List
 import json
-from openai import OpenAI
+from openai import AsyncOpenAI
 from shared.config import settings
 from ...domain.interface.adapter_interfaces import AnalystAgent
 from ...domain.models.job import JobInfo, EvaluationCriteria
@@ -8,13 +8,14 @@ from ...domain.models.report import CompetencyResult, OverallFeedback
 
 class OpenAiAnalyst(AnalystAgent):
     """
-    OpenAI API를 사용하여 지원자를 분석하는 AI 에이전트 구현체
+    OpenAI API를 사용하여 지원자를 분석하는 AI 에이전트 구현체 (Async)
     """
     def __init__(self):
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = "gpt-4-turbo-preview" # or settings.MODEL_NAME
+        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        # gpt-4o-mini: 빠르고 저렴하며 성능이 준수함
+        self.model = getattr(settings, "MODEL_NAME", "gpt-4o-mini")
 
-    def evaluate_competency(
+    async def evaluate_competency(
         self, 
         job_info: JobInfo,
         criteria: EvaluationCriteria, 
@@ -51,7 +52,7 @@ class OpenAiAnalyst(AnalystAgent):
         }}
         """
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -70,7 +71,7 @@ class OpenAiAnalyst(AnalystAgent):
             description=data.get("reason", "No reason provided.")
         )
 
-    def synthesize_report(
+    async def synthesize_report(
         self, 
         job_info: JobInfo,
         competency_results: List[CompetencyResult]
@@ -107,7 +108,7 @@ class OpenAiAnalyst(AnalystAgent):
         }
         """
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model,
             messages=[
                 {"role": "system", "content": system_prompt},

@@ -6,7 +6,6 @@ class FileInfo:
     """파일명, 경로 등 원본 파일 메타데이터"""
     file_path: int
     file_type: str  # "RESUME" or "PORTFOLIO"
-    # TODO: 추가 속성 정의
 
 @dataclass
 class ParsedDoc:
@@ -14,7 +13,6 @@ class ParsedDoc:
     doc_type:str
     text: str
     is_valid: bool = True
-    # TODO: 속성 추가
 
     def is_analyzable(self) -> bool:
         """
@@ -42,7 +40,7 @@ class ApplicantDocuments:
         분석 가능한 텍스트 데이터가 모두 준비되었는지 확인.
         원본 파일이 있으면 파싱된 데이터도 있어야 함.
         """
-        # TODO: 파일이 있는데 파싱 데이터가 없다면 False 반환
+        # 파일이 있는데 파싱 데이터가 없다면 False 반환
         if self.resume_file and (not self.parsed_resume or not self.parsed_resume.is_analyzable()):
             return False
             

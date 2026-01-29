@@ -31,11 +31,3 @@ class DocRepository(Protocol):
         새로 추출한 텍스트 데이터를 저장
         """
         ...
-
-class ReportRepository(Protocol):
-    """
-    분석 결과 리포트 저장소 인터페이스 (Async)
-    """
-    async def save_report(self, user_id: int, job_id: int, report: AnalysisReport) -> None:
-        """최종 분석 리포트를 저장"""
-        ...

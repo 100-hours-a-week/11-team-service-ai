@@ -8,7 +8,7 @@ sys.path.append(os.getcwd())
 
 from sqlalchemy import text
 from shared.db.connection import get_db
-from job_analysis.data.repository.repository import JobPostRepository
+from job_analysis.data.repository import JobPostRepository
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("DB_TEST")
@@ -25,7 +25,7 @@ async def test_connection():
             # 2. Repository 조회 테스트 (SQL 매핑 확인)
             repo = JobPostRepository(session)
             # 존재하지 않는 ID로 조회하여 에러가 안 나는지 확인
-            post = await repo.get_job_post_by_id(999999999)
+            post = await repo.find_by_id(999999999)
             logger.info(f"✅ Repository Read Test Passed. Result: {post}")
 
         except Exception as e:

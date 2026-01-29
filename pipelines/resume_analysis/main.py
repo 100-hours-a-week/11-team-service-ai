@@ -1,7 +1,7 @@
 from shared.schema.document import ResumeAnalyzeRequest, ResumeAnalyzeResponse
 
 
-def run_pipeline(request: ResumeAnalyzeRequest) -> ResumeAnalyzeResponse:
+async def run_pipeline(request: ResumeAnalyzeRequest) -> ResumeAnalyzeResponse:
     """
     Execute the Resume Analysis Pipeline.
     Currently returns dummy data directly.

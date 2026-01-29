@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/v1/applicant", tags=["Applicant"])
 )
 async def evaluate_applicant(request: EvaluateRequest):
     service = ApplicantService()
-    result = service.evaluate_applicant(request.user_id, request.job_posting_id)
+    result = await service.evaluate_applicant(request.user_id, request.job_posting_id)
     return ApiResponse(success=True, data=result)
 
 
@@ -32,7 +32,7 @@ async def evaluate_applicant(request: EvaluateRequest):
 )
 async def compare_applicants(request: CompareRequest):
     service = ApplicantService()
-    result = service.compare_applicants(
+    result = await service.compare_applicants(
         request.user_id, request.job_posting_id, request.competitor
     )
     return ApiResponse(success=True, data=result)
