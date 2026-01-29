@@ -1,6 +1,11 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
+class EvaluationCriteriaItem(BaseModel):
+    name: str = Field(..., description="평가 기준명 (예: '직무 적합성')")
+    description: str = Field(..., description="해당 기준에 대한 설명")
+
+
 class ExtractedJobData(BaseModel):
     """채용 공고 텍스트에서 추출할 구조화된 데이터"""
     
@@ -40,4 +45,9 @@ class ExtractedJobData(BaseModel):
     ai_summary: str = Field(
         ..., 
         description="공고 전체에 대한 3줄 이내의 핵심 요약"
+    )
+
+    evaluation_criteria: List[EvaluationCriteriaItem] = Field(
+        default_factory=list,
+        description="채용 평가 기준 (예: [{'name': '직무 적합성', 'description': '...'}, ...])"
     )

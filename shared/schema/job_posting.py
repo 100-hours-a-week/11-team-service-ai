@@ -25,6 +25,9 @@ class JobPostingAnalyzeResponse(BaseModel):
         None, description="채용 기간"
     )
     ai_summary: str = Field(..., description="AI가 요약한 공고 핵심 내용")
+    evaluation_criteria: Optional[List[dict]] = Field(
+        default=[], description="평가 기준 리스트"
+    )
 
 
 class JobPostingDeleteResponse(BaseModel):
