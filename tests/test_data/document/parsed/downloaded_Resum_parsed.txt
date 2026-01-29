@@ -1,0 +1,35 @@
+# 이력서 (Resume)
+## 기본 정보
+- **이름:** 김자바
+- **전화:** 010-1234-5678
+- **이메일:** java.kim@email.com
+- **직무:** Backend Engineer (3년차)
+## 학력
+- **OO대학교 컴퓨터공학과 학사** (2016.03 ~ 2022.02)
+- 졸업 학점: 3.8/4.5
+- 주요 수강: 자료구조, 알고리즘, 운영체제, 데이터베이스, 네트워크
+## 기술 스택 (Skills)
+- **Languages:** Java 17, Kotlin
+- **Frameworks:** Spring Boot 3.0, Spring Cloud, JPA (Hibernate)
+- **Infrastructure:** AWS (EC2, EKS, RDS), Docker, Kubernetes
+- **Data Stores:** MySQL, PostgreSQL, Redis, Kafka
+- **Tools:** Git, Jenkins, Jira, IntelliJ
+## 경력 사항 (Work Experience)
+### (주)핀테크솔루션 | 백엔드 개발자
+**2023.01 ~ 현재 (재직 중)**
+- **결제 플랫폼 MSA 전환 프로젝트**
+- 모놀리식 결제 시스템을 MSA로 분리하고, 사내 최초로 Kafka 기반의 EDA를 도입.
+- Saga Pattern을 적용하여 분산 트랜잭션의 데이터 정합성 보장.
+- Resilience4j Circuit Breaker 적용으로 외부 연동 구간의 장애 전파 차단.
+- **성과:** 배포 시간 90% 단축(60분 -> 5분), 피크 타임 TPS 3,000 무중단 처
+리.
+### (주)스타트업컴퍼니 | 백엔드 개발자
+**2022.06 ~ 2022.12**
+- **사내 포인트 시스템 구축**
+- 포인트 적립/차감 코어 로직 개발 및 정산 배치 시스템 구현.
+- Redis 분산 락을 도입하여 동시성 이슈(Lost Update) 원천 차단.
+- **성과:** 동시 접속 1,000명 부하 테스트 통과, 데이터 오차 0건 달성.
+## 자격증 및 어학
+- 정보처리기사 (2021.08)
+- AWS Certified Solutions Architect - Associate (2023.05)
+- SQLD (2020.11)

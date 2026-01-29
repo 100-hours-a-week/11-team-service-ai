@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api/v1", tags=["Document Analysis"])
 )
 async def analyze_resume(request: ResumeAnalyzeRequest):
     service = DocumentService()
-    result = service.analyze_resume(request.user_id, request.job_posting_id)
+    result = await service.analyze_resume(request.user_id, request.job_posting_id)
     return ApiResponse(success=True, data=result)
 
 
@@ -36,5 +36,5 @@ async def analyze_resume(request: ResumeAnalyzeRequest):
 )
 async def analyze_portfolio(request: PortfolioAnalyzeRequest):
     service = DocumentService()
-    result = service.analyze_portfolio(request.user_id, request.job_posting_id)
+    result = await service.analyze_portfolio(request.user_id, request.job_posting_id)
     return ApiResponse(success=True, data=result)
