@@ -91,9 +91,9 @@ jobs:
           target: "/home/ubuntu/ai"
           strip_components: 1
 
-      # ----------------------------
+      # ----------------------------------
       # 5. FastAPI Restart + Health Check
-      # ----------------------------
+      # ----------------------------------
       - name: Restart FastAPI
         uses: appleboy/ssh-action@master
         with:
