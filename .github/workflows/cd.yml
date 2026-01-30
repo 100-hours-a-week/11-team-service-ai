@@ -43,6 +43,11 @@ jobs:
           echo "Downloaded from s3://$BUCKET/$PREFIX/latest/"
           ls -la ./artifact | head
 
+      - name: Setup WireGuard
+        uses: niklaskeerl/easy-wireguard-action@v2
+        with:
+          WG_CONFIG_FILE: ${{ secrets.WG_CONFIG }}
+    
       # ----------------------------
       # 3. 서버로 배포 (백업/롤백 대비)
       # ----------------------------
@@ -72,11 +77,6 @@ jobs:
 
       - name: List AI files
         run: ls -la artifact && find artifact -maxdepth 2 -type f | head
-
-      - name: Setup WireGuard
-        uses: niklaskeerl/easy-wireguard-action@v2
-        with:
-          WG_CONFIG_FILE: ${{ secrets.WG_CONFIG }}
           
       # ----------------------------
       # 4. artifact 업로드
