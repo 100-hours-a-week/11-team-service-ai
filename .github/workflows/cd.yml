@@ -73,6 +73,11 @@ jobs:
       - name: List AI files
         run: ls -la artifact && find artifact -maxdepth 2 -type f | head
 
+      - name: Setup WireGuard
+        uses: niklaskeerl/easy-wireguard-action@v2
+        with:
+          WG_CONFIG_FILE: ${{ secrets.WG_CONFIG }}
+          
       # ----------------------------
       # 4. artifact 업로드
       # ----------------------------
