@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: [ "FastAPI CI" ]
     types: [ completed ]
-    branches: [ develop ]
+    branches: [ develop, main ]
 
 permissions:
   id-token: write
