@@ -37,14 +37,9 @@ jobs:
       # 2. WireGuard VPN
       # ----------------------------
       - name: Setup WireGuard VPN
-        uses: egor-tensin/setup-wireguard@v1
+        uses: niklaskeerl/easy-wireguard-action@v2
         with:
-          endpoint: ${{ secrets.WG_ENDPOINT }}
-          endpoint_public_key: ${{ secrets.WG_SERVER_PUBLIC_KEY }}
-          ips: ${{ secrets.WG_CLIENT_IP }}
-          allowed_ips: ${{ secrets.WG_ALLOWED_IPS }}
-          private_key: ${{ secrets.WG_PRIVATE_KEY }}
-          keepalive: 25
+          WG_CONFIG_FILE: ${{ secrets.WG_CONFIG }}
 
       # ----------------------------
       # 3. S3에서 최신 snapshot 다운로드 
@@ -311,14 +306,9 @@ jobs:
       # 2. WireGuard VPN
       # ----------------------------
       - name: Setup WireGuard VPN
-        uses: egor-tensin/setup-wireguard@v1
+        uses: niklaskeerl/easy-wireguard-action@v2
         with:
-          endpoint: ${{ secrets.WG_ENDPOINT }}
-          endpoint_public_key: ${{ secrets.WG_SERVER_PUBLIC_KEY }}
-          ips: ${{ secrets.WG_CLIENT_IP }}
-          allowed_ips: ${{ secrets.WG_ALLOWED_IPS }}
-          private_key: ${{ secrets.WG_PRIVATE_KEY }}
-          keepalive: 25
+          WG_CONFIG_FILE: ${{ secrets.WG_CONFIG }}
 
       # ----------------------------
       # 3. S3에서 최신 artifact 다운로드 (latest)
