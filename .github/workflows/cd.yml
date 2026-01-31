@@ -88,51 +88,11 @@ jobs:
             rm -rf "$TARGET_DIR"
             mkdir -p "$TARGET_DIR"
 
-      # ----------------------------
-      # 5. artifact 업로드
-      # ----------------------------
-      - name: Upload artifact files
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          source: "ai/**"
-          target: "/home/ubuntu/ai"
-          strip_components: 1
-
-      # ----------------------------------
-      # 6. FastAPI Restart 
-      # ----------------------------------
-      - name: Restart FastAPI
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          script: |
-            set -e
-            echo "=== FastAPI Deploy Start ==="
-
-            TARGET_DIR="/home/ubuntu/ai"
-            BACKUP_DIR="/home/ubuntu/ai_backup"
-
-            # 백업 (롤백 대비)
-            rm -rf "$BACKUP_DIR"
-            if [ -d "$TARGET_DIR" ]; then
-              cp -r "$TARGET_DIR" "$BACKUP_DIR"
-              echo "Backup completed"
-            fi
-
-            # 기존 파일 제거
-            rm -rf "$TARGET_DIR"
-            mkdir -p "$TARGET_DIR"
-
       - name: List AI files
         run: ls -la artifact && find artifact -maxdepth 2 -type f | head
           
       # ----------------------------
-      # 4. artifact 업로드
+      # 5. artifact 업로드
       # ----------------------------
       - name: Upload artifact files
         uses: appleboy/scp-action@master
@@ -144,9 +104,9 @@ jobs:
           target: "/home/ubuntu/ai"
           strip_components: 1
 
-      # ----------------------------
-      # 5. FastAPI Restart + Health Check
-      # ----------------------------
+      # ----------------------------------
+      # 6. FastAPI Restart
+      # ----------------------------------
       - name: Restart FastAPI
         uses: appleboy/ssh-action@master
         with:
