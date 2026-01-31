@@ -150,7 +150,7 @@ jobs:
           strip_components: 1
 
       # ----------------------------------
-      # 5. FastAPI Restart + Health Check
+      # 5. FastAPI Restart
       # ----------------------------------
       - name: Restart FastAPI
         uses: appleboy/ssh-action@master
