@@ -1,10 +1,10 @@
 import logging
 import hashlib
-from typing import Any, List, Optional
+from typing import Any, List
 from datetime import datetime, date
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from job_analysis.data.models import JobPost, JobMaster, JobMasterSkill, Company, Skill
+from job_analysis.data.models import JobPost, JobMaster, JobMasterSkill
 from job_analysis.data.repository.job_post_repository import JobPostRepository
 from job_analysis.data.repository.job_master_repository import JobMasterRepository
 from job_analysis.data.repository.company_repository import CompanyRepository
@@ -12,7 +12,6 @@ from job_analysis.data.repository.skill_repository import SkillRepository
 from job_analysis.data.vector_repository.job_vector_repo import JobVectorRepository
 from job_analysis.normalizer.company_normalizer import CompanyNormalizer
 from job_analysis.normalizer.skill_normalizer import SkillNormalizer
-from shared.schema.job_posting import JobPostingAnalyzeResponse, RecruitmentPeriod
 from job_analysis.domain.job_duplicate_checker import JobDuplicateChecker
 from job_analysis.data.repository.dto import JobPostingWithRelations
 

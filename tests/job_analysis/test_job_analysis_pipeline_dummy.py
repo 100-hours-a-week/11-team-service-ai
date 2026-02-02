@@ -1,7 +1,6 @@
 
 import asyncio
 import logging
-from typing import Any
 
 from shared.db.connection import get_db
 from job_analysis.service import JobAnalysisService
@@ -37,7 +36,7 @@ class MockJobAnalysisService(JobAnalysisService):
         return "MOCK_HTML_CONTENT"
 
     async def _extract_data(self, raw_text: str):
-        logger.info(f"🔍 [MOCK] Returning Dummy Extracted Data")
+        logger.info("🔍 [MOCK] Returning Dummy Extracted Data")
         # 실제로는 raw_text를 LLM에 보내서 추출하지만, 여기서는 더미 데이터 반환
         return DUMMY_EXTRACTED_DATA
 

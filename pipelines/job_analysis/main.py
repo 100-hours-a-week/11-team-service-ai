@@ -1,13 +1,10 @@
 import logging
-import asyncio
 
-from shared.db.connection import get_db
 from shared.schema.job_posting import (
     JobPostingAnalyzeRequest,
     JobPostingAnalyzeResponse,
     JobPostingDeleteResponse,
 )
-from job_analysis.service import JobAnalysisService
 from job_analysis.simple_extraction_service import SimpleJobExtractionService
 
 

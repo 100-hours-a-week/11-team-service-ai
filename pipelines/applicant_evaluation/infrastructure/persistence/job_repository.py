@@ -1,8 +1,8 @@
-from typing import Optional, List
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
-from shared.db.model.models import JobMaster, Company, JobMasterSkill, Skill
+from shared.db.model.models import JobMaster, JobMasterSkill, Skill
 from ...domain.interface.repository_interfaces import JobRepository
 from ...domain.models.job import JobInfo, EvaluationCriteria
 

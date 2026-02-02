@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-from typing import List
 from shared.schema.applicant import EvaluateResponse, CompetencyScore
 from ..domain.models.report import AnalysisReport
 

@@ -2,7 +2,6 @@
 import logging
 from typing import Optional
 import weaviate
-from weaviate.classes.init import Auth
 from weaviate.client import WeaviateClient
 
 from shared.config import settings

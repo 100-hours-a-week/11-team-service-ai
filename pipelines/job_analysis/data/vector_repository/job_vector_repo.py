@@ -73,7 +73,7 @@ class JobVectorRepository(BaseVectorRepository):
                 })
                 
             return results
-        except Exception as e:
+        except Exception:
             # 컬렉션이 없거나 에러 발생 시 빈 리스트 반환 (안전 장치)
             # logger.error(f"Vector search failed: {e}")
             return []

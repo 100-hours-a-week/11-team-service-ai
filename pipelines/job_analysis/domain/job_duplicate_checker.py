@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, List
+from typing import Optional
 from job_analysis.data.repository.job_post_repository import JobPostRepository
 from job_analysis.data.vector_repository.job_vector_repo import JobVectorRepository
 from job_analysis.data.repository.job_posting_query_repository import JobPostingQueryRepository

@@ -8,7 +8,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 
 from shared.db.connection import get_db
 from pipelines.applicant_evaluation.infrastructure.persistence.doc_repository import SqlAlchemyDocRepository
-from pipelines.applicant_evaluation.domain.models.document import ParsedDoc
 from sqlalchemy import text
 
 @pytest.mark.asyncio
@@ -43,7 +42,7 @@ async def test_doc_repository_retrieval():
             docs = await repo.get_documents(user_id, job_id)
 
             # 3. 검증
-            print(f"\n✅ Document Info Retrieved Successfully!")
+            print("\n✅ Document Info Retrieved Successfully!")
             
             # --- Resume 검증 ---
             resume = docs.resume_file

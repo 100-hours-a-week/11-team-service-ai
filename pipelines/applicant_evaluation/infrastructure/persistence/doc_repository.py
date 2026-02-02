@@ -6,7 +6,7 @@ import datetime
 
 
 from shared.db.model.models import (
-    JobApplication, ApplicationDocument, ApplicationDocumentParsed, FileObject
+    JobApplication, ApplicationDocument, ApplicationDocumentParsed
 )
 from ...domain.interface.repository_interfaces import DocRepository
 from ...domain.models.document import ApplicantDocuments, ParsedDoc, FileInfo

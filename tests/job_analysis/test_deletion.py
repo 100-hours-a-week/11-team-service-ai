@@ -1,12 +1,10 @@
 import asyncio
 import logging
 import uuid
-from typing import Any
 
 from shared.db.connection import get_db
 from job_analysis.service import JobAnalysisService
 from job_analysis.parser.extract.extractor import ExtractedJobData
-from job_analysis.data.models import JobPost
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

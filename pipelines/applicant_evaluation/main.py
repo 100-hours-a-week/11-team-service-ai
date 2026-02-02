@@ -1,4 +1,3 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from shared.db.connection import get_db
 from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 from .infrastructure.persistence.doc_repository import SqlAlchemyDocRepository

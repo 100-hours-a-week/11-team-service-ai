@@ -1,6 +1,5 @@
 import sys
 import os
-import io
 import asyncio
 
 # 현재 디렉토리(tests/unit)의 상위 상위 디렉토리(ai)를 path에 추가하여 모듈 import 가능하게 함
@@ -72,7 +71,7 @@ async def test_local_pdf_parsing():
 
             # 결과 처리
             if not extracted_text:
-                print(f"   ⚠️ No text extracted (Image-based or empty PDF?)")
+                print("   ⚠️ No text extracted (Image-based or empty PDF?)")
                 extracted_text = "(No text extracted)"
             else:
                 print(f"   ✅ Extraction successful! ({len(extracted_text)} chars)")

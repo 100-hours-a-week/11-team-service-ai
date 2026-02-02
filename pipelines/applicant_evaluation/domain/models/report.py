@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Set
 from .evaluation import CompetencyResult
 from .job import JobInfo

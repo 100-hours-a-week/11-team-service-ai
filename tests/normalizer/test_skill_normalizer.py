@@ -2,13 +2,12 @@
 import asyncio
 import logging
 from job_analysis.normalizer.skill_normalizer import SkillNormalizer
+from shared.db.connection import get_db
+from job_analysis.data.repository.skill_repository import SkillRepository
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-from shared.db.connection import get_db
-from job_analysis.data.repository.skill_repository import SkillRepository
 
 async def main():
     logger.info("🚀 Starting SkillNormalizer manual test...")

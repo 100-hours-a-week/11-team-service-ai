@@ -1,8 +1,7 @@
-from typing import Optional, Any, List
+from typing import Optional, Any
 import logging
 import hashlib
 import asyncio
-from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from job_analysis.data.repository.job_post_repository import JobPostRepository
@@ -189,7 +188,7 @@ class JobAnalysisService:
         result = await self.duplicate_checker.check_existing_post_by_fingerprint(fingerprint)
 
         if result:
-            logger.info(f"♻️ Content Duplicate detected. Linking to existing Master.")
+            logger.info("♻️ Content Duplicate detected. Linking to existing Master.")
 
             # 새 JobPost 생성 및 연결 (RegistrationService 위임)
             duplicate_dto = await self.registration_service.link_job_post(

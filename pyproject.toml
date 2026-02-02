@@ -39,13 +39,14 @@ packages = [
     "api", 
     "shared",
     "pipelines/job_analysis",
-    "pipelines/resume_scoring",
-    "pipelines/feedback", 
-    "pipelines/candidate_comparison"
+    "pipelines/resume_analysis",
+    "pipelines/applicant_evaluation",
+    "pipelines/candidate_comparison",
+    "pipelines/portfolio_analysis"
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "black>=26.1.0",
     "mypy>=1.19.1",
     "pytest>=8.3.4",

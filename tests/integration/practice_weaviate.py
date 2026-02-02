@@ -1,6 +1,4 @@
 import weaviate
-import os
-import json
 from weaviate.classes.config import Property, DataType, Configure
 from weaviate.classes.query import Filter, MetadataQuery
 import logging
@@ -128,7 +126,7 @@ def check_config():
         if hasattr(prop, 'skip_vectorization'):
              print(f"  - Skip Vectorization: {prop.skip_vectorization}")
         else:
-             print(f"  - Skip Vectorization: (Not explicitly set, assuming Default)")
+             print("  - Skip Vectorization: (Not explicitly set, assuming Default)")
              
     # 좀 더 확실하게 vector index config 자체를 덤프해볼 수도 있음
     # print(config) 

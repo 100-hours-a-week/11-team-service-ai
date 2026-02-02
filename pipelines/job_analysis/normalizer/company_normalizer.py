@@ -2,7 +2,6 @@
 import logging
 from typing import Optional
 
-from weaviate.classes.query import MetadataQuery
 from datetime import datetime
 from job_analysis.data.models import Company
 from job_analysis.data.vector_repository.company_vector_repo import CompanyVectorRepository
@@ -80,7 +79,7 @@ class CompanyNormalizer:
         similar_companies = await self.vector_repo.search_similar(raw_company_name, limit=1)
 
         if not similar_companies:
-            logger.info(f"📝 No similar companies found in Vector DB.")
+            logger.info("📝 No similar companies found in Vector DB.")
             return None
 
         # 4. 유사도 기반 판단
@@ -124,7 +123,7 @@ class CompanyNormalizer:
                 await self._learn_new_alias(company_id, raw_company_name)
                 return company_id
             else:
-                logger.info(f"❌ Agent denied match. Treating as new company.")
+                logger.info("❌ Agent denied match. Treating as new company.")
                 return None
 
         else:

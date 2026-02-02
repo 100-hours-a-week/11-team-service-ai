@@ -41,7 +41,7 @@ async def test_job_repository_retrieval():
             # 3. 검증 (Assertions)
             assert job_info is not None, "JobInfo should not be None"
             
-            print(f"\n✅ Job Info Retrieved Successfully!")
+            print("\n✅ Job Info Retrieved Successfully!")
             print(f"   🏢 Company: {job_info.company_name}")
             print(f"   📝 Summary: {job_info.summary}")
             print(f"   🛠️ Tech Stacks: {job_info.tech_stacks}")

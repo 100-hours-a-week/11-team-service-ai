@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Any
 import logging
 from weaviate.classes.query import MetadataQuery
 from shared.vector_db.client import get_weaviate_client

@@ -1,7 +1,6 @@
 from typing import Protocol, Optional
 from ..models.job import JobInfo
 from ..models.document import ApplicantDocuments, ParsedDoc
-from ..models.report import AnalysisReport
 
 class JobRepository(Protocol):
     """

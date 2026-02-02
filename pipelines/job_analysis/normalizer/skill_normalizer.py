@@ -1,10 +1,8 @@
 """Skill Name Normalization Logic"""
 import logging
-import asyncio
 from typing import Optional, List
 
 from datetime import datetime
-from weaviate.classes.query import MetadataQuery
 from job_analysis.data.models import Skill
 from job_analysis.data.vector_repository.skill_vector_repo import SkillVectorRepository
 from job_analysis.utils.ai_agent import get_ai_agent
@@ -94,7 +92,7 @@ class SkillNormalizer:
         similar_skills = await self.vector_repo.search_similar(raw_skill_name, limit=1)
 
         if not similar_skills:
-            logger.debug(f"📝 No similar skills found in Vector DB.")
+            logger.debug("📝 No similar skills found in Vector DB.")
             return None
 
         # 4. 유사도 기반 판단
@@ -137,7 +135,7 @@ class SkillNormalizer:
                 await self._learn_new_alias(skill_id, raw_skill_name, normalized_name)
                 return skill_id
             else:
-                logger.info(f"❌ Agent denied match. Treating as new skill.")
+                logger.info("❌ Agent denied match. Treating as new skill.")
                 return None
 
         else:
