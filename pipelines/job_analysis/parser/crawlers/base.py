@@ -29,16 +29,19 @@ class BasePlaywrightCrawler(ABC):
         # 봇 탐지 회피를 위해 무조건 Headful 모드 사용 (User Request)
         is_headless = False
         display = None
-        
+
         try:
             # Linux 서버 등에서 가상 디스플레이(Xvfb) 시도
             from pyvirtualdisplay import Display
-            display = Display(visible=0, size=(1920, 1080))
+
+            display = Display(visible=False, size=(1920, 1080))
             display.start()
             logger.info("🖥️  Virtual Display(Xvfb) started.")
         except Exception as e:
             # Xvfb가 없으면(로컬 Mac 등) 실제 모니터 사용
-            logger.warning(f"⚠️  Virtual Display not available (Error: {e}). Using physical display.")
+            logger.warning(
+                f"⚠️  Virtual Display not available (Error: {e}). Using physical display."
+            )
 
         try:
             with sync_playwright() as p:
@@ -51,7 +54,7 @@ class BasePlaywrightCrawler(ABC):
                             "--no-sandbox",
                             "--disable-setuid-sandbox",
                             "--disable-dev-shm-usage",  # 메모리 부족 충돌 방지 (Linux/Docker 필수)
-                            "--disable-gpu",            # 가상 환경 렌더링 충돌 방지
+                            "--disable-gpu",  # 가상 환경 렌더링 충돌 방지
                         ],
                     )
                 except Exception as e:
@@ -67,7 +70,7 @@ class BasePlaywrightCrawler(ABC):
                         )
                         logger.info("✅ Browser installed. Retrying launch...")
                         browser = p.chromium.launch(
-                            headless=True, # 설치 직후 안전하게 Headless로 시작
+                            headless=True,  # 설치 직후 안전하게 Headless로 시작
                             args=[
                                 "--disable-blink-features=AutomationControlled",
                                 "--no-sandbox",
@@ -79,10 +82,13 @@ class BasePlaywrightCrawler(ABC):
 
                     # 2. 시스템 의존성 라이브러리가 없는 경우 (Linux/Ubuntu 등)
                     elif "error while loading shared libraries" in error_msg:
-                        logger.info("🔧 System dependencies missing. Running 'npx playwright install-deps'...")
+                        logger.info(
+                            "🔧 System dependencies missing. Running 'npx playwright install-deps'..."
+                        )
                         try:
                             subprocess.run(
-                                ["npx", "playwright", "install-deps", "chromium"], check=True
+                                ["npx", "playwright", "install-deps", "chromium"],
+                                check=True,
                             )
                             logger.info("✅ Dependencies installed. Retrying launch...")
                             # 의존성 설치 후 재시도 (Headless + Stealth)
@@ -97,12 +103,19 @@ class BasePlaywrightCrawler(ABC):
                                 ],
                             )
                         except Exception as dep_err:
-                            logger.error(f"❌ Failed to install dependencies: {dep_err}")
+                            logger.error(
+                                f"❌ Failed to install dependencies: {dep_err}"
+                            )
                             raise e
 
                     # 3. Xvfb(XServer)가 없어서 Headful 모드가 실패한 경우 (환경 설정 문제)
-                    elif "No XServer running" in error_msg or "headless: true" in error_msg:
-                        logger.warning("🚨 Xvfb not found! Falling back to 'headless=True' with Stealth options to prevent crash.")
+                    elif (
+                        "No XServer running" in error_msg
+                        or "headless: true" in error_msg
+                    ):
+                        logger.warning(
+                            "🚨 Xvfb not found! Falling back to 'headless=True' with Stealth options to prevent crash."
+                        )
                         browser = p.chromium.launch(
                             headless=True,  # 자동 폴백
                             args=[
@@ -118,16 +131,17 @@ class BasePlaywrightCrawler(ABC):
                         # 그 외 알 수 없는 에러는 그대로 발생
                         raise e
 
-
                 context = browser.new_context(
-                    user_agent=self.user_agent, 
+                    user_agent=self.user_agent,
                     viewport={"width": 1920, "height": 1080},
-                    locale="ko-KR", 
+                    locale="ko-KR",
                     ignore_https_errors=True,  # HTTPS 에러 무시
                 )
-                
+
                 # navigator.webdriver 값 제거 (가장 중요한 탐지 방지 스크립트)
-                context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                context.add_init_script(
+                    "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+                )
 
                 # 실제 사용자처럼 보이게 하기 위한 추가 스크립트 주입 (Stealth)
                 context.add_init_script("""
@@ -186,8 +200,10 @@ class BasePlaywrightCrawler(ABC):
                 try:
                     page.wait_for_load_state("domcontentloaded", timeout=10000)
                 except Exception:
-                    logger.warning("⚠️ DOM load timeout. Proceeding with partial content.")
-                
+                    logger.warning(
+                        "⚠️ DOM load timeout. Proceeding with partial content."
+                    )
+
                 # 3. 최소한의 콘텐츠(body)가 렌더링될 때까지 짧게 대기 (1초)
                 try:
                     page.wait_for_selector("body", timeout=1000)
