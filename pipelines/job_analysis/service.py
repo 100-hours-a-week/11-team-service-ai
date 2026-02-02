@@ -12,7 +12,6 @@ from job_analysis.data.repository.job_posting_query_repository import (
     JobPostingQueryRepository,
 )
 from job_analysis.data.repository.dto import JobPostingWithRelations
-from job_analysis.data.models import JobPost
 from job_analysis.parser.crawlers.factory import CrawlerFactory
 from job_analysis.parser.extract.extractor import JobPostingExtractor
 from job_analysis.utils.fingerprint import FingerprintGenerator
@@ -69,12 +68,6 @@ class JobAnalysisService:
         """URL SHA-256 해시 생성"""
         return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
-    def _map_to_response(
-        self, post: JobPost, is_existing: bool
-    ) -> JobPostingAnalyzeResponse:
-        """SQLAlchemy Model -> Pydantic Response 변환"""
-        # ... (기존 로직 유지)
-
     async def run_analysis(self, url: str) -> JobPostingAnalyzeResponse:
         """
         채용 공고 분석 파이프라인 메인 진입점.
@@ -127,7 +120,7 @@ class JobAnalysisService:
         )
 
         # 6. 최종 등록 처리 (분기)
-        result: JobPostingAnalyzeResponse = None
+        result: Optional[JobPostingAnalyzeResponse] = None
 
         if existing_job_master_id:
             logger.info(
@@ -251,7 +244,7 @@ class JobAnalysisService:
             ai_summary=job_master.ai_summary or "",
         )
 
-    async def delete_job_posting(self, job_posting_id: int) -> int:
+    async def delete_job_posting(self, job_posting_id: int) -> Optional[int]:
         """
         Job Posting ID를 기준으로 관련 데이터(JobMaster, JobPost, Skills, Vector)를 일괄 삭제합니다.
         (Hard Delete)

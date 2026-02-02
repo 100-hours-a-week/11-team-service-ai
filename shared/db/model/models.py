@@ -11,10 +11,10 @@ from sqlalchemy import (
     JSON,
     TIMESTAMP,
 )
-from sqlalchemy.orm import declarative_base, relationship
+from typing import TYPE_CHECKING, List
+from sqlalchemy.orm import relationship, Mapped
 from sqlalchemy.sql import func
-
-Base = declarative_base()
+from shared.db.connection import Base
 
 
 class User(Base):
@@ -33,11 +33,11 @@ class Company(Base):
     company_id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)
     domain = Column(String(100))
-    created_at = Column(DateTime(6), nullable=False, server_default=func.now())
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
-        DateTime(6), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
-    deleted_at = Column(DateTime(6))
+    deleted_at = Column(DateTime)
 
 
 class JobMaster(Base):
@@ -52,12 +52,12 @@ class JobMaster(Base):
     ai_summary = Column(Text)
     evaluation_criteria = Column(JSON)
     status = Column(String(20), nullable=False)
-    last_seen_at = Column(DateTime(6))
-    created_at = Column(DateTime(6), nullable=False, server_default=func.now())
+    last_seen_at = Column(DateTime)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
-        DateTime(6), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
-    deleted_at = Column(DateTime(6))
+    deleted_at = Column(DateTime)
 
     company = relationship("Company")
 
@@ -68,11 +68,11 @@ class Skill(Base):
     skill_id = Column(BigInteger, primary_key=True, autoincrement=True)
     skill_name = Column(String(50), nullable=False, unique=True)
     category = Column(String(50))
-    created_at = Column(DateTime(6), nullable=False, server_default=func.now())
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
-        DateTime(6), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
-    deleted_at = Column(DateTime(6))
+    deleted_at = Column(DateTime)
 
 
 class JobMasterSkill(Base):
@@ -82,8 +82,8 @@ class JobMasterSkill(Base):
         BigInteger, ForeignKey("job_masters.job_master_id"), primary_key=True
     )
     skill_id = Column(BigInteger, ForeignKey("skills.skill_id"), primary_key=True)
-    created_at = Column(DateTime(6), nullable=False, server_default=func.now())
-    deleted_at = Column(DateTime(6))
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    deleted_at = Column(DateTime)
 
 
 class JobApplication(Base):
@@ -95,11 +95,11 @@ class JobApplication(Base):
         BigInteger, ForeignKey("job_masters.job_master_id"), nullable=False
     )
     status = Column(String(20), nullable=False)
-    created_at = Column(DateTime(6), nullable=False, server_default=func.now())
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
-        DateTime(6), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
-    deleted_at = Column(DateTime(6))
+    deleted_at = Column(DateTime)
 
     user = relationship("User")
     job_master = relationship("JobMaster")
@@ -116,8 +116,8 @@ class FileObject(Base):
     content_type = Column(String(100))
     size_bytes = Column(BigInteger, nullable=False)
     checksum = Column(String(128))
-    created_at = Column(DateTime(6), nullable=False, server_default=func.now())
-    deleted_at = Column(DateTime(6))
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    deleted_at = Column(DateTime)
 
 
 class ApplicationDocument(Base):
@@ -129,14 +129,19 @@ class ApplicationDocument(Base):
     )
     file_id = Column(BigInteger, ForeignKey("file_objects.file_id"), nullable=False)
     doc_type = Column(String(20), nullable=False)
-    created_at = Column(DateTime(6), nullable=False, server_default=func.now())
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
-        DateTime(6), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
-    deleted_at = Column(DateTime(6))
+    deleted_at = Column(DateTime)
 
     file = relationship("FileObject")
     application = relationship("JobApplication")
+
+    if TYPE_CHECKING:
+        parsed: Mapped[List["ApplicationDocumentParsed"]] = relationship(
+            "ApplicationDocumentParsed", back_populates="application_document"
+        )
 
 
 class ApplicationDocumentParsed(Base):
@@ -160,7 +165,7 @@ class ApplicationDocumentParsed(Base):
         TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
-    application_document = relationship("ApplicationDocument", backref="parsed")
+    application_document = relationship("ApplicationDocument", back_populates="parsed")
 
 
 class AiApplicantEvaluation(Base):
@@ -177,10 +182,10 @@ class AiApplicantEvaluation(Base):
         BigInteger
     )  # FK constraint to ai_eval_jobs omitted for brevity or needs Model
     final_score = Column(Integer, nullable=False)
-    rank_percentile = Column(DECIMAL(5, 2))
+    rank_percentile = Column(DECIMAL(5, 2))  # type: ignore
     overall_strengths = Column(JSON)
     overall_weaknesses = Column(JSON)
     improvement_suggestions = Column(JSON)
-    created_at = Column(DateTime(6), nullable=False, server_default=func.now())
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     application = relationship("JobApplication")

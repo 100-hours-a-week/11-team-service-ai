@@ -3,6 +3,7 @@
 import logging
 from typing import Optional
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 from shared.config import settings
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,11 @@ class AIAgent:
 
     def __init__(self):
         self.llm = ChatOpenAI(
-            model="gpt-4o-mini", temperature=0, api_key=settings.OPENAI_API_KEY
+            model="gpt-4o-mini",
+            temperature=0,
+            api_key=(
+                SecretStr(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
+            ),
         )
 
     async def is_same_company(self, raw_name: str, normalized_name: str) -> bool:
@@ -44,7 +49,7 @@ class AIAgent:
 
         try:
             response = await self.llm.ainvoke(prompt)
-            answer = response.content.strip().upper()
+            answer = str(response.content).strip().upper()
             is_same = answer == "YES"
 
             logger.info(
@@ -86,7 +91,7 @@ class AIAgent:
 
         try:
             response = await self.llm.ainvoke(prompt)
-            answer = response.content.strip().upper()
+            answer = str(response.content).strip().upper()
             is_same = answer == "YES"
 
             logger.info(
@@ -128,7 +133,7 @@ class AIAgent:
 
         try:
             response = await self.llm.ainvoke(prompt)
-            answer = response.content.strip().upper()
+            answer = str(response.content).strip().upper()
             is_same = answer == "YES"
 
             logger.info(f"🤖 AI Agent decision for job posting → {answer}")

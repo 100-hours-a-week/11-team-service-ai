@@ -1,6 +1,6 @@
 import asyncio
 from typing import List
-from ..dtos import PipelineEvaluateResponse
+from shared.schema.applicant import EvaluateResponse
 from ...domain.models.document import ParsedDoc
 from ...domain.models.evaluation import CompetencyResult
 from ...domain.models.report import AnalysisReport
@@ -32,7 +32,7 @@ class ApplicationAnalyzer:
         self.extractor = extractor
         self.agent = agent
 
-    async def run(self, user_id: int, job_id: int) -> PipelineEvaluateResponse:
+    async def run(self, user_id: int, job_id: int) -> EvaluateResponse:
         # 1. 채용 공고 정보 조회
         job_info = await self.job_repo.get_job_info(job_id)
         if not job_info:
@@ -50,6 +50,8 @@ class ApplicationAnalyzer:
             if not documents.is_ready_for_analysis():
                 raise ValueError("Document preparation failed.")
 
+        if not documents.parsed_resume:
+            raise ValueError("Parsed resume is missing even after preparation.")
         resume_text = documents.parsed_resume.text
         portfolio_text = (
             documents.parsed_portfolio.text if documents.parsed_portfolio else ""
@@ -81,7 +83,21 @@ class ApplicationAnalyzer:
         )
 
         # 6. 응답 반환 (DTO 변환)
-        return PipelineEvaluateResponse.from_domain(report)
+        # 6. 응답 반환 (Schema 변환)
+        # TODO: PipelineEvaluateResponse 대신 shared.schema.applicant.EvaluateResponse 사용으로 변경됨에 따라 매핑 수정
+        from shared.schema.applicant import CompetencyScore
+
+        return EvaluateResponse(
+            overall_score=float(report.overall_score),
+            competency_scores=[
+                CompetencyScore(
+                    name=r.name, score=float(r.score), description=r.description
+                )
+                for r in report.competency_scores
+            ],
+            one_line_review=report.one_line_review,
+            feedback_detail=report.feedback_detail,
+        )
 
     async def _prepare_documents(self, user_id: int, job_id: int, documents):
         """텍스트 추출이 필요한 문서들을 처리하여 저장소에 저장하는 헬퍼 메서드 (Async)"""

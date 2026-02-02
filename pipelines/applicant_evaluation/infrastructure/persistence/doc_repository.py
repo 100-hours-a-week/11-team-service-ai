@@ -38,7 +38,9 @@ class SqlAlchemyDocRepository(DocRepository):
             select(ApplicationDocument)
             .options(
                 joinedload(ApplicationDocument.file),  # 파일 메타데이터 로딩
-                joinedload(ApplicationDocument.parsed),  # 파싱 결과 로딩
+                joinedload(
+                    ApplicationDocument.parsed
+                ),  # 파싱 결과 로딩  # type: ignore
             )
             .where(
                 ApplicationDocument.job_application_id == application.job_application_id
@@ -55,19 +57,21 @@ class SqlAlchemyDocRepository(DocRepository):
             if not doc.file:
                 continue
 
-            f_info = FileInfo(file_path=doc.file.object_key, file_type=doc.doc_type)
+            f_info = FileInfo(
+                file_path=str(doc.file.object_key), file_type=str(doc.doc_type)
+            )
 
             # B. ParsedDoc 변환
             p_doc = None
             # parsed가 list인지 단일 객체인지 확인 (Model definition에 따름, 보통 list)
-            parsed_list = doc.parsed if doc.parsed else []
+            parsed_list = doc.parsed if doc.parsed else []  # type: ignore
             parsed_record = parsed_list[0] if parsed_list else None
 
             if parsed_record:
                 p_doc = ParsedDoc(
-                    doc_type=doc.doc_type,
-                    text=parsed_record.raw_text,
-                    is_valid=(parsed_record.parsing_status == "SUCCESS"),
+                    doc_type=str(doc.doc_type),
+                    text=str(parsed_record.raw_text),
+                    is_valid=(str(parsed_record.parsing_status) == "SUCCESS"),
                 )
 
             # C. 타입별 할당
@@ -117,11 +121,9 @@ class SqlAlchemyDocRepository(DocRepository):
 
         if existing_parsed:
             # Update
-            existing_parsed.raw_text = parsed_doc.text
-            existing_parsed.parsing_status = (
-                "SUCCESS" if parsed_doc.is_valid else "FAILED"
-            )
-            existing_parsed.updated_at = now
+            existing_parsed.raw_text = parsed_doc.text  # type: ignore
+            existing_parsed.parsing_status = "SUCCESS" if parsed_doc.is_valid else "FAILED"  # type: ignore
+            existing_parsed.updated_at = now  # type: ignore
         else:
             # Insert
             new_parsed = ApplicationDocumentParsed(

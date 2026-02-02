@@ -8,6 +8,8 @@ from shared.config import settings
 from job_analysis.parser.extract.schemas import ExtractedJobData
 from job_analysis.parser.extract.prompts import EXTRACTION_PROMPT
 
+from pydantic import SecretStr
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,7 +22,9 @@ class JobPostingExtractor:
         # TODO: vLLM 사용 시 base_url과 api_key 수정 필요
         self.llm = ChatOpenAI(
             model=model_name,
-            api_key=settings.OPENAI_API_KEY,
+            api_key=(
+                SecretStr(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
+            ),
             temperature=0,  # 추출 작업이므로 낮은 온도 설정
         )
 

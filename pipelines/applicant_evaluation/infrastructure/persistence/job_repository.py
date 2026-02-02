@@ -40,7 +40,7 @@ class SqlAlchemyJobRepository(JobRepository):
         tech_stacks = list(msg_result.scalars().all())
 
         # 3. Evaluation Criteria 변환 (JSON -> Domain Models)
-        criteria_list = []
+        criteria_list: list[EvaluationCriteria] = []
         if job_master.evaluation_criteria:
             criteria_data = job_master.evaluation_criteria
             if isinstance(criteria_data, list):
@@ -59,6 +59,6 @@ class SqlAlchemyJobRepository(JobRepository):
                 job_master.main_tasks if isinstance(job_master.main_tasks, list) else []
             ),
             tech_stacks=tech_stacks,
-            summary=job_master.ai_summary or "",
+            summary=str(job_master.ai_summary or ""),
             evaluation_criteria=criteria_list,
         )

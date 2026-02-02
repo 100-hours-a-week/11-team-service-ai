@@ -6,7 +6,7 @@ from typing import Optional
 class FileInfo:
     """파일명, 경로 등 원본 파일 메타데이터"""
 
-    file_path: int
+    file_path: str
     file_type: str  # "RESUME" or "PORTFOLIO"
 
 

@@ -90,7 +90,7 @@ class JobVectorRepository(BaseVectorRepository):
             results = []
             for obj in response.objects:
                 # distance to similarity score (0..1)
-                similarity = 1.0 - obj.metadata.distance
+                similarity = 1.0 - (obj.metadata.distance or 0.0)
 
                 results.append(
                     {

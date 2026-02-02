@@ -27,9 +27,9 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     nickname: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 class Company(Base):
@@ -40,9 +40,9 @@ class Company(Base):
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     domain: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 class CompanyAlias(Base):
@@ -62,9 +62,9 @@ class CompanyAlias(Base):
     source: Mapped[str] = mapped_column(String(30), nullable=False)
     alias_name: Mapped[str] = mapped_column(String(150), nullable=False)
     alias_normalized: Mapped[str] = mapped_column(String(150), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 class Skill(Base):
@@ -75,9 +75,9 @@ class Skill(Base):
     )
     skill_name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     category: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 class SkillAlias(Base):
@@ -96,9 +96,9 @@ class SkillAlias(Base):
     )
     alias_name: Mapped[str] = mapped_column(String(100), nullable=False)
     alias_normalized: Mapped[str] = mapped_column(String(100), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 class JobMasterSkill(Base):
@@ -110,8 +110,8 @@ class JobMasterSkill(Base):
     skill_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("skills.skill_id"), primary_key=True
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 class JobMaster(Base):
@@ -142,10 +142,10 @@ class JobMaster(Base):
     end_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
     # Audit Fields
-    last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+    last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 class JobPost(Base):
@@ -188,9 +188,9 @@ class JobPost(Base):
     end_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
     # Audit Fields
-    created_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(6), nullable=False)
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(6), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Fingerprint
     fingerprint_hash: Mapped[str] = mapped_column(

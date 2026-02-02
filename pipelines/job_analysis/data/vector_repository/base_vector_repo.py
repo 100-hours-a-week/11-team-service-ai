@@ -31,9 +31,9 @@ class BaseVectorRepository:
 
             results = []
             for obj in response.objects:
-                similarity = 1.0 - obj.metadata.distance
+                similarity = 1.0 - (obj.metadata.distance or 0.0)
                 # 기본적으로 모든 프로퍼티를 가져옵니다.
-                item = obj.properties.copy()
+                item = dict(obj.properties)
                 item["similarity_score"] = similarity
                 results.append(item)
 

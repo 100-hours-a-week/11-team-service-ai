@@ -41,7 +41,9 @@ class SaraminCrawler(BasePlaywrightCrawler):
             if iframe_element.count() > 0:
                 logger.info("found iframe, extracting content from iframe...")
                 # Iframe 내부 콘텐츠 접근
-                frame = iframe_element.content_frame
+                # element_handle() returns ElementHandle which has content_frame() method returning Frame
+                handle = iframe_element.element_handle()
+                frame = handle.content_frame() if handle else None
                 if frame:
                     # Iframe 내부의 user_content (없으면 body 전체)
                     # user_content 클래스가 주로 본문임
