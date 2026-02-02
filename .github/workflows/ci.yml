@@ -90,10 +90,9 @@ jobs:
         with:
           name: ${{ steps.meta.outputs.artifact_name }}
           path: |
-            api/**
-            shared/**
-            pipelines/**
-            **/*.py
+            api
+            shared
+            pipelines
             pyproject.toml
             uv.lock
             pytest.ini
