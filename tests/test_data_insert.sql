@@ -61,7 +61,7 @@ INSERT INTO
 VALUES
     (
         991,
-        'APPLICANT',
+        'USER',
         'Backend_Applicant_991',
         'ACTIVE',
         NOW (),
@@ -76,18 +76,12 @@ VALUES
 
 -- 3. 스킬 데이터 생성 (skills)
 INSERT INTO
-    skills (
-        skill_id,
-        skill_name,
-        category,
-        created_at,
-        updated_at
-    )
+    skills (skill_id, skill_name, created_at, updated_at)
 VALUES
-    (9901, 'Java', 'Language', NOW (), NOW ()),
-    (9902, 'Spring Boot', 'Framework', NOW (), NOW ()),
-    (9903, 'MySQL', 'Database', NOW (), NOW ()),
-    (9904, 'Docker', 'Infrastructure', NOW (), NOW ());
+    (9901, 'Java', NOW (), NOW ()),
+    (9902, 'Spring Boot', NOW (), NOW ()),
+    (9903, 'MySQL', NOW (), NOW ()),
+    (9904, 'Docker', NOW (), NOW ());
 
 -- 4. 채용 공고 마스터 생성 (job_masters)
 INSERT INTO
@@ -136,7 +130,7 @@ INSERT INTO
         updated_at
     )
 VALUES
-    (9901, 991, 9901, 'APPLIED', NOW (), NOW ());
+    (9901, 991, 9901, 'ACTIVE', NOW (), NOW ());
 
 -- 7. 파일 오브젝트 생성 (Resume - ID: 9901)
 -- 주의: 사용자가 지정한 S3 Path 반영
