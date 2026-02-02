@@ -14,30 +14,11 @@ class BasePlaywrightCrawler(ABC):
     공통적인 브라우저 실행 및 종료 로직을 담당합니다.
     """
     def __init__(self):
-        self._ensure_browser_installed()
         self.user_agent = (
              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
              "AppleWebKit/537.36 (KHTML, like Gecko) "
              "Chrome/120.0.0.0 Safari/537.36"
         )
-
-    def _ensure_browser_installed(self):
-        """브라우저 설치 확인 및 자동 설치"""
-        try:
-            subprocess.run(
-                ["playwright", "--version"],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            logger.info("🔧 Playwright not found or browsers missing. Installing chromium...")
-            try:
-                subprocess.run(["playwright", "install", "chromium"], check=True)
-                logger.info("✅ Playwright chromium installed successfully.")
-            except Exception as e:
-                logger.error(f"❌ Failed to install Playwright browsers: {e}")
-                raise RuntimeError("Could not install Playwright browsers.") from e
 
     def fetch(self, url: str) -> str:
         """
@@ -46,7 +27,17 @@ class BasePlaywrightCrawler(ABC):
         logger.info(f"🌐 [Playwright] Crawling URL: {url}")
         try:
             with sync_playwright() as p:
-                browser = p.chromium.launch(headless=False)
+                try:
+                    browser = p.chromium.launch(headless=False)
+                except Exception as e:
+                    if "Executable doesn't exist" in str(e):
+                        logger.info("🔧 Browser missing. Installing chromium...")
+                        subprocess.run(["playwright", "install", "chromium"], check=True)
+                        logger.info("✅ Browser installed. Retrying launch...")
+                        browser = p.chromium.launch(headless=False)
+                    else:
+                        raise e
+
                 context = browser.new_context(
                     user_agent=self.user_agent,
                     viewport={"width": 1920, "height": 1080}

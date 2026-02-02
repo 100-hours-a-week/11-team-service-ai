@@ -255,24 +255,24 @@ class JobAnalysisService:
         logger.info(f"Trace JobMaster ID: {master_id}")
 
         try:
-            # 2. RDB 데이터 삭제 (순서 중요: Child -> Parent)
+            # # 2. RDB 데이터 삭제 (순서 중요: Child -> Parent)
             
-            # 2-1. Skill 연결 삭제 (JobMasterSkill)
-            await self.skill_repo.delete_job_master_skills(master_id)
+            # # 2-1. Skill 연결 삭제 (JobMasterSkill)
+            # await self.skill_repo.delete_job_master_skills(master_id)
             
-            # 2-2. JobPosts 삭제 (해당 마스터에 연결된 모든 공고)
-            await self.job_post_repo.delete_by_master_id(master_id)
+            # # 2-2. JobPosts 삭제 (해당 마스터에 연결된 모든 공고)
+            # await self.job_post_repo.delete_by_master_id(master_id)
             
-            # 2-3. JobMaster 삭제
-            await self.job_master_repo.delete(master_id)
+            # # 2-3. JobMaster 삭제
+            # await self.job_master_repo.delete(master_id)
             
-            # 3. Vector DB 삭제
-            await self.job_vector_repo.delete_jobs_by_master_id(master_id)
+            # # 3. Vector DB 삭제
+            # await self.job_vector_repo.delete_jobs_by_master_id(master_id)
             
-            # 4. Commit
-            await self.session.commit()
+            # # 4. Commit
+            # await self.session.commit()
             
-            logger.info(f"✅ Successfully deleted JobMaster {master_id} and related data.")
+            # logger.info(f"✅ Successfully deleted JobMaster {master_id} and related data.")
             
             return job_posting_id
             

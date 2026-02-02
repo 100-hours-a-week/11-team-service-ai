@@ -26,5 +26,4 @@ class ApiResponse(BaseModel, Generic[T]):
         default=None, description="요청 처리 실패 시 반환되는 에러 정보"
     )
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
+

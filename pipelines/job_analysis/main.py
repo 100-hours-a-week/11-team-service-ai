@@ -13,6 +13,7 @@ from job_analysis.simple_extraction_service import SimpleJobExtractionService
 
 logger = logging.getLogger(__name__)
 
+# TODO: 공고분석 파이프라인 구현, 벡터db에만 공고 저장
 async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeResponse:
     """
     Job Analysis Pipeline Entrypoint (MSA)
@@ -47,24 +48,27 @@ async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeRe
     #     logger.error(f"❌ [Pipeline Failed] Error: {e}", exc_info=True)
     #     raise
 
+
+# TODO: 삭제 파이프라인 구현, 벡터db에 저장된 내용만 삭제
 async def delete_pipeline(job_posting_id: int) -> JobPostingDeleteResponse:
     """
     Job Posting Deletion Pipeline Entrypoint
     """
     logger.info(f"🚀 [Pipeline Start] Delete Job Posting ID: {job_posting_id}")
+    return JobPostingDeleteResponse(deleted_id=job_posting_id)
 
-    try:
-        async for session in get_db():
-            service = JobAnalysisService(session)
-            # service.delete_job_posting returns int (deleted_id)
-            deleted_id = await service.delete_job_posting(job_posting_id)
+    # try:
+    #     async for session in get_db():
+    #         service = JobAnalysisService(session)
+    #         # service.delete_job_posting returns int (deleted_id)
+    #         deleted_id = await service.delete_job_posting(job_posting_id)
             
-            if deleted_id is None: # None check added
-                 raise ValueError(f"JobPosting {job_posting_id} not found or failed to delete.")
+    #         if deleted_id is None: # None check added
+    #              raise ValueError(f"JobPosting {job_posting_id} not found or failed to delete.")
 
-            logger.info(f"✅ [Pipeline Success] Deleted ID: {deleted_id}")
-            return JobPostingDeleteResponse(deleted_id=deleted_id)
+    #         logger.info(f"✅ [Pipeline Success] Deleted ID: {deleted_id}")
+    #         return JobPostingDeleteResponse(deleted_id=deleted_id)
             
-    except Exception as e:
-        logger.error(f"❌ [Pipeline Failed] Delete Error: {e}", exc_info=True)
-        raise
+    # except Exception as e:
+    #     logger.error(f"❌ [Pipeline Failed] Delete Error: {e}", exc_info=True)
+    #     raise
