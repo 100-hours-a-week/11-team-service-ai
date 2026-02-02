@@ -5,6 +5,7 @@ from shared.vector_db.client import get_weaviate_client
 
 logger = logging.getLogger(__name__)
 
+
 class BaseVectorRepository:
     """Vector DB 공통 Repository"""
 
@@ -23,11 +24,9 @@ class BaseVectorRepository:
         """유사 텍스트 검색 (공통)"""
         try:
             collection = self.client.collections.get(self.collection_name)
-            
+
             response = collection.query.near_text(
-                query=query,
-                limit=limit,
-                return_metadata=MetadataQuery(distance=True)
+                query=query, limit=limit, return_metadata=MetadataQuery(distance=True)
             )
 
             results = []
@@ -35,9 +34,9 @@ class BaseVectorRepository:
                 similarity = 1.0 - obj.metadata.distance
                 # 기본적으로 모든 프로퍼티를 가져옵니다.
                 item = obj.properties.copy()
-                item['similarity_score'] = similarity
+                item["similarity_score"] = similarity
                 results.append(item)
-            
+
             return results
 
         except Exception as e:

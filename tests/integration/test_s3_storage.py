@@ -6,7 +6,10 @@ import asyncio
 # 현재 디렉토리(tests/integration)의 상위 상위 디렉토리(ai)를 path에 추가하여 모듈 import 가능하게 함
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from pipelines.applicant_evaluation.infrastructure.adapters.s3_storage import S3FileStorage
+from pipelines.applicant_evaluation.infrastructure.adapters.s3_storage import (
+    S3FileStorage,
+)
+
 
 @pytest.mark.asyncio
 async def test_s3_pdf_upload_download_manual():
@@ -25,7 +28,7 @@ async def test_s3_pdf_upload_download_manual():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     origin_dir = os.path.join(project_root, "tests/test_data/document/origin")
     download_dir = os.path.join(project_root, "tests/test_data/document/download")
-    
+
     # 다운로드 디렉토리는 없으면 생성
     os.makedirs(download_dir, exist_ok=True)
 
@@ -37,15 +40,19 @@ async def test_s3_pdf_upload_download_manual():
         print(f"⚠️ [Skip] Origin directory does not exist: {origin_dir}")
         return
 
-    test_files = [f for f in os.listdir(origin_dir) if os.path.isfile(os.path.join(origin_dir, f)) and not f.startswith('.')]
-    
+    test_files = [
+        f
+        for f in os.listdir(origin_dir)
+        if os.path.isfile(os.path.join(origin_dir, f)) and not f.startswith(".")
+    ]
+
     if not test_files:
         print(f"⚠️ [Skip] No files found in {origin_dir}")
         return
 
     for filename in test_files:
         file_path = os.path.join(origin_dir, filename)
-        
+
         print(f"\n[Test] Processing local file: {filename}")
 
         # 파일 읽기
@@ -53,12 +60,14 @@ async def test_s3_pdf_upload_download_manual():
             pdf_content = f.read()
 
         s3_key = f"test_uploads/{filename}"
-        
+
         print(f"       -> Uploading to S3 Key: {s3_key}")
 
         # 2. Upload
         try:
-            uploaded_path = await storage.upload_file(pdf_content, s3_key, content_type="application/pdf")
+            uploaded_path = await storage.upload_file(
+                pdf_content, s3_key, content_type="application/pdf"
+            )
             assert uploaded_path == s3_key
             print(f"✅ [Test] {filename} Upload success")
         except Exception as e:
@@ -68,12 +77,12 @@ async def test_s3_pdf_upload_download_manual():
         try:
             downloaded_content = await storage.download_file(s3_key)
             assert downloaded_content == pdf_content
-            
+
             # 다운로드 파일 저장
             save_path = os.path.join(download_dir, f"downloaded_{filename}")
             with open(save_path, "wb") as f:
                 f.write(downloaded_content)
-                
+
             print(f"✅ [Test] {filename} Download success. Saved to: {save_path}")
         except Exception as e:
             pytest.fail(f"{filename} Download failed: {e}")
@@ -85,12 +94,13 @@ async def test_s3_pdf_upload_download_manual():
         # except Exception as e:
         #     print(f"⚠️ [Test] {filename} Cleanup failed: {e}")
 
+
 if __name__ == "__main__":
     # 이 파일을 직접 실행할 경우 (python tests/integration/test_s3_storage_manual.py)
     try:
         print("\n--- PDF File Test (Async) ---")
         asyncio.run(test_s3_pdf_upload_download_manual())
-        
+
         print("\n🎉 모든 테스트 통과!")
     except Exception as e:
         print(f"\n❌ 테스트 실패: {e}")

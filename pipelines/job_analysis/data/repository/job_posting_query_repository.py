@@ -40,10 +40,7 @@ class JobPostingQueryRepository:
         skills = await self._get_skills_by_job_master_id(job_master.job_master_id)
 
         return JobPostingWithRelations(
-            job_post=job_post,
-            job_master=job_master,
-            company=company,
-            skills=skills
+            job_post=job_post, job_master=job_master, company=company, skills=skills
         )
 
     async def find_with_relations_by_fingerprint(
@@ -74,10 +71,7 @@ class JobPostingQueryRepository:
         skills = await self._get_skills_by_job_master_id(job_master.job_master_id)
 
         return JobPostingWithRelations(
-            job_post=job_post,
-            job_master=job_master,
-            company=company,
-            skills=skills
+            job_post=job_post, job_master=job_master, company=company, skills=skills
         )
 
     async def _get_skills_by_job_master_id(self, job_master_id: int) -> List[str]:

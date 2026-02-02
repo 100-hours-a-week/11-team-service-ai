@@ -7,8 +7,8 @@ from shared.schema.job_posting import (
 )
 from job_analysis.simple_extraction_service import SimpleJobExtractionService
 
-
 logger = logging.getLogger(__name__)
+
 
 # TODO: 공고분석 파이프라인 구현, 벡터db에만 공고 저장
 async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeResponse:
@@ -21,7 +21,6 @@ async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeRe
     3. Returns standardized response with transaction management
     """
     logger.info(f"🚀 [Pipeline Start] Job Analysis for URL: {request.url}")
-
 
     """
     단순 크롤링 및 추출 파이프라인 (DB 저장 없음)
@@ -59,13 +58,13 @@ async def delete_pipeline(job_posting_id: int) -> JobPostingDeleteResponse:
     #         service = JobAnalysisService(session)
     #         # service.delete_job_posting returns int (deleted_id)
     #         deleted_id = await service.delete_job_posting(job_posting_id)
-            
+
     #         if deleted_id is None: # None check added
     #              raise ValueError(f"JobPosting {job_posting_id} not found or failed to delete.")
 
     #         logger.info(f"✅ [Pipeline Success] Deleted ID: {deleted_id}")
     #         return JobPostingDeleteResponse(deleted_id=deleted_id)
-            
+
     # except Exception as e:
     #     logger.error(f"❌ [Pipeline Failed] Delete Error: {e}", exc_info=True)
     #     raise

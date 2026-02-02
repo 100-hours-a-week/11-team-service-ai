@@ -8,16 +8,18 @@ from fastapi import HTTPException
 # 로깅 설정
 logger = logging.getLogger(__name__)
 
+
 class BasePlaywrightCrawler(ABC):
     """
     모든 Playwright 기반 크롤러의 부모 클래스.
     공통적인 브라우저 실행 및 종료 로직을 담당합니다.
     """
+
     def __init__(self):
         self.user_agent = (
-             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-             "AppleWebKit/537.36 (KHTML, like Gecko) "
-             "Chrome/120.0.0.0 Safari/537.36"
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
         )
 
     def fetch(self, url: str) -> str:
@@ -32,34 +34,40 @@ class BasePlaywrightCrawler(ABC):
                 except Exception as e:
                     if "Executable doesn't exist" in str(e):
                         logger.info("🔧 Browser missing. Installing chromium...")
-                        subprocess.run(["playwright", "install", "chromium"], check=True)
+                        subprocess.run(
+                            ["playwright", "install", "chromium"], check=True
+                        )
                         logger.info("✅ Browser installed. Retrying launch...")
                         browser = p.chromium.launch(headless=False)
                     else:
                         raise e
 
                 context = browser.new_context(
-                    user_agent=self.user_agent,
-                    viewport={"width": 1920, "height": 1080}
+                    user_agent=self.user_agent, viewport={"width": 1920, "height": 1080}
                 )
                 page = context.new_page()
 
                 # 속도 최적화: 불필요한 리소스(이미지, 폰트 등) 로딩 차단
                 def block_resources(route):
-                    if route.request.resource_type in ["image", "media", "font", "stylesheet"]:
+                    if route.request.resource_type in [
+                        "image",
+                        "media",
+                        "font",
+                        "stylesheet",
+                    ]:
                         route.abort()
                     else:
                         route.continue_()
 
                 # 모든 요청에 대해 인터셉터 등록
                 page.route("**/*", block_resources)
-                
+
                 # 공통 페이지 이동 로직 (타임아웃은 넉넉히 주되, 불필요한 리소스를 막아둬서 빨리 끝남)
                 page.goto(url, timeout=60000, wait_until="domcontentloaded")
-                
+
                 # 자식 클래스별 구체적인 파싱 로직 실행 (Hook)
                 result_text = self._parse_page(page)
-                
+
                 browser.close()
                 return result_text
 
@@ -68,7 +76,9 @@ class BasePlaywrightCrawler(ABC):
             raise HTTPException(status_code=400, detail=f"Crawling failed: {str(e)}")
         except Exception as e:
             logger.error(f"❌ Unexpected error: {e}")
-            raise HTTPException(status_code=500, detail=f"Internal crawler error: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Internal crawler error: {str(e)}"
+            )
 
     @abstractmethod
     def _parse_page(self, page: Page) -> str:
@@ -81,12 +91,22 @@ class BasePlaywrightCrawler(ABC):
     def _clean_html(self, html_content: str) -> str:
         """HTML 정제 헬퍼 메서드 (BeautifulSoup 활용)"""
         soup = BeautifulSoup(html_content, "html.parser")
-        
-        unwanted_tags = ["script", "style", "noscript", "header", "footer", "nav", "aside", "form"]
+
+        unwanted_tags = [
+            "script",
+            "style",
+            "noscript",
+            "header",
+            "footer",
+            "nav",
+            "aside",
+            "form",
+        ]
         for tag in soup(unwanted_tags):
             tag.decompose()
 
         text = soup.get_text(separator="\n", strip=True)
         import re
+
         text = re.sub(r"\n\s*\n", "\n\n", text)
         return text.strip()

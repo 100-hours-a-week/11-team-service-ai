@@ -1,4 +1,5 @@
 """Skill Name Normalization Logic"""
+
 import logging
 from typing import Optional, List
 
@@ -36,22 +37,24 @@ class SkillNormalizer:
 
         # 2. 신규 생성
         logger.info(f"🆕 Creating new skill via Normalizer: {raw_skill_name}")
-        
+
         new_skill = Skill(
             skill_name=raw_skill_name,
             category=None,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
         saved_skill = await self.repo.create(new_skill)
 
-        # 3. Vector DB 등록        
+        # 3. Vector DB 등록
         try:
-            await self.vector_repo.add_skill(saved_skill.skill_id, saved_skill.skill_name)
+            await self.vector_repo.add_skill(
+                saved_skill.skill_id, saved_skill.skill_name
+            )
             logger.info(f"✅ Added new skill to Vector DB: {saved_skill.skill_name}")
         except Exception as e:
             logger.error(f"❌ Failed to add new skill to Vector DB: {e}")
-            
+
         return saved_skill.skill_id
 
     async def get_or_create_batch(self, raw_skill_names: List[str]) -> List[int]:
@@ -65,7 +68,7 @@ class SkillNormalizer:
         for name in raw_skill_names:
             skill_id = await self.get_or_create(name)
             skill_ids.append(skill_id)
-            
+
         return skill_ids
 
     async def find_id(self, raw_skill_name: str) -> Optional[int]:
@@ -85,7 +88,9 @@ class SkillNormalizer:
         if self.repo:
             alias = await self.repo.find_alias_by_name(raw_skill_name)
             if alias:
-                logger.debug(f"✅ Found exact match in Alias: {raw_skill_name} -> ID: {alias.skill_id}")
+                logger.debug(
+                    f"✅ Found exact match in Alias: {raw_skill_name} -> ID: {alias.skill_id}"
+                )
                 return alias.skill_id
 
         # 2. 벡터 DB 검색 (전처리된 이름 사용)
@@ -102,14 +107,18 @@ class SkillNormalizer:
         normalized_name = best_match["name"]
 
         if similarity >= self.HIGH_SIMILARITY_THRESHOLD:
-            logger.debug(f"✅ High similarity match: {normalized_name} (score: {similarity:.2f}) -> ID: {skill_id}")
+            logger.debug(
+                f"✅ High similarity match: {normalized_name} (score: {similarity:.2f}) -> ID: {skill_id}"
+            )
 
             # [Validation] RDB에 실제로 존재하는지 확인
             if self.repo:
                 exists = await self.repo.find_by_id(skill_id)
                 if not exists:
-                     logger.warning(f"⚠️ Skill ID {skill_id} found in VectorDB but missing in RDB. Treating as new.")
-                     return None
+                    logger.warning(
+                        f"⚠️ Skill ID {skill_id} found in VectorDB but missing in RDB. Treating as new."
+                    )
+                    return None
 
             # [Self-Learning] 이름이 완전히 똑같지 않다면 별칭으로 등록
             if best_match["name"] != raw_skill_name:
@@ -118,7 +127,9 @@ class SkillNormalizer:
             return skill_id
 
         elif similarity >= self.MEDIUM_SIMILARITY_THRESHOLD:
-            logger.info(f"⚠️ Medium similarity match: {normalized_name} (score: {similarity:.2f}). Asking Agent...")
+            logger.info(
+                f"⚠️ Medium similarity match: {normalized_name} (score: {similarity:.2f}). Asking Agent..."
+            )
 
             # AI 판단 요청
             ai_agent = get_ai_agent()
@@ -128,8 +139,10 @@ class SkillNormalizer:
                 if self.repo:
                     exists = await self.repo.find_by_id(skill_id)
                     if not exists:
-                         logger.warning(f"⚠️ Skill ID {skill_id} found in VectorDB but missing in RDB. Treating as new.")
-                         return None
+                        logger.warning(
+                            f"⚠️ Skill ID {skill_id} found in VectorDB but missing in RDB. Treating as new."
+                        )
+                        return None
 
                 logger.info(f"✅ Agent confirmed match. Using ID: {skill_id}")
                 await self._learn_new_alias(skill_id, raw_skill_name, normalized_name)
@@ -142,7 +155,9 @@ class SkillNormalizer:
             logger.debug(f"📝 Low similarity ({similarity:.2f}). New skill.")
             return None
 
-    async def _learn_new_alias(self, skill_id: int, raw_name: str, normalized_name: str):
+    async def _learn_new_alias(
+        self, skill_id: int, raw_name: str, normalized_name: str
+    ):
         """새로운 별칭을 학습합니다 (RDB & Vector DB)."""
         if not self.repo:
             return

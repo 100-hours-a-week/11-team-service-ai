@@ -6,10 +6,12 @@ from shared.db.model.models import JobMaster, JobMasterSkill, Skill
 from ...domain.interface.repository_interfaces import JobRepository
 from ...domain.models.job import JobInfo, EvaluationCriteria
 
+
 class SqlAlchemyJobRepository(JobRepository):
     """
     JobRepository의 SQLAlchemy (Async) 구현체
     """
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -22,7 +24,7 @@ class SqlAlchemyJobRepository(JobRepository):
         )
         result = await self.session.execute(stmt)
         job_master = result.scalars().first()
-        
+
         if not job_master:
             return None
 
@@ -44,8 +46,8 @@ class SqlAlchemyJobRepository(JobRepository):
             if isinstance(criteria_data, list):
                 criteria_list = [
                     EvaluationCriteria(
-                        name=item.get('name', 'Unknown'),
-                        description=item.get('description', '')
+                        name=item.get("name", "Unknown"),
+                        description=item.get("description", ""),
                     )
                     for item in criteria_data
                 ]
@@ -53,8 +55,10 @@ class SqlAlchemyJobRepository(JobRepository):
         # 4. 도메인 객체 생성 및 반환
         return JobInfo(
             company_name=job_master.company.name if job_master.company else "Unknown",
-            main_tasks=job_master.main_tasks if isinstance(job_master.main_tasks, list) else [],
+            main_tasks=(
+                job_master.main_tasks if isinstance(job_master.main_tasks, list) else []
+            ),
             tech_stacks=tech_stacks,
             summary=job_master.ai_summary or "",
-            evaluation_criteria=criteria_list
+            evaluation_criteria=criteria_list,
         )

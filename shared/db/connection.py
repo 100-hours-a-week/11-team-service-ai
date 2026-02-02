@@ -24,9 +24,11 @@ async_session_factory = async_sessionmaker(
     autoflush=False,
 )
 
+
 # 모델 베이스 클래스
 class Base(DeclarativeBase):
     pass
+
 
 # 의존성 주입(Dependency Injection)용 함수
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

@@ -43,5 +43,4 @@ class Settings(BaseSettings):
     AWS_S3_BUCKET_NAME: str
 
 
-
 settings = Settings()  # type: ignore

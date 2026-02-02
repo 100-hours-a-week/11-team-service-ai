@@ -17,12 +17,17 @@ from shared.schema.job_posting import (
 )
 from applicant_evaluation.main import run_pipeline as run_applicant_evaluation
 from candidate_comparison.main import run_pipeline as run_candidate_comparison
-from job_analysis.main import run_pipeline as run_job_analysis, delete_pipeline as delete_job_analysis
+from job_analysis.main import (
+    run_pipeline as run_job_analysis,
+    delete_pipeline as delete_job_analysis,
+)
 from portfolio_analysis.main import run_pipeline as run_portfolio_analysis
 from resume_analysis.main import run_pipeline as run_resume_analysis
 
 
-async def call_job_analysis(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeResponse:
+async def call_job_analysis(
+    request: JobPostingAnalyzeRequest,
+) -> JobPostingAnalyzeResponse:
     return await run_job_analysis(request)
 
 
@@ -32,7 +37,6 @@ async def call_job_deletion(job_posting_id: int) -> JobPostingDeleteResponse:
 
 async def call_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeResponse:
     return await run_resume_analysis(request)
-
 
 
 async def call_applicant_evaluation(request: EvaluateRequest) -> EvaluateResponse:

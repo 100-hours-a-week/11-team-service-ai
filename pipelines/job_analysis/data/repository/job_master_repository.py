@@ -31,5 +31,6 @@ class JobMasterRepository:
     async def delete(self, job_master_id: int) -> None:
         """JobMaster를 물리 삭제합니다."""
         from sqlalchemy import delete
+
         stmt = delete(JobMaster).where(JobMaster.job_master_id == job_master_id)
         await self.session.execute(stmt)

@@ -1,6 +1,7 @@
 import hashlib
 from typing import List
 
+
 class FingerprintGenerator:
     """
     공고 내용의 고유 지문(Fingerprint)을 생성하여 중복 여부를 판별하는 유틸리티.

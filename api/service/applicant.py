@@ -8,7 +8,9 @@ from shared.pipeline_bridge import call_applicant_evaluation, call_candidate_com
 
 
 class ApplicantService:
-    async def evaluate_applicant(self, user_id: str, job_posting_id: str) -> EvaluateResponse:
+    async def evaluate_applicant(
+        self, user_id: str, job_posting_id: str
+    ) -> EvaluateResponse:
         """
         Evaluate applicant resume against job posting.
         """

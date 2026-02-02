@@ -1,4 +1,5 @@
 """AI Agent utilities for decision making in normalization and duplicate detection"""
+
 import logging
 from typing import Optional
 from langchain_openai import ChatOpenAI
@@ -12,9 +13,7 @@ class AIAgent:
 
     def __init__(self):
         self.llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0,
-            api_key=settings.OPENAI_API_KEY
+            model="gpt-4o-mini", temperature=0, api_key=settings.OPENAI_API_KEY
         )
 
     async def is_same_company(self, raw_name: str, normalized_name: str) -> bool:
@@ -48,7 +47,9 @@ class AIAgent:
             answer = response.content.strip().upper()
             is_same = answer == "YES"
 
-            logger.info(f"🤖 AI Agent decision: '{raw_name}' vs '{normalized_name}' → {answer}")
+            logger.info(
+                f"🤖 AI Agent decision: '{raw_name}' vs '{normalized_name}' → {answer}"
+            )
             return is_same
 
         except Exception as e:
@@ -88,7 +89,9 @@ class AIAgent:
             answer = response.content.strip().upper()
             is_same = answer == "YES"
 
-            logger.info(f"🤖 AI Agent decision: '{raw_name}' vs '{normalized_name}' → {answer}")
+            logger.info(
+                f"🤖 AI Agent decision: '{raw_name}' vs '{normalized_name}' → {answer}"
+            )
             return is_same
 
         except Exception as e:

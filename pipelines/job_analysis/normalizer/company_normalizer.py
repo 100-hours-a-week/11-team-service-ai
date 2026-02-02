@@ -1,10 +1,13 @@
 """Company Name Normalization Logic"""
+
 import logging
 from typing import Optional
 
 from datetime import datetime
 from job_analysis.data.models import Company
-from job_analysis.data.vector_repository.company_vector_repo import CompanyVectorRepository
+from job_analysis.data.vector_repository.company_vector_repo import (
+    CompanyVectorRepository,
+)
 from job_analysis.utils.ai_agent import get_ai_agent
 
 logger = logging.getLogger(__name__)
@@ -38,17 +41,17 @@ class CompanyNormalizer:
 
         # 2. 신규 생성 (Create) - rdb + vector db를 통한 유사도 조회 결과가 없을 경우
         logger.info(f"🆕 Creating new company via Normalizer: {raw_company_name}")
-        
+
         new_company = Company(
-            name=raw_company_name,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
+            name=raw_company_name, created_at=datetime.now(), updated_at=datetime.now()
         )
         saved_company = await self.repo.create(new_company)
 
         # 3. Vector DB 등록 (검색용)
         try:
-            await self.vector_repo.add_company(saved_company.company_id, saved_company.name)
+            await self.vector_repo.add_company(
+                saved_company.company_id, saved_company.name
+            )
             logger.info(f"✅ Added new company to Vector DB: {saved_company.name}")
         except Exception as e:
             logger.error(f"❌ Failed to add new company to Vector DB: {e}")
@@ -72,11 +75,15 @@ class CompanyNormalizer:
         if self.repo:
             alias = await self.repo.find_alias_by_name(raw_company_name)
             if alias:
-                logger.info(f"✅ Found exact match in Alias: {raw_company_name} -> ID: {alias.company_id}")
+                logger.info(
+                    f"✅ Found exact match in Alias: {raw_company_name} -> ID: {alias.company_id}"
+                )
                 return alias.company_id
 
         # 2. 벡터 DB 검색 (전처리된 이름 사용)
-        similar_companies = await self.vector_repo.search_similar(raw_company_name, limit=1)
+        similar_companies = await self.vector_repo.search_similar(
+            raw_company_name, limit=1
+        )
 
         if not similar_companies:
             logger.info("📝 No similar companies found in Vector DB.")
@@ -89,35 +96,43 @@ class CompanyNormalizer:
         normalized_name = best_match["name"]
 
         if similarity >= self.HIGH_SIMILARITY_THRESHOLD:
-            logger.info(f"✅ High similarity match: {normalized_name} (score: {similarity:.2f}) -> ID: {company_id}")
-            
+            logger.info(
+                f"✅ High similarity match: {normalized_name} (score: {similarity:.2f}) -> ID: {company_id}"
+            )
+
             # [Validation] RDB에 실제로 존재하는지 확인
             if self.repo:
                 exists = await self.repo.find_by_id(company_id)
                 if not exists:
-                        logger.warning(f"⚠️ Company ID {company_id} found in VectorDB but missing in RDB. Treating as new.")
-                        return None
+                    logger.warning(
+                        f"⚠️ Company ID {company_id} found in VectorDB but missing in RDB. Treating as new."
+                    )
+                    return None
 
             # [Self-Learning] 이름이 완전히 똑같지 않다면 별칭으로 등록
             if best_match["name"] != raw_company_name:
-                 await self._learn_new_alias(company_id, raw_company_name)
+                await self._learn_new_alias(company_id, raw_company_name)
 
             return company_id
 
         elif similarity >= self.MEDIUM_SIMILARITY_THRESHOLD:
-            logger.warning(f"⚠️ Medium similarity match: {normalized_name} (score: {similarity:.2f}). Asking Agent...")
+            logger.warning(
+                f"⚠️ Medium similarity match: {normalized_name} (score: {similarity:.2f}). Asking Agent..."
+            )
 
             # AI 판단 요청
             ai_agent = get_ai_agent()
             is_same = await ai_agent.is_same_company(raw_company_name, normalized_name)
-            
+
             if is_same:
                 # [Validation] RDB에 실제로 존재하는지 확인
                 if self.repo:
                     exists = await self.repo.find_by_id(company_id)
                     if not exists:
-                         logger.warning(f"⚠️ Company ID {company_id} found in VectorDB but missing in RDB. Treating as new.")
-                         return None
+                        logger.warning(
+                            f"⚠️ Company ID {company_id} found in VectorDB but missing in RDB. Treating as new."
+                        )
+                        return None
 
                 logger.info(f"✅ Agent confirmed match. Using ID: {company_id}")
                 await self._learn_new_alias(company_id, raw_company_name)
@@ -127,7 +142,9 @@ class CompanyNormalizer:
                 return None
 
         else:
-            logger.info(f"📝 Low similarity ({similarity:.2f}). Treating as new company.")
+            logger.info(
+                f"📝 Low similarity ({similarity:.2f}). Treating as new company."
+            )
             return None
 
     async def _learn_new_alias(self, company_id: int, raw_name: str):

@@ -17,6 +17,7 @@ from job_analysis.data.repository.dto import JobPostingWithRelations
 
 logger = logging.getLogger(__name__)
 
+
 class JobRegistrationService:
     """
     신규 채용 공고 등록 로직을 담당하는 도메인 서비스입니다.
@@ -35,7 +36,7 @@ class JobRegistrationService:
         company_normalizer: CompanyNormalizer,
         skill_normalizer: SkillNormalizer,
         duplicate_checker: JobDuplicateChecker,
-        job_vector_repo: JobVectorRepository
+        job_vector_repo: JobVectorRepository,
     ):
         self.session = session
         self.job_post_repo = job_post_repo
@@ -47,15 +48,19 @@ class JobRegistrationService:
         self.duplicate_checker = duplicate_checker
         self.job_vector_repo = job_vector_repo
 
-    async def ensure_and_get_ids(self, extracted_data: Any) -> tuple[int, List[int], Any]:
+    async def ensure_and_get_ids(
+        self, extracted_data: Any
+    ) -> tuple[int, List[int], Any]:
         """
         회사와 스킬이 DB에 존재하는지 확인하고, 없으면 생성하여 ID를 반환합니다.
         또한 extracted_data의 내용을 정규화된 명칭(DB에 저장된 이름)으로 업데이트하여 반환합니다.
         """
-        
+
         # 1. 회사 처리 (Get or Create)
-        company_id = await self.company_normalizer.get_or_create(extracted_data.company_name)
-        
+        company_id = await self.company_normalizer.get_or_create(
+            extracted_data.company_name
+        )
+
         # 정규화된 회사명 조회 및 업데이트
         company = await self.company_repo.find_by_id(company_id)
         if company:
@@ -65,7 +70,7 @@ class JobRegistrationService:
         raw_skills = extracted_data.tech_stacks or []
         # 모든 스킬에 대해 ID를 보장받음
         final_skill_ids = await self.skill_normalizer.get_or_create_batch(raw_skills)
-        
+
         normalized_skill_names = []
 
         # ID -> Name 역조회 (데이터 패치용)
@@ -73,14 +78,14 @@ class JobRegistrationService:
         for skill_id, raw_skill in zip(final_skill_ids, raw_skills):
             skill = await self.skill_repo.find_by_id(skill_id)
             if skill:
-                 normalized_skill_names.append(skill.skill_name)
+                normalized_skill_names.append(skill.skill_name)
             else:
-                 # ID는 있는데 조회가 안되는 경우 (거의 없음)
-                 normalized_skill_names.append(raw_skill)
-        
+                # ID는 있는데 조회가 안되는 경우 (거의 없음)
+                normalized_skill_names.append(raw_skill)
+
         # 정규화된 스킬명으로 업데이트
         extracted_data.tech_stacks = normalized_skill_names
-        
+
         return company_id, final_skill_ids, extracted_data
 
     async def register_new_job_master(
@@ -89,17 +94,16 @@ class JobRegistrationService:
         extracted_data: Any,
         fingerprint: str,
         company_id: int,
-        skill_ids: List[int]
+        skill_ids: List[int],
     ) -> JobPostingWithRelations:
         """완전히 새로운 JobMaster와 JobPost를 생성합니다."""
-        
+
         # Step 3: 신규 JobMaster 생성 (ID들은 이미 확보됨)
         logger.info("🆕 Creating new JobMaster")
         job_master = await self._create_job_master(
-            company_id=company_id,
-            extracted_data=extracted_data
+            company_id=company_id, extracted_data=extracted_data
         )
-        
+
         # Step 4: JobMasterSkill 연결
         await self._link_skills_to_job_master(job_master.job_master_id, skill_ids)
 
@@ -109,7 +113,7 @@ class JobRegistrationService:
             company_id=company_id,
             url=url,
             extracted_data=extracted_data,
-            fingerprint=fingerprint
+            fingerprint=fingerprint,
         )
 
         # Step 6: Vector DB 등록 (JobPost 기준)
@@ -120,29 +124,27 @@ class JobRegistrationService:
                 job_master_id=job_master.job_master_id,
                 job_post_id=job_post.job_post_id,
                 company_id=company_id,
-                content=json_text
+                content=json_text,
             )
-            logger.info(f"💾 Added JobPost {job_post.job_post_id} (Master {job_master.job_master_id}) to Vector DB")
+            logger.info(
+                f"💾 Added JobPost {job_post.job_post_id} (Master {job_master.job_master_id}) to Vector DB"
+            )
         except Exception as e:
-             logger.error(f"❌ Failed to add job to vector DB: {e}", exc_info=True)
+            logger.error(f"❌ Failed to add job to vector DB: {e}", exc_info=True)
 
         return await self._build_dto(job_post, job_master, company_id)
 
     async def link_job_post(
-        self,
-        job_master_id: int,
-        url: str,
-        extracted_data: Any,
-        fingerprint: str
+        self, job_master_id: int, url: str, extracted_data: Any, fingerprint: str
     ) -> JobPostingWithRelations:
         """기존 JobMaster에 새로운 JobPost를 연결합니다."""
-        
+
         logger.info(f"🔗 Linking new JobPost to existing JobMaster ID: {job_master_id}")
-        
+
         # JobMaster 조회
         job_master = await self.job_master_repo.find_by_id(job_master_id)
         if not job_master:
-             raise ValueError(f"JobMaster {job_master_id} not found.")
+            raise ValueError(f"JobMaster {job_master_id} not found.")
 
         # 회사 ID 확보 (JobMaster의 회사)
         company_id = job_master.company_id
@@ -153,7 +155,7 @@ class JobRegistrationService:
             company_id=company_id,
             url=url,
             extracted_data=extracted_data,
-            fingerprint=fingerprint
+            fingerprint=fingerprint,
         )
 
         # Vector DB 등록 (중복 공고라도 개별 벡터를 저장하여 데이터 축적)
@@ -163,17 +165,19 @@ class JobRegistrationService:
                 job_master_id=job_master_id,
                 job_post_id=job_post.job_post_id,
                 company_id=company_id,
-                content=json_text
+                content=json_text,
             )
-            logger.info(f"💾 Added JobPost {job_post.job_post_id} (Master {job_master_id}) to Vector DB")
+            logger.info(
+                f"💾 Added JobPost {job_post.job_post_id} (Master {job_master_id}) to Vector DB"
+            )
         except Exception as e:
-             logger.error(f"❌ Failed to add job to vector DB: {e}", exc_info=True)
+            logger.error(f"❌ Failed to add job to vector DB: {e}", exc_info=True)
 
         return await self._build_dto(job_post, job_master, company_id)
 
-
-
-    async def _create_job_master(self, company_id: int, extracted_data: Any) -> JobMaster:
+    async def _create_job_master(
+        self, company_id: int, extracted_data: Any
+    ) -> JobMaster:
         """JobMaster를 생성합니다."""
         logger.info(f"📝 Creating JobMaster: {extracted_data.job_title}")
 
@@ -202,16 +206,18 @@ class JobRegistrationService:
             start_date=start_date,
             end_date=end_date,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
         try:
             async with self.job_master_repo.session.begin_nested():
-                 return await self.job_master_repo.create(new_job_master)
+                return await self.job_master_repo.create(new_job_master)
         except Exception as e:
             logger.error(f"❌ Failed to create JobMaster: {e}")
             raise
 
-    async def _link_skills_to_job_master(self, job_master_id: int, skill_ids: List[int]) -> None:
+    async def _link_skills_to_job_master(
+        self, job_master_id: int, skill_ids: List[int]
+    ) -> None:
         """JobMaster와 Skills를 연결합니다."""
         if not skill_ids:
             return
@@ -220,14 +226,21 @@ class JobRegistrationService:
             link = JobMasterSkill(
                 job_master_id=job_master_id,
                 skill_id=skill_id,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
             await self.skill_repo.create_job_master_skill(link)
 
-    async def _create_job_post(self, job_master_id: int, company_id: int, url: str, extracted_data: Any, fingerprint: str) -> JobPost:
+    async def _create_job_post(
+        self,
+        job_master_id: int,
+        company_id: int,
+        url: str,
+        extracted_data: Any,
+        fingerprint: str,
+    ) -> JobPost:
         """JobPost를 생성합니다."""
         logger.info(f"📝 Creating JobPost for URL: {url}")
-        
+
         url_hash = hashlib.sha256(url.encode("utf-8")).hexdigest()
 
         new_job_post = JobPost(
@@ -246,19 +259,23 @@ class JobRegistrationService:
             created_at=datetime.now(),
             updated_at=datetime.now(),
             fingerprint_hash=fingerprint,
-            ai_job_id=0 # Required by DB schema but not used in this pipeline logic yet
+            ai_job_id=0,  # Required by DB schema but not used in this pipeline logic yet
         )
         return await self.job_post_repo.create(new_job_post)
 
-    async def _build_dto(self, job_post: JobPost, job_master: JobMaster, company_id: int) -> JobPostingWithRelations:
+    async def _build_dto(
+        self, job_post: JobPost, job_master: JobMaster, company_id: int
+    ) -> JobPostingWithRelations:
         """DTO 반환"""
         company = await self.company_repo.find_by_id(company_id)
-        skill_names = await self.skill_repo.find_names_by_job_master_id(job_master.job_master_id)
+        skill_names = await self.skill_repo.find_names_by_job_master_id(
+            job_master.job_master_id
+        )
 
         # DTO 생성
         return JobPostingWithRelations(
             job_post=job_post,
             job_master=job_master,
             company=company,
-            skills=skill_names
+            skills=skill_names,
         )

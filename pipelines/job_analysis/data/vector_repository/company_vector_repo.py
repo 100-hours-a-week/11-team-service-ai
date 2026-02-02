@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class CompanyVectorRepository(BaseVectorRepository):
     """Company 전용 Vector Repository"""
 
@@ -27,9 +28,18 @@ class CompanyVectorRepository(BaseVectorRepository):
                         distance_metric=VectorDistances.COSINE
                     ),
                     properties=[
-                        Property(name="company_id", data_type=DataType.INT, description="Database company ID", skip_vectorization=True),
-                        Property(name="name", data_type=DataType.TEXT, description="Original company name"),
-                    ]
+                        Property(
+                            name="company_id",
+                            data_type=DataType.INT,
+                            description="Database company ID",
+                            skip_vectorization=True,
+                        ),
+                        Property(
+                            name="name",
+                            data_type=DataType.TEXT,
+                            description="Original company name",
+                        ),
+                    ],
                 )
                 logger.info(f"✅ {self.COLLECTION_NAME} collection created")
         except Exception as e:
@@ -38,7 +48,9 @@ class CompanyVectorRepository(BaseVectorRepository):
 
     async def add_company(self, company_id: int, name: str) -> bool:
         """Type-safe wrapper for add"""
-        return await self.add({
-            "company_id": company_id,
-            "name": name,
-        })
+        return await self.add(
+            {
+                "company_id": company_id,
+                "name": name,
+            }
+        )

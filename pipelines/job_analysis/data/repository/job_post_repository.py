@@ -38,5 +38,6 @@ class JobPostRepository:
     async def delete_by_master_id(self, job_master_id: int) -> None:
         """JobMaster ID에 연결된 모든 JobPost를 물리 삭제합니다."""
         from sqlalchemy import delete
+
         stmt = delete(JobPost).where(JobPost.job_master_id == job_master_id)
         await self.session.execute(stmt)

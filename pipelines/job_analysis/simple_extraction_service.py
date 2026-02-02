@@ -6,11 +6,13 @@ from job_analysis.parser.extract.extractor import JobPostingExtractor
 
 logger = logging.getLogger(__name__)
 
+
 class SimpleJobExtractionService:
     """
     단순 크롤링 및 데이터 추출만 수행하는 서비스
     DB 저장이나 중복 체크 없이 순수하게 데이터를 가져오는 역할
     """
+
     def __init__(self):
         self.extractor = JobPostingExtractor()
 
@@ -25,13 +27,15 @@ class SimpleJobExtractionService:
         extracted_data = await self._extract_data(raw_text)
 
         # 3. Response 매핑 (DB 저장이 없으므로 ID는 임시값 0 사용)
-        from shared.schema.job_posting import JobPostingAnalyzeResponse, RecruitmentPeriod
+        from shared.schema.job_posting import (
+            JobPostingAnalyzeResponse,
+            RecruitmentPeriod,
+        )
 
         recruitment_period = None
         if extracted_data.start_date or extracted_data.end_date:
             recruitment_period = RecruitmentPeriod(
-                start_date=extracted_data.start_date,
-                end_date=extracted_data.end_date
+                start_date=extracted_data.start_date, end_date=extracted_data.end_date
             )
 
         return JobPostingAnalyzeResponse(
@@ -39,12 +43,24 @@ class SimpleJobExtractionService:
             is_existing=False,
             company_name=extracted_data.company_name,
             job_title=extracted_data.job_title,
-            main_responsibilities=extracted_data.main_tasks if isinstance(extracted_data.main_tasks, list) else [],
-            required_skills=extracted_data.tech_stacks if isinstance(extracted_data.tech_stacks, list) else [],
-            recruitment_status="OPEN", # 기본값
+            main_responsibilities=(
+                extracted_data.main_tasks
+                if isinstance(extracted_data.main_tasks, list)
+                else []
+            ),
+            required_skills=(
+                extracted_data.tech_stacks
+                if isinstance(extracted_data.tech_stacks, list)
+                else []
+            ),
+            recruitment_status="OPEN",  # 기본값
             recruitment_period=recruitment_period,
             ai_summary=extracted_data.ai_summary or "",
-            evaluation_criteria=[item.model_dump() for item in extracted_data.evaluation_criteria] if extracted_data.evaluation_criteria else []
+            evaluation_criteria=(
+                [item.model_dump() for item in extracted_data.evaluation_criteria]
+                if extracted_data.evaluation_criteria
+                else []
+            ),
         )
 
     async def _crawl_content(self, url: str) -> str:

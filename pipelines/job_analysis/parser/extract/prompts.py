@@ -29,7 +29,6 @@ SYSTEM_PROMPT = """너는 IT/소프트웨어 분야 채용 공고를 분석하�
 5. 정보가 명시되어 있지 않은 필드는 빈 리스트나 Null로 둔다. 절대 없는 정보를 지어내지 말 것.
 """
 
-EXTRACTION_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", SYSTEM_PROMPT),
-    ("human", "{text}")
-])
+EXTRACTION_PROMPT = ChatPromptTemplate.from_messages(
+    [("system", SYSTEM_PROMPT), ("human", "{text}")]
+)

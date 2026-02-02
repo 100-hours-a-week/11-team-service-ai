@@ -25,5 +25,3 @@ class ApiResponse(BaseModel, Generic[T]):
     error: Optional[ErrorDetail] = Field(
         default=None, description="요청 처리 실패 시 반환되는 에러 정보"
     )
-
-

@@ -13,6 +13,7 @@ from job_analysis.data.repository import JobPostRepository
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("DB_TEST")
 
+
 async def test_connection():
     logger.info("📡 Testing DB Connection...")
     async for session in get_db():
@@ -21,7 +22,7 @@ async def test_connection():
             result = await session.execute(text("SELECT 1"))
             val = result.scalar()
             logger.info(f"✅ Connection Successful! (SELECT 1 => {val})")
-            
+
             # 2. Repository 조회 테스트 (SQL 매핑 확인)
             repo = JobPostRepository(session)
             # 존재하지 않는 ID로 조회하여 에러가 안 나는지 확인
@@ -32,7 +33,9 @@ async def test_connection():
             logger.error(f"❌ DB Error: {e}")
             # 자세한 에러 출력을 위해
             import traceback
+
             traceback.print_exc()
+
 
 if __name__ == "__main__":
     try:

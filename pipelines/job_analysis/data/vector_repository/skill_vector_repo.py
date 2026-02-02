@@ -4,6 +4,7 @@ from .base_vector_repo import BaseVectorRepository
 
 logger = logging.getLogger(__name__)
 
+
 class SkillVectorRepository(BaseVectorRepository):
     """Skill 전용 Vector Repository"""
 
@@ -27,9 +28,18 @@ class SkillVectorRepository(BaseVectorRepository):
                         distance_metric=VectorDistances.COSINE
                     ),
                     properties=[
-                        Property(name="skill_id", data_type=DataType.INT, description="Database skill ID", skip_vectorization=True),
-                        Property(name="name", data_type=DataType.TEXT, description="Original skill name"),
-                    ]
+                        Property(
+                            name="skill_id",
+                            data_type=DataType.INT,
+                            description="Database skill ID",
+                            skip_vectorization=True,
+                        ),
+                        Property(
+                            name="name",
+                            data_type=DataType.TEXT,
+                            description="Original skill name",
+                        ),
+                    ],
                 )
                 logger.info(f"✅ {self.COLLECTION_NAME} collection created")
         except Exception as e:
@@ -38,7 +48,9 @@ class SkillVectorRepository(BaseVectorRepository):
 
     async def add_skill(self, skill_id: int, name: str) -> bool:
         """Type-safe wrapper for add"""
-        return await self.add({
-            "skill_id": skill_id,
-            "name": name,
-        })
+        return await self.add(
+            {
+                "skill_id": skill_id,
+                "name": name,
+            }
+        )

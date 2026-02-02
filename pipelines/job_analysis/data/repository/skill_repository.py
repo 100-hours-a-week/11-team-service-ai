@@ -27,7 +27,11 @@ class SkillRepository:
 
     async def find_by_name(self, skill_name: str) -> Optional[Skill]:
         """이름으로 스킬을 조회합니다."""
-        stmt = select(Skill).where(Skill.skill_name == skill_name).where(Skill.deleted_at.is_(None))
+        stmt = (
+            select(Skill)
+            .where(Skill.skill_name == skill_name)
+            .where(Skill.deleted_at.is_(None))
+        )
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
@@ -55,7 +59,9 @@ class SkillRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def create_job_master_skill(self, job_master_skill: JobMasterSkill) -> JobMasterSkill:
+    async def create_job_master_skill(
+        self, job_master_skill: JobMasterSkill
+    ) -> JobMasterSkill:
         """JobMaster와 Skill 연결을 생성합니다."""
         self.session.add(job_master_skill)
         await self.session.flush()
@@ -64,7 +70,11 @@ class SkillRepository:
     async def find_alias_by_name(self, raw_name: str) -> Optional[SkillAlias]:
         """별칭(Alias)으로 스킬을 조회합니다."""
         # 1. Skill 테이블에서 정확히 일치하는 이름 검색
-        stmt = select(Skill).where(Skill.skill_name == raw_name).where(Skill.deleted_at.is_(None))
+        stmt = (
+            select(Skill)
+            .where(Skill.skill_name == raw_name)
+            .where(Skill.deleted_at.is_(None))
+        )
         result = await self.session.execute(stmt)
         skill = result.scalars().first()
 
@@ -72,11 +82,15 @@ class SkillRepository:
             return SkillAlias(
                 skill_id=skill.skill_id,
                 alias_name=skill.skill_name,
-                alias_normalized=skill.skill_name
+                alias_normalized=skill.skill_name,
             )
 
         # 2. SkillAlias 테이블 검색
-        stmt = select(SkillAlias).where(SkillAlias.alias_name == raw_name).where(SkillAlias.deleted_at.is_(None))
+        stmt = (
+            select(SkillAlias)
+            .where(SkillAlias.alias_name == raw_name)
+            .where(SkillAlias.deleted_at.is_(None))
+        )
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
@@ -85,9 +99,9 @@ class SkillRepository:
         alias = SkillAlias(
             skill_id=skill_id,
             alias_name=raw_name,
-            alias_normalized=raw_name.strip().lower(), # 간단한 정규화
+            alias_normalized=raw_name.strip().lower(),  # 간단한 정규화
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
         self.session.add(alias)
         await self.session.flush()
@@ -96,5 +110,8 @@ class SkillRepository:
     async def delete_job_master_skills(self, job_master_id: int) -> None:
         """JobMaster ID에 연결된 모든 스킬 연결(JobMasterSkill)을 물리 삭제합니다."""
         from sqlalchemy import delete
-        stmt = delete(JobMasterSkill).where(JobMasterSkill.job_master_id == job_master_id)
+
+        stmt = delete(JobMasterSkill).where(
+            JobMasterSkill.job_master_id == job_master_id
+        )
         await self.session.execute(stmt)

@@ -13,5 +13,5 @@ __all__ = [
     "call_applicant_evaluation",
     "call_candidate_comparison",
     "call_portfolio_analysis",
-    "call_job_deletion"
+    "call_job_deletion",
 ]
