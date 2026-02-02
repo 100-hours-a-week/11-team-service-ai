@@ -13,7 +13,6 @@ class Settings(BaseSettings):
 
     # Profile (dev/prod)
     PROFILE: str = "dev"
-
     # Mock mode option (only works when PROFILE=dev)
     USE_MOCK: bool = True
 
