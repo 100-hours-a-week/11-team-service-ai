@@ -51,7 +51,7 @@ class ApplicationAnalyzer:
                 raise ValueError("Document preparation failed.")
 
         if not documents.parsed_resume:
-            raise ValueError("Parsed resume is missing even after preparation.")
+            raise ValueError("유저의 서류가 존재하지 않습니다.")
         resume_text = documents.parsed_resume.text
         portfolio_text = (
             documents.parsed_portfolio.text if documents.parsed_portfolio else ""

@@ -11,7 +11,7 @@ from sqlalchemy import (
     JSON,
     TIMESTAMP,
 )
-from typing import TYPE_CHECKING, List
+from typing import List
 from sqlalchemy.orm import relationship, Mapped
 from sqlalchemy.sql import func
 from shared.db.connection import Base
@@ -138,10 +138,9 @@ class ApplicationDocument(Base):
     file = relationship("FileObject")
     application = relationship("JobApplication")
 
-    if TYPE_CHECKING:
-        parsed: Mapped[List["ApplicationDocumentParsed"]] = relationship(
-            "ApplicationDocumentParsed", back_populates="application_document"
-        )
+    parsed: Mapped[List["ApplicationDocumentParsed"]] = relationship(
+        "ApplicationDocumentParsed", back_populates="application_document"
+    )
 
 
 class ApplicationDocumentParsed(Base):
