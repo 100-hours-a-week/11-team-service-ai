@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mysql:8.0.44
+    container_name: mysql-container
+    restart: always
+    environment:
+      # 루트 비밀번호 설정 (필수)
+      MYSQL_ROOT_PASSWORD: Qwerty123456!
+      # 초기 데이터베이스 생성 (선택)
+      MYSQL_DATABASE: service_db
+      # 일반 사용자 계정 생성 (선택)
+      MYSQL_USER: developer
+      MYSQL_PASSWORD: Qwerty123456!
+      MYSQL_OPTS: "--default-authentication-plugin=mysql_native_password"
+    ports:
+      - "3306:3306"
+    volumes:
+      # 로컬에 데이터 저장 (컨테이너 삭제시 데이터 유지)
+      - mysql_data:/var/lib/mysql
+      # 로컬의 init.sql 파일을 컨테이너 내부의 자동 실행 폴더 안으로 넣음
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mysql-network
+
+networks:
+  mysql-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+
+
+# jdbc:mysql://localhost:3306/service_db?allowPublicKeyRetrieval=true&useSSL=false
+# docker compose -f docker-compose-db.yml up -d
+# docker compose -f docker-compose-db.yml down -v

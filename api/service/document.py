@@ -11,22 +11,22 @@ from shared.pipeline_bridge import (
 
 
 class DocumentService:
-    def analyze_resume(
+    async def analyze_resume(
         self, user_id: str, job_posting_id: str
     ) -> ResumeAnalyzeResponse:
         """
         Analyze resume details.
         """
-        return call_resume_analysis(
+        return await call_resume_analysis(
             ResumeAnalyzeRequest(user_id=user_id, job_posting_id=job_posting_id)
         )
 
-    def analyze_portfolio(
+    async def analyze_portfolio(
         self, user_id: str, job_posting_id: str
     ) -> PortfolioAnalyzeResponse:
         """
         Analyze portfolio details.
         """
-        return call_portfolio_analysis(
+        return await call_portfolio_analysis(
             PortfolioAnalyzeRequest(user_id=user_id, job_posting_id=job_posting_id)
         )

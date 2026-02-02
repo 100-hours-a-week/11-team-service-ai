@@ -1,7 +1,7 @@
 from shared.schema.applicant import CompareRequest, CompareResponse, ComparisonMetric
 
 
-def run_pipeline(request: CompareRequest) -> CompareResponse:
+async def run_pipeline(request: CompareRequest) -> CompareResponse:
     """
     Execute the Candidate Comparison Pipeline.
     Currently returns dummy data directly.
@@ -21,9 +21,15 @@ def run_pipeline(request: CompareRequest) -> CompareResponse:
 
 
 if __name__ == "__main__":
+    import asyncio
+
     # Test execution
     print(
-        run_pipeline(
-            CompareRequest(user_id="user1", job_posting_id="12345", competitor="user2")
+        asyncio.run(
+            run_pipeline(
+                CompareRequest(
+                    user_id="user1", job_posting_id="12345", competitor="user2"
+                )
+            )
         )
     )
