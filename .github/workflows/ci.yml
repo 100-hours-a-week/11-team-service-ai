@@ -69,6 +69,13 @@ jobs:
       - name: Import Check
         run: uv run python -c "import api.main"
 
+      
+      - name: Debug - confirm .env exists
+        run: |
+          pwd
+          ls -al .env
+          head -n 3 .env
+
       - name: Set metadata (artifact name / version)
         id: meta
         run: |
