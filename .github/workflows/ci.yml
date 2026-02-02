@@ -89,6 +89,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.meta.outputs.artifact_name }}
+          include-hidden-files: true
+          if-no-files-found: error
           path: |
             api
             shared
