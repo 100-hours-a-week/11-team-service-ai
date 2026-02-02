@@ -1,21 +1,22 @@
 from shared.schema.job_posting import (
     JobPostingAnalyzeRequest,
     JobPostingAnalyzeResponse,
+    JobPostingDeleteResponse,
 )
-from shared.pipeline_bridge import call_job_analysis
+from shared.pipeline_bridge import call_job_analysis, call_job_deletion
 
 
 class JobPostingService:
-    def analyze_job_posting(self, url: str) -> JobPostingAnalyzeResponse:
+    async def analyze_job_posting(self, url: str) -> JobPostingAnalyzeResponse:
         """
         Analyze job posting URL.
         Ideally calling the pipeline.
         """
         # Dummy Implementation
-        return call_job_analysis(JobPostingAnalyzeRequest(url=url))
+        return await call_job_analysis(JobPostingAnalyzeRequest(url=url))
 
-    def delete_job_posting(self, job_posting_id: str) -> dict:
+    async def delete_job_posting(self, job_posting_id: int) -> JobPostingDeleteResponse:
         """
         Delete job posting data.
         """
-        return {"deleted_id": job_posting_id}
+        return await call_job_deletion(job_posting_id)

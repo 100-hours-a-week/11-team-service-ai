@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from api.core.exception import CustomException, ErrorCode
 from api.routes import applicant, document, job_posting
 from shared.schema.common_schema import ApiResponse, ErrorDetail
+import uvicorn
 
 app = FastAPI(title="AI Service API")
 
@@ -83,6 +84,7 @@ async def custom_exception_handler(request: Request, exc: CustomException):
 
 @app.get("/")
 async def root():
+    print("hello")
     return {"message": "AI Model Server is running 🚀"}
 
 
@@ -90,3 +92,7 @@ async def root():
 app.include_router(job_posting.router)
 app.include_router(applicant.router)
 app.include_router(document.router)
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
