@@ -18,26 +18,54 @@ class JobPostingExtractor:
         """
         :param model_name: 사용할 모델명 (gpt-4o, gpt-3.5-turbo 등)
         """
-        # 1. LLM 초기화
-        # TODO: vLLM 사용 시 base_url과 api_key 수정 필요
-        self.llm = ChatOpenAI(
-            model=model_name,
-            api_key=(
-                SecretStr(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
-            ),
-            temperature=0,  # 추출 작업이므로 낮은 온도 설정
-        )
+        if not settings.use_mock:
+            # 1. LLM 초기화
+            # TODO: vLLM 사용 시 base_url과 api_key 수정 필요
+            self.llm = ChatOpenAI(
+                model=model_name,
+                api_key=(
+                    SecretStr(settings.OPENAI_API_KEY)
+                    if settings.OPENAI_API_KEY
+                    else None
+                ),
+                temperature=0,  # 추출 작업이므로 낮은 온도 설정
+            )
 
-        # 2. 구조화된 출력을 위한 LLM 설정 (Tool Calling)
-        structured_llm = self.llm.with_structured_output(ExtractedJobData)
+            # 2. 구조화된 출력을 위한 LLM 설정 (Tool Calling)
+            structured_llm = self.llm.with_structured_output(ExtractedJobData)
 
-        # 3. Prompt + LLM 체인 구성
-        self.chain: Runnable = EXTRACTION_PROMPT | structured_llm
+            # 3. Prompt + LLM 체인 구성
+            self.chain: Runnable = EXTRACTION_PROMPT | structured_llm
 
     async def extract(self, text: str) -> Optional[ExtractedJobData]:
         """
         채용 공고 텍스트에서 정보를 추출하여 구조화된 데이터로 반환합니다.
         """
+        # Mock 모드: OpenAI 호출 없이 목업 데이터 반환
+        if settings.use_mock:
+            logger.info("[Mock] JobPostingExtractor.extract")
+            return ExtractedJobData(
+                company_name="[Mock] 테스트 회사",
+                job_title="[Mock] 백엔드 개발자",
+                main_tasks=[
+                    "API 설계 및 개발",
+                    "데이터베이스 설계",
+                    "시스템 아키텍처 구축",
+                ],
+                requirements=["Python 3년 이상", "FastAPI 경험"],
+                preferred=["AWS 경험", "Docker/Kubernetes 경험"],
+                tech_stacks=["Python", "FastAPI", "PostgreSQL", "Docker"],
+                start_date=None,
+                end_date=None,
+                ai_summary="[Mock] 이 공고는 백엔드 개발자를 찾고 있습니다.",
+                evaluation_criteria=[
+                    {
+                        "name": "기술역량",
+                        "description": "Python, FastAPI 등 기술 스택 숙련도",
+                    },
+                    {"name": "프로젝트경험", "description": "관련 프로젝트 수행 경험"},
+                ],
+            )
         if not text or len(text.strip()) < 50:
             logger.warning("Empty or too short text provided for extraction.")
             return None

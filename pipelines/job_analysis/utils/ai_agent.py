@@ -13,15 +13,27 @@ class AIAgent:
     """AI Agent for making intelligent decisions using LLM"""
 
     def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0,
-            api_key=(
-                SecretStr(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
-            ),
-        )
+        if not settings.use_mock:
+            self.llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0,
+                api_key=(
+                    SecretStr(settings.OPENAI_API_KEY)
+                    if settings.OPENAI_API_KEY
+                    else None
+                ),
+            )
 
     async def is_same_company(self, raw_name: str, normalized_name: str) -> bool:
+        # Mock 모드: OpenAI 호출 없이 간단한 문자열 비교
+        if settings.use_mock:
+            is_same = raw_name.lower().replace(
+                " ", ""
+            ) == normalized_name.lower().replace(" ", "")
+            logger.info(
+                f"[Mock] is_same_company: '{raw_name}' vs '{normalized_name}' → {is_same}"
+            )
+            return is_same
         """
         두 회사명이 같은 회사를 가리키는지 LLM으로 판단합니다.
 
@@ -72,6 +84,16 @@ class AIAgent:
         Returns:
             True if same skill, False otherwise
         """
+        # Mock 모드: OpenAI 호출 없이 간단한 문자열 비교
+        if settings.use_mock:
+            is_same = raw_name.lower().replace(
+                " ", ""
+            ) == normalized_name.lower().replace(" ", "")
+            logger.info(
+                f"[Mock] is_same_skill: '{raw_name}' vs '{normalized_name}' → {is_same}"
+            )
+            return is_same
+
         prompt = f"""다음 두 기술/스킬명이 같은 기술을 가리키는지 판단하세요.
 
 스킬 A: {raw_name}
@@ -114,6 +136,17 @@ class AIAgent:
         Returns:
             True if same job posting, False otherwise
         """
+        # Mock 모드: OpenAI 호출 없이 간단한 비교
+        if settings.use_mock:
+            is_same = (
+                new_data.get("company", "").lower()
+                == existing_data.get("company", "").lower()
+                and new_data.get("job_title", "").lower()
+                == existing_data.get("job_title", "").lower()
+            )
+            logger.info(f"[Mock] is_same_job_posting → {is_same}")
+            return is_same
+
         prompt = f"""다음 두 채용 공고가 같은 공고인지 판단하세요.
 
 [공고 A]

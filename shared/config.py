@@ -11,6 +11,16 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
+    # Profile (dev/prod)
+    PROFILE: str = "dev"
+    # Mock mode option (only works when PROFILE=dev)
+    USE_MOCK: bool = True
+
+    @property
+    def use_mock(self) -> bool:
+        """dev 프로필이면서 USE_MOCK=true일 때만 목업 데이터 사용"""
+        return self.PROFILE.lower() == "dev" and self.USE_MOCK
+
     # Weaviate configs
     WEAVIATE_HOST: str = "127.0.0.1"
     WEAVIATE_PORT: int = 8080
