@@ -3,9 +3,11 @@ import os
 import asyncio
 
 # 현재 디렉토리(tests/unit)의 상위 상위 디렉토리(ai)를 path에 추가하여 모듈 import 가능하게 함
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+# 현재 디렉토리(tests/integration/pipelines/applicant_evaluation/infrastructure/adapters/parser)에서 
+# 프로젝트 루트(ai)까지 7단계 상위 이동
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../../")))
 
-from pipelines.applicant_evaluation.infrastructure.adapters.pdf_extractor import (
+from pipelines.applicant_evaluation.infrastructure.adapters.parser.pdf_extractor import (
     PyPdfExtractor,
 )
 
@@ -22,14 +24,13 @@ async def test_local_pdf_parsing():
 
     # 2. Configure Paths
     # 프로젝트 루트: ai 폴더
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../../"))
 
-    # 입력: tests/test_data/document/download (사용자 지정 소스)
-    # (만약 테스트를 위해 임시로 origin 등 다른 폴더를 쓰고 싶다면 여기만 변경하면 됨)
-    input_dir = os.path.join(project_root, "tests/test_data/document/download")
+    # 입력: tests/fixtures/data/document/download (사용자 지정 소스)
+    input_dir = os.path.join(project_root, "tests/fixtures/data/document/download")
 
-    # 출력: tests/test_data/document/parsed
-    output_dir = os.path.join(project_root, "tests/test_data/document/parsed")
+    # 출력: tests/fixtures/data/document/parsed
+    output_dir = os.path.join(project_root, "tests/fixtures/data/document/parsed")
 
     # 출력 디렉토리 생성
     os.makedirs(output_dir, exist_ok=True)
@@ -41,7 +42,7 @@ async def test_local_pdf_parsing():
     if not os.path.exists(input_dir):
         print(f"❌ Error: Input directory does not exist: {input_dir}")
         print(
-            "💡 Tip: 'tests/test_data/document/download' 폴더에 테스트할 PDF 파일을 넣어주세요."
+            "💡 Tip: 'tests/fixtures/data/document/download' 폴더에 테스트할 PDF 파일을 넣어주세요."
         )
         return
 

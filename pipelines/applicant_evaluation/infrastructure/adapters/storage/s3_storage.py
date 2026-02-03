@@ -2,7 +2,7 @@ import asyncio
 import boto3
 from botocore.exceptions import ClientError
 from shared.config import settings
-from ...domain.interface.adapter_interfaces import FileStorage
+from ....domain.interface.adapter_interfaces import FileStorage
 
 
 class S3FileStorage(FileStorage):

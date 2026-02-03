@@ -1,11 +1,13 @@
+
 import logging
 from typing import List
 import json
 from openai import AsyncOpenAI
 from shared.config import settings
-from ...domain.interface.adapter_interfaces import AnalystAgent
-from ...domain.models.job import JobInfo, EvaluationCriteria
-from ...domain.models.report import CompetencyResult, OverallFeedback
+from ....domain.interface.adapter_interfaces import AnalystAgent
+from ....domain.models.job import JobInfo, EvaluationCriteria
+from ....domain.models.evaluation import CompetencyResult
+from ....domain.models.report import OverallFeedback
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +17,16 @@ class OpenAiAnalyst(AnalystAgent):
     OpenAI API를 사용하여 지원자를 분석하는 AI 에이전트 구현체 (Async)
     """
 
-    def __init__(self):
-        if not settings.use_mock:
+    def __init__(self, client: AsyncOpenAI = None):
+        """
+        :param client: AsyncOpenAI 클라이언트 (DI)
+                       테스트 시에는 Mock 객체를, 실제 구동 시에는 실제 클라이언트를 주입받음.
+        """
+        if client:
+            self.client = client
+        else:
             self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+
         # gpt-4o-mini: 빠르고 저렴하며 성능이 준수함
         self.model = getattr(settings, "MODEL_NAME", "gpt-4o-mini")
 
@@ -28,14 +37,6 @@ class OpenAiAnalyst(AnalystAgent):
         resume_text: str,
         portfolio_text: str,
     ) -> CompetencyResult:
-        # Mock 모드: OpenAI 호출 없이 목업 데이터 반환
-        if settings.use_mock:
-            logger.info(f"[Mock] evaluate_competency for criteria: {criteria.name}")
-            return CompetencyResult(
-                name=criteria.name,
-                score=75.0,
-                description=f"[Mock] {criteria.name}에 대한 평가 결과입니다.",
-            )
         """
         단일 평가 기준에 대해 점수와 이유를 생성
         """
@@ -91,14 +92,7 @@ class OpenAiAnalyst(AnalystAgent):
         """
         개별 평가 결과를 종합하여 최종 리포트 생성
         """
-        # Mock 모드: OpenAI 호출 없이 목업 데이터 반환
-        if settings.use_mock:
-            logger.info("[Mock] synthesize_report")
-            return OverallFeedback(
-                one_line_review="[Mock] 기술적 역량이 우수하며 성장 가능성이 높은 지원자입니다.",
-                feedback_detail="[Mock] 강점: 관련 기술 경험이 풍부합니다. 보완점: 대규모 시스템 경험을 쌓으면 좋겠습니다.",
-            )
-
+        
         # 평가 결과 요약 텍스트 생성
         results_summary = "\n".join(
             [f"- {r.name}: {r.score}점. {r.description}" for r in competency_results]

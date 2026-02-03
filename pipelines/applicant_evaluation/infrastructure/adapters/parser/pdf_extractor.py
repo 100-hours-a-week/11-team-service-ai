@@ -1,7 +1,7 @@
 import io
 import asyncio
 import pdfplumber
-from ...domain.interface.adapter_interfaces import TextExtractor
+from ....domain.interface.adapter_interfaces import TextExtractor
 
 
 class PyPdfExtractor(TextExtractor):
