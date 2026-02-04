@@ -69,7 +69,7 @@ class SaraminCrawler(BasePlaywrightCrawler):
         try:
             # 우선순위: 컨테이너 내부 -> 전체
             period_selector = f"{container_selector} .info_period"
-            
+
             target_element = None
             if page.locator(period_selector).count() > 0:
                 target_element = page.locator(period_selector).first
@@ -77,7 +77,7 @@ class SaraminCrawler(BasePlaywrightCrawler):
             elif page.locator(".info_period").count() > 0:
                 target_element = page.locator(".info_period").first
                 logger.info("✅ Found period info: .info_period (Global)")
-            
+
             if target_element:
                 period_text = self._clean_html(target_element.inner_html())
 
