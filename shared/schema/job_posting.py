@@ -13,6 +13,11 @@ class RecruitmentPeriod(BaseModel):
     end_date: Optional[date] = Field(None, description="채용 종료일")
 
 
+class JobEvaluationCriteriaItem(BaseModel):
+    name: str = Field(..., description="평가 기준 항목명 (예: 직무 적합성)")
+    description: str = Field(..., description="해당 항목에 대한 상세 설명 및 판단 기준")
+
+
 class JobPostingAnalyzeResponse(BaseModel):
     job_posting_id: int = Field(..., description="채용 공고 ID (DB 식별자)")
     is_existing: bool = Field(..., description="기존 데이터 존재 여부")
@@ -25,7 +30,7 @@ class JobPostingAnalyzeResponse(BaseModel):
         None, description="채용 기간"
     )
     ai_summary: str = Field(..., description="AI가 요약한 공고 핵심 내용")
-    evaluation_criteria: Optional[List[dict]] = Field(
+    evaluation_criteria: Optional[List[JobEvaluationCriteriaItem]] = Field(
         default=[], description="평가 기준 리스트"
     )
 

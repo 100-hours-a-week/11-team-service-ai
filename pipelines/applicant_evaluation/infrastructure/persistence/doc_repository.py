@@ -71,7 +71,7 @@ class SqlAlchemyDocRepository(DocRepository):
                 p_doc = ParsedDoc(
                     doc_type=str(doc.doc_type),
                     text=str(parsed_record.raw_text),
-                    is_valid=(str(parsed_record.parsing_status) == "SUCCESS"),
+                    is_valid=(str(parsed_record.parsing_status) == "COMPLETED"),
                 )
 
             # C. 타입별 할당
@@ -122,14 +122,14 @@ class SqlAlchemyDocRepository(DocRepository):
         if existing_parsed:
             # Update
             existing_parsed.raw_text = parsed_doc.text  # type: ignore
-            existing_parsed.parsing_status = "SUCCESS" if parsed_doc.is_valid else "FAILED"  # type: ignore
+            existing_parsed.parsing_status = "COMPLETED" if parsed_doc.is_valid else "FAILED"  # type: ignore
             existing_parsed.updated_at = now  # type: ignore
         else:
             # Insert
             new_parsed = ApplicationDocumentParsed(
                 application_document_id=target_doc.application_document_id,
                 raw_text=parsed_doc.text,
-                parsing_status="SUCCESS" if parsed_doc.is_valid else "FAILED",
+                parsing_status="COMPLETED" if parsed_doc.is_valid else "FAILED",
                 created_at=now,
                 updated_at=now,
             )

@@ -39,27 +39,36 @@ jobs:
 
       - name: Create .env file
         run: |
+          # Profile & Mock Configs (브랜치별 분기)
+          if [ "${{ github.base_ref }}" == "main" ] || [ "${{ github.ref_name }}" == "main" ]; then
+            echo "PROFILE=${{ secrets.PROD_PROFILE }}" >> .env
+            echo "USE_MOCK=false" >> .env
+          else
+            echo "PROFILE=${{ secrets.DEV_PROFILE }}" >> .env
+            echo "USE_MOCK=${{ secrets.DEV_USE_MOCK }}" >> .env
+          fi
+
           # Weaviate Configs
           echo "WEAVIATE_HOST=${{ secrets.WEAVIATE_HOST }}" >> .env
           echo "WEAVIATE_PORT=${{ secrets.WEAVIATE_PORT }}" >> .env
           echo "WEAVIATE_GRPC_PORT=${{ secrets.WEAVIATE_GRPC_PORT }}" >> .env
-          
+
           # DB Configs
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          
+
           # LLM Configs
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}" >> .env
-          
+
           # Langfuse Configs
           echo "LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}" >> .env
           echo "LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}" >> .env
           echo "LANGFUSE_BASE_URL=${{ secrets.LANGFUSE_BASE_URL }}" >> .env
-          
+
           # AWS S3 Configs
           echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
@@ -121,27 +130,36 @@ jobs:
           
       - name: Create .env file
         run: |
+          # Profile & Mock Configs (브랜치별 분기)
+          if [ "${{ github.base_ref }}" == "main" ] || [ "${{ github.ref_name }}" == "main" ]; then
+            echo "PROFILE=${{ secrets.PROD_PROFILE }}" >> .env
+            echo "USE_MOCK=false" >> .env
+          else
+            echo "PROFILE=${{ secrets.DEV_PROFILE }}" >> .env
+            echo "USE_MOCK=${{ secrets.DEV_USE_MOCK }}" >> .env
+          fi
+
           # Weaviate Configs
           echo "WEAVIATE_HOST=${{ secrets.WEAVIATE_HOST }}" >> .env
           echo "WEAVIATE_PORT=${{ secrets.WEAVIATE_PORT }}" >> .env
           echo "WEAVIATE_GRPC_PORT=${{ secrets.WEAVIATE_GRPC_PORT }}" >> .env
-          
+
           # DB Configs
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          
+
           # LLM Configs
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}" >> .env
-          
+
           # Langfuse Configs
           echo "LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}" >> .env
           echo "LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}" >> .env
           echo "LANGFUSE_BASE_URL=${{ secrets.LANGFUSE_BASE_URL }}" >> .env
-          
+
           # AWS S3 Configs
           echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
@@ -199,7 +217,7 @@ jobs:
       - name: Set meta
         id: meta
         run: |
-          echo "timestamp=$(TZ='Asia/Seoul' date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+          echo "timestamp=$(TZ='Asia/Seoul' date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
 
       - name: Download built artifact
         uses: actions/download-artifact@v4
