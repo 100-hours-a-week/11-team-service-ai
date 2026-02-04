@@ -6,8 +6,11 @@ import asyncio
 # 현재 디렉토리(tests/integration)의 상위 상위 디렉토리(ai)를 path에 추가하여 모듈 import 가능하게 함
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from pipelines.applicant_evaluation.infrastructure.adapters.s3_storage import (
+from pipelines.applicant_evaluation.infrastructure.adapters.storage.s3_storage import (
     S3FileStorage,
+)
+from pipelines.applicant_evaluation.infrastructure.adapters.parser.pdf_extractor import (
+    PyPdfExtractor,
 )
 
 
@@ -23,11 +26,20 @@ async def test_s3_pdf_upload_download_manual():
     except Exception as e:
         pytest.skip(f"S3 연결 실패 (설정 확인 필요): {e}")
 
+    # PDF Extractor 초기화
+    extractor = PyPdfExtractor()
+
     # 테스트에 사용할 실제 파일 목록
-    # 프로젝트 루트 기준 경로 설정
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-    origin_dir = os.path.join(project_root, "tests/test_data/document/origin")
-    download_dir = os.path.join(project_root, "tests/test_data/document/download")
+    # 현재 파일 위치: tests/integration/pipelines/applicant_evaluation/infrastructure/adapters/test_s3_storage.py
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # 1. 원본 파일 경로: tests/fixtures/data/document
+    # tests 폴더까지 5단계 올라감
+    tests_dir = os.path.abspath(os.path.join(current_dir, "../../../../../"))
+    origin_dir = os.path.join(tests_dir, "fixtures/data/document")
+
+    # 2. 다운로드 경로: 현재 파일 위치 하위의 data 폴더
+    download_dir = os.path.join(current_dir, "data")
 
     # 다운로드 디렉토리는 없으면 생성
     os.makedirs(download_dir, exist_ok=True)
@@ -84,6 +96,31 @@ async def test_s3_pdf_upload_download_manual():
                 f.write(downloaded_content)
 
             print(f"✅ [Test] {filename} Download success. Saved to: {save_path}")
+
+            # 4. Text Extraction (Verification)
+            try:
+                extracted_text = await extractor.extract_text(downloaded_content)
+                text_len = len(extracted_text)
+                print(f"       -> Extracted Text Length: {text_len} chars")
+
+                # 추출된 텍스트 저장
+                txt_filename = f"downloaded_{os.path.splitext(filename)[0]}.txt"
+                txt_save_path = os.path.join(download_dir, txt_filename)
+                with open(txt_save_path, "w", encoding="utf-8") as f:
+                    f.write(extracted_text)
+
+                print(
+                    f"✅ [Test] {filename} Extraction success. Saved to: {txt_save_path}"
+                )
+                print(
+                    f"       -> Preview: {extracted_text[:100].replace(chr(10), ' ')}..."
+                )
+
+            except Exception as e:
+                print(
+                    f"⚠️ [Test] {filename} Extraction failed (might vary by PDF type): {e}"
+                )
+
         except Exception as e:
             pytest.fail(f"{filename} Download failed: {e}")
 
