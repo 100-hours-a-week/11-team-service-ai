@@ -16,7 +16,7 @@ def test_crawlers():
     test_urls = [
         {
             "site": "Saramin_1",
-            "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?isMypage=no&rec_idx=52971006&recommend_ids=eJxNzsENxSAMA9Bpek8Mwfb5D9L9tyjql0i5PTlYLpjTw7cyL%2F4K8pqrbgdeOrjfTuNPBZxN0prnr5k51uHOwugqi8k%2BNrHUKanN07x73ausUcgPBeVns6LQBCrfGQ8PUDBV&view_type=list&gz=1&t_ref_content=general&t_ref=jobcategory_recruit&relayNonce=856a7878d2637de6c697&immediately_apply_layer_open=n#seq=0",
+            "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?isMypage=no&rec_idx=52971006&recommend_ids=eJxNzsENxSAMA9Bpek8Mwfb5D9L9tyjql0i5PTlYLpjTw7cyL%2F4K8pqrbgdeOrjfTuNPBZxN0prnr5k51uHOwugqi8k%2BNrHUKanN07x73ausUcgPBeVns6LQBCrfGQ8PUDBV&view_type=list&gz=1&t_ref_content=general&t_ref=jobcategory_recruit&relayNonce=856a7878d2637de6c697&immediately_apply_layer_open=n#seq=3",
         }
     ]
 
