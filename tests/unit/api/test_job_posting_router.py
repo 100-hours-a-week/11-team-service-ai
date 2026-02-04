@@ -29,7 +29,7 @@ def test_analyze_job_posting_success():
 
         # 3. 요청 실행
         payload = {"url": "http://example.com/job/123"}
-        response = client.post("/api/v1/job-posting/analyze", json=payload)
+        response = client.post("/ai/api/v1/job-posting/analyze", json=payload)
 
         # 4. 검증
         assert response.status_code == 200
@@ -49,7 +49,7 @@ def test_analyze_job_posting_success():
 def test_analyze_job_posting_invalid_input():
     # URL 필드 누락
     payload = {}
-    response = client.post("/api/v1/job-posting/analyze", json=payload)
+    response = client.post("/ai/api/v1/job-posting/analyze", json=payload)
 
     # RequestValidationError 핸들러에 의해 400 Bad Request 반환 예상 (main.py 설정)
     assert response.status_code == 400

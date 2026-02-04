@@ -68,10 +68,11 @@ async def test_extract_job_data_success(service, mock_crawler, mock_extractor):
 @pytest.mark.asyncio
 async def test_extract_job_data_invalid_url(service, mock_crawler):
     # Given
-    url = "https://www.wanted.co.kr/wd/123"  # Not Saramin
+    # Given
+    url = "https://www.google.com/search?q=job"  # Not Saramin, Not Wanted
 
     # When & Then
-    with pytest.raises(ValueError, match="사람인.*지원"):
+    with pytest.raises(ValueError, match="사람인.*원티드.*지원"):
         await service.extract_job_data(url)
 
     # Crawler should NOT be called

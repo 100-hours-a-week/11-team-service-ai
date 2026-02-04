@@ -9,7 +9,7 @@ from shared.schema.applicant import (
 from shared.schema.common_schema import ApiResponse
 from api.service.applicant import ApplicantService
 
-router = APIRouter(prefix="/api/v1/applicant", tags=["Applicant"])
+router = APIRouter(prefix="/ai/api/v1/applicant", tags=["Applicant"])
 
 
 @router.post(

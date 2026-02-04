@@ -13,7 +13,7 @@ from api.service.document import DocumentService
 # I'll create one router that handles both prefixes or just add endpoints.
 # I will use Tags to separate them in swagger.
 
-router = APIRouter(prefix="/api/v1", tags=["Document Analysis"])
+router = APIRouter(prefix="/ai/api/v1", tags=["Document Analysis"])
 
 
 @router.post(
