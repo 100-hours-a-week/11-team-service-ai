@@ -63,21 +63,26 @@ class SaraminCrawler(BasePlaywrightCrawler):
         except Exception as e:
             logger.error(f"❌ Body selector not found or error: {e}")
 
-        # 3. 접수 방법 (.jv_howto) 추출 (추가)
-        # .wrap_jv_cont 내부에서 탐색
-        howto_text = ""
+        # 3. 채용 기간 및 접수 방법 추출 (.info_period)
+        # .wrap_jv_cont 내부 혹은 전체에서 탐색하며, 첫 번째 요소만 가져옴
+        period_text = ""
         try:
             # 우선순위: 컨테이너 내부 -> 전체
-            howto_selector = f"{container_selector} .jv_howto"
+            period_selector = f"{container_selector} .info_period"
 
-            if page.locator(howto_selector).count() > 0:
-                howto_text = self._clean_html(page.locator(howto_selector).inner_html())
-                logger.info(f"✅ Found howto: {howto_selector}")
-            elif page.locator(".jv_howto").count() > 0:
-                howto_text = self._clean_html(page.locator(".jv_howto").inner_html())
-                logger.info("✅ Found howto: .jv_howto (Global)")
+            target_element = None
+            if page.locator(period_selector).count() > 0:
+                target_element = page.locator(period_selector).first
+                logger.info(f"✅ Found period info: {period_selector}")
+            elif page.locator(".info_period").count() > 0:
+                target_element = page.locator(".info_period").first
+                logger.info("✅ Found period info: .info_period (Global)")
+
+            if target_element:
+                period_text = self._clean_html(target_element.inner_html())
+
         except Exception:
-            logger.warning("⚠️ Failed to extract howto section")
+            logger.warning("⚠️ Failed to extract period info section")
 
-        # 4. 헤더, 본문, 접수방법 합치기
-        return f"{header_text}\n\n{body_text}\n\n{howto_text}".strip()
+        # 4. 헤더, 본문, 접수정보 합치기
+        return f"{header_text}\n\n{body_text}\n\n{period_text}".strip()
