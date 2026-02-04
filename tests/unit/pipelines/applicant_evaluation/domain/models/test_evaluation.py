@@ -1,6 +1,6 @@
-
 import pytest
 from pipelines.applicant_evaluation.domain.models.evaluation import CompetencyResult
+
 
 class TestCompetencyResult:
     def test_score_validation_valid(self):

@@ -1,4 +1,3 @@
-
 import logging
 from typing import List
 from ....domain.interface.adapter_interfaces import AnalystAgent
@@ -7,6 +6,7 @@ from ....domain.models.evaluation import CompetencyResult
 from ....domain.models.report import OverallFeedback
 
 logger = logging.getLogger(__name__)
+
 
 class MockAnalyst(AnalystAgent):
     """

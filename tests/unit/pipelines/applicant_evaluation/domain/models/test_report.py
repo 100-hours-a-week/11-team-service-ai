@@ -1,18 +1,25 @@
-
 import pytest
-from pipelines.applicant_evaluation.domain.models.report import AnalysisReport, OverallFeedback, AnalysisReportError
+from pipelines.applicant_evaluation.domain.models.report import (
+    AnalysisReport,
+    OverallFeedback,
+    AnalysisReportError,
+)
 from pipelines.applicant_evaluation.domain.models.evaluation import CompetencyResult
 from pipelines.applicant_evaluation.domain.models.job import JobInfo, EvaluationCriteria
+
 
 class TestAnalysisReport:
     @pytest.fixture
     def job_info(self):
         return JobInfo(
-            company_name="Test", main_tasks=[], tech_stacks=[], summary="",
+            company_name="Test",
+            main_tasks=[],
+            tech_stacks=[],
+            summary="",
             evaluation_criteria=[
                 EvaluationCriteria(name="A", description=""),
-                EvaluationCriteria(name="B", description="")
-            ]
+                EvaluationCriteria(name="B", description=""),
+            ],
         )
 
     @pytest.fixture
@@ -23,11 +30,11 @@ class TestAnalysisReport:
         """모든 기준 충족 시 생성 성공 및 평균 점수 계산 확인"""
         results = [
             CompetencyResult(name="A", score=80, description=""),
-            CompetencyResult(name="B", score=90, description="")
+            CompetencyResult(name="B", score=90, description=""),
         ]
-        
+
         report = AnalysisReport.create(job_info, results, feedback)
-        
+
         assert isinstance(report, AnalysisReport)
         # (80 + 90) / 2 = 85.0
         assert report.overall_score == 85.0
@@ -35,10 +42,8 @@ class TestAnalysisReport:
     def test_create_completeness_validation_fail(self, job_info, feedback):
         """평가 기준 중 하나라도 결과가 없으면 생성 실패"""
         # Criteria has A, B but results only have A
-        results = [
-            CompetencyResult(name="A", score=80, description="")
-        ]
-        
+        results = [CompetencyResult(name="A", score=80, description="")]
+
         with pytest.raises(AnalysisReportError, match="누락"):
             AnalysisReport.create(job_info, results, feedback)
 
@@ -46,10 +51,10 @@ class TestAnalysisReport:
         """종합 피드백 내용이 비어있으면 생성 실패"""
         results = [
             CompetencyResult(name="A", score=80, description=""),
-            CompetencyResult(name="B", score=90, description="")
+            CompetencyResult(name="B", score=90, description=""),
         ]
         empty_feedback = OverallFeedback(one_line_review="", feedback_detail="")
-        
+
         with pytest.raises(AnalysisReportError, match="종합 평가 데이터"):
             AnalysisReport.create(job_info, results, empty_feedback)
 
@@ -57,7 +62,7 @@ class TestAnalysisReport:
         """점수 계산 시 소수점 반올림 확인"""
         results = [
             CompetencyResult(name="A", score=80, description=""),
-            CompetencyResult(name="B", score=81, description="")
+            CompetencyResult(name="B", score=81, description=""),
         ]
         # (80 + 81) / 2 = 80.5
         report = AnalysisReport.create(job_info, results, feedback)

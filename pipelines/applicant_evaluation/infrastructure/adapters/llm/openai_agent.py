@@ -1,6 +1,5 @@
-
 import logging
-from typing import List
+from typing import List, Optional
 import json
 from openai import AsyncOpenAI
 from shared.config import settings
@@ -17,7 +16,7 @@ class OpenAiAnalyst(AnalystAgent):
     OpenAI API를 사용하여 지원자를 분석하는 AI 에이전트 구현체 (Async)
     """
 
-    def __init__(self, client: AsyncOpenAI = None):
+    def __init__(self, client: Optional[AsyncOpenAI] = None):
         """
         :param client: AsyncOpenAI 클라이언트 (DI)
                        테스트 시에는 Mock 객체를, 실제 구동 시에는 실제 클라이언트를 주입받음.
@@ -78,6 +77,8 @@ class OpenAiAnalyst(AnalystAgent):
         )
 
         raw_content = response.choices[0].message.content
+        if not raw_content:
+            raise ValueError("Empty response from OpenAI")
         data = json.loads(raw_content)
 
         return CompetencyResult(
@@ -92,7 +93,7 @@ class OpenAiAnalyst(AnalystAgent):
         """
         개별 평가 결과를 종합하여 최종 리포트 생성
         """
-        
+
         # 평가 결과 요약 텍스트 생성
         results_summary = "\n".join(
             [f"- {r.name}: {r.score}점. {r.description}" for r in competency_results]
@@ -131,7 +132,10 @@ class OpenAiAnalyst(AnalystAgent):
             temperature=0.2,
         )
 
-        data = json.loads(response.choices[0].message.content)
+        raw_content = response.choices[0].message.content
+        if not raw_content:
+            raise ValueError("Empty response from OpenAI")
+        data = json.loads(raw_content)
 
         return OverallFeedback(
             one_line_review=data.get("one_line_review", ""),

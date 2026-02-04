@@ -40,7 +40,7 @@ def test_analyze_job_posting_success():
 
         # Bridge 함수가 서비스에 의해 호출되었는지 확인
         mock_bridge_call.assert_called_once()
-        
+
         # 호출 인자 검증 (Service가 Request 객체를 잘 만들어서 넘겼는지)
         args = mock_bridge_call.call_args[0]
         assert args[0].url == "http://example.com/job/123"

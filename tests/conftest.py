@@ -1,16 +1,16 @@
-
 import pytest
 import asyncio
 from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 # DB 설정 가져오기 (Import Error 방지)
 try:
-    from shared.db.connection import engine, Base
+    from shared.db.connection import engine
 except ImportError:
     # shared 모듈이 경로에 없을 경우를 대비 (보통 pytest 실행 시, rootdir이 잡혀있어 괜찮음)
     pass
+
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -34,19 +34,19 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     connection = await engine.connect()
     transaction = await connection.begin()
-    
+
     # 롤백을 보장하기 위해 비동기 세션 생성 시 bind=connection 사용
     session_factory = sessionmaker(
-        bind=connection,
+        bind=connection,  # type: ignore
         class_=AsyncSession,
         expire_on_commit=False,
         autocommit=False,
         autoflush=False,
     )
-    
+
     async with session_factory() as session:
         yield session
-        
+
         # 테스트가 끝난 후 롤백
         await transaction.rollback()
         await connection.close()

@@ -5,6 +5,7 @@ from openai import AsyncOpenAI
 from shared.config import settings
 from .infrastructure.adapters.llm.openai_agent import OpenAiAnalyst
 from .infrastructure.adapters.llm.mock_agent import MockAnalyst
+from .domain.interface.adapter_interfaces import AnalystAgent
 from .infrastructure.adapters.storage.s3_storage import S3FileStorage
 from .infrastructure.adapters.parser.pdf_extractor import PyPdfExtractor
 from .application.services.analyzer import ApplicationAnalyzer
@@ -24,10 +25,11 @@ async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
 
         file_storage = S3FileStorage()
         extractor = PyPdfExtractor()
-        
+
         # External Clients (DI) & Mock Selection
         # use_mock 프로퍼티가 있다면 그것을 사용 (dev profile 체크 포함됨)
         # 또는 settings.USE_MOCK을 직접 사용해도 됨
+        agent: AnalystAgent
         if getattr(settings, "use_mock", False):
             agent = MockAnalyst()
         else:

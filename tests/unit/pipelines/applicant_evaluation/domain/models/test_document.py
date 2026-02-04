@@ -1,6 +1,10 @@
-
 import pytest
-from pipelines.applicant_evaluation.domain.models.document import ParsedDoc, ApplicantDocuments, FileInfo
+from pipelines.applicant_evaluation.domain.models.document import (
+    ParsedDoc,
+    ApplicantDocuments,
+    FileInfo,
+)
+
 
 class TestParsedDoc:
     def test_analyzable_condition_length(self):
@@ -38,7 +42,7 @@ class TestApplicantDocuments:
     @pytest.fixture
     def resume_file(self):
         return FileInfo(file_path="path/to/resume", file_type="RESUME")
-        
+
     @pytest.fixture
     def portfolio_file(self):
         return FileInfo(file_path="path/to/portfolio", file_type="PORTFOLIO")
@@ -69,7 +73,7 @@ class TestApplicantDocuments:
         """파싱 데이터가 있지만 유효하지 않으면(너무 짧음) Not Ready"""
         invalid_parsed = ParsedDoc(doc_type="RESUME", text="Short")
         docs = ApplicantDocuments(resume_file=resume_file, parsed_resume=invalid_parsed)
-        
+
         # 주의: 현재 로직상 '분석 불가능'도 '준비 안 됨'으로 취급하여 재파싱 등을 유도할 수 있음
         # 혹은 '준비는 됐으나 내용 미달'로 볼 수도 있음. 코드(document.py) 로직에 따르면 False임.
         assert docs.is_ready_for_analysis() is False
@@ -78,12 +82,12 @@ class TestApplicantDocuments:
     def test_missing_types_multiple(self, resume_file, portfolio_file, valid_parsed):
         """이력서는 준비됐지만 포트폴리오가 없을 때"""
         docs = ApplicantDocuments(
-            resume_file=resume_file, 
+            resume_file=resume_file,
             parsed_resume=valid_parsed,
             portfolio_file=portfolio_file,
-            parsed_portfolio=None
+            parsed_portfolio=None,
         )
-        
+
         assert docs.is_ready_for_analysis() is False
         # 순서 중요하지 않다면 set 비교 권장, 여기선 리스트
         assert docs.get_missing_parsed_types() == ["PORTFOLIO"]

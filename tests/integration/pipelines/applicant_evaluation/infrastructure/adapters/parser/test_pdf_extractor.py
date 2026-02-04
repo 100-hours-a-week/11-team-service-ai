@@ -3,9 +3,11 @@ import os
 import asyncio
 
 # 현재 디렉토리(tests/unit)의 상위 상위 디렉토리(ai)를 path에 추가하여 모듈 import 가능하게 함
-# 현재 디렉토리(tests/integration/pipelines/applicant_evaluation/infrastructure/adapters/parser)에서 
+# 현재 디렉토리(tests/integration/pipelines/applicant_evaluation/infrastructure/adapters/parser)에서
 # 프로젝트 루트(ai)까지 7단계 상위 이동
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../../")))
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../../"))
+)
 
 from pipelines.applicant_evaluation.infrastructure.adapters.parser.pdf_extractor import (
     PyPdfExtractor,
@@ -24,7 +26,9 @@ async def test_local_pdf_parsing():
 
     # 2. Configure Paths
     # 프로젝트 루트: ai 폴더
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../../"))
+    project_root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../../../../../../../")
+    )
 
     # 입력: tests/fixtures/data/document/download (사용자 지정 소스)
     input_dir = os.path.join(project_root, "tests/fixtures/data/document/download")

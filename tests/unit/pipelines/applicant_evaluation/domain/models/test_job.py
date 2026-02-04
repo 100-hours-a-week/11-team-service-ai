@@ -1,6 +1,6 @@
-
 import pytest
 from pipelines.applicant_evaluation.domain.models.job import JobInfo, EvaluationCriteria
+
 
 class TestJobInfo:
     @pytest.fixture
@@ -14,7 +14,7 @@ class TestJobInfo:
             main_tasks=["Task1"],
             tech_stacks=["Python"],
             summary="Good Job",
-            evaluation_criteria=valid_criteria
+            evaluation_criteria=valid_criteria,
         )
         # Should not raise
         job.validate()
@@ -22,11 +22,11 @@ class TestJobInfo:
     def test_validation_missing_company_name(self, valid_criteria):
         """회사명이 비어있으면 에러 발생"""
         job = JobInfo(
-            company_name="", # Empty
+            company_name="",  # Empty
             main_tasks=["Task1"],
             tech_stacks=["Python"],
             summary="Job",
-            evaluation_criteria=valid_criteria
+            evaluation_criteria=valid_criteria,
         )
         with pytest.raises(ValueError, match="Company name"):
             job.validate()
@@ -38,7 +38,7 @@ class TestJobInfo:
             main_tasks=["Task1"],
             tech_stacks=["Python"],
             summary="Job",
-            evaluation_criteria=[] # Empty
+            evaluation_criteria=[],  # Empty
         )
         with pytest.raises(ValueError, match="Evaluation criteria"):
             job.validate()
