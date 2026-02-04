@@ -1,0 +1,75 @@
+import logging
+import os
+from pipelines.job_analysis.infrastructure.adapters.crawling.router import (
+    DynamicRoutingCrawler,
+)
+
+# 로그 설정
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("DevTester")
+
+
+def test_crawlers():
+    # 테스트할 URL 목록
+    test_urls = [
+        {
+            "site": "Saramin_1",
+            "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?isMypage=no&rec_idx=52971006&recommend_ids=eJxNzsENxSAMA9Bpek8Mwfb5D9L9tyjql0i5PTlYLpjTw7cyL%2F4K8pqrbgdeOrjfTuNPBZxN0prnr5k51uHOwugqi8k%2BNrHUKanN07x73ausUcgPBeVns6LQBCrfGQ8PUDBV&view_type=list&gz=1&t_ref_content=general&t_ref=jobcategory_recruit&relayNonce=856a7878d2637de6c697&immediately_apply_layer_open=n#seq=0",
+        }
+    ]
+
+    # 결과 저장 디렉토리
+    output_dir = "./tests/integration/pipelines/job_analysis/parser/data/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    print("\n" + "=" * 60)
+    print("🚀 Starting Development Crawler Test")
+    print("=" * 60 + "\n")
+
+    for item in test_urls:
+        site = item["site"]
+        url = item["url"]
+
+        print(f"🎯 Testing [{site}]")
+        print(f"🔗 URL: {url}")
+
+        try:
+            # 1. 라우팅 크롤러 초기화
+            crawler = DynamicRoutingCrawler()
+
+            # (옵션) 내부 전략 확인을 위한 로깅은 router 내부 구현에 따름
+            # 여기서는 fetch 호출만 하면 됨
+
+            # 2. 크롤링 실행
+            text = crawler.fetch(url)
+
+            # 3. 결과 검증
+            content_length = len(text)
+            print(f"✅ Success! Content Length: {content_length} chars")
+
+            if content_length < 50:
+                print("⚠️  Warning: Content seems too short!")
+
+            # 4. 파일 저장
+            filename = f"{site.lower()}_result.txt"
+            filepath = os.path.join(output_dir, filename)
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(text)
+
+            print(f"💾 Saved sample to: {filepath}")
+
+            # 5. 본문 미리보기 (앞 200자)
+            print("-" * 20 + " Preview " + "-" * 20)
+            print(text[:200].replace("\n", " ") + "...")
+            print("-" * 50)
+
+        except Exception as e:
+            print(f"❌ Failed: {e}")
+
+        print("\n" + "=" * 60 + "\n")
+
+
+if __name__ == "__main__":
+    test_crawlers()
