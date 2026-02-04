@@ -14,10 +14,7 @@ logger = logging.getLogger("DevTester")
 def test_crawlers():
     # 테스트할 URL 목록
     test_urls = [
-        {
-            "site": "Saramin_1",
-            "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?isMypage=no&rec_idx=52971006&recommend_ids=eJxNzsENxSAMA9Bpek8Mwfb5D9L9tyjql0i5PTlYLpjTw7cyL%2F4K8pqrbgdeOrjfTuNPBZxN0prnr5k51uHOwugqi8k%2BNrHUKanN07x73ausUcgPBeVns6LQBCrfGQ8PUDBV&view_type=list&gz=1&t_ref_content=general&t_ref=jobcategory_recruit&relayNonce=856a7878d2637de6c697&immediately_apply_layer_open=n#seq=3",
-        }
+            "https://www.wanted.co.kr/wd/330563",
     ]
 
     # 결과 저장 디렉토리
@@ -28,12 +25,9 @@ def test_crawlers():
     print("🚀 Starting Development Crawler Test")
     print("=" * 60 + "\n")
 
-    for item in test_urls:
-        site = item["site"]
-        url = item["url"]
+    for url in test_urls:
 
-        print(f"🎯 Testing [{site}]")
-        print(f"🔗 URL: {url}")
+        print(f"🎯 Testing [{url}]")
 
         try:
             # 1. 라우팅 크롤러 초기화
@@ -53,7 +47,7 @@ def test_crawlers():
                 print("⚠️  Warning: Content seems too short!")
 
             # 4. 파일 저장
-            filename = f"{site.lower()}_result.txt"
+            filename = f"crawlers_result.txt"
             filepath = os.path.join(output_dir, filename)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(text)
