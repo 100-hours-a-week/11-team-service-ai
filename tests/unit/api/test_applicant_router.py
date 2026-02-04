@@ -31,7 +31,7 @@ def test_evaluate_applicant_success():
 
         # 3. Request
         payload = {"user_id": "user_123", "job_posting_id": "job_456"}
-        response = client.post("/api/v1/applicant/evaluate", json=payload)
+        response = client.post("/ai/api/v1/applicant/evaluate", json=payload)
 
         # 4. Verify
         assert response.status_code == 200
@@ -62,7 +62,7 @@ def test_compare_applicants_success():
             "job_posting_id": "job_1",
             "competitor": "other_guy",
         }
-        response = client.post("/api/v1/applicant/compare", json=payload)
+        response = client.post("/ai/api/v1/applicant/compare", json=payload)
 
         # 4. Verify
         assert response.status_code == 200

@@ -51,9 +51,7 @@ class WantedCrawler(BasePlaywrightCrawler):
 
     def _extract_description(self, page: Page) -> str:
         """공고 본문 — "상세정보 더보기" 버튼이 있으면 클릭 후 전체 본문 추출"""
-        description_selector = (
-            f"{self._WRAPPER} .JobDescription_JobDescription__s2Keo"
-        )
+        description_selector = f"{self._WRAPPER} .JobDescription_JobDescription__s2Keo"
         wrapper_selector = (
             f"{description_selector}"
             " .JobDescription_JobDescription__paragraph__wrapper__WPrKC"

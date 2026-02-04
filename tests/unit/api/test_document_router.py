@@ -22,7 +22,7 @@ def test_analyze_resume_success():
         mock_call.return_value = mock_response
 
         payload = {"user_id": "u1", "job_posting_id": "j1"}
-        response = client.post("/api/v1/resume/analyze", json=payload)
+        response = client.post("/ai/api/v1/resume/analyze", json=payload)
 
         assert response.status_code == 200
         json_data = response.json()
@@ -45,7 +45,7 @@ def test_analyze_portfolio_success():
         mock_call.return_value = mock_response
 
         payload = {"user_id": "u1", "job_posting_id": "j1"}
-        response = client.post("/api/v1/portfolio/analyze", json=payload)
+        response = client.post("/ai/api/v1/portfolio/analyze", json=payload)
 
         assert response.status_code == 200
         json_data = response.json()

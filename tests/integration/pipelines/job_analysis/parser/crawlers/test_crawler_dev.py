@@ -14,7 +14,7 @@ logger = logging.getLogger("DevTester")
 def test_crawlers():
     # 테스트할 URL 목록
     test_urls = [
-            "https://www.wanted.co.kr/wd/330563",
+        "https://www.wanted.co.kr/wd/330563",
     ]
 
     # 결과 저장 디렉토리
@@ -47,7 +47,7 @@ def test_crawlers():
                 print("⚠️  Warning: Content seems too short!")
 
             # 4. 파일 저장
-            filename = f"crawlers_result.txt"
+            filename = "crawlers_result.txt"
             filepath = os.path.join(output_dir, filename)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(text)

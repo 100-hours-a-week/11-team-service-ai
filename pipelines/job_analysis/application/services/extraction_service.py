@@ -27,7 +27,9 @@ class JobExtractionService:
         # 0. 정책 검증 (Application Policy)
         # 현재는 사람인(Saramin) 공고만 지원함
         if "saramin.co.kr" not in url and "wanted.co.kr" not in url:
-            raise ValueError("현재는 사람인(Saramin), 원티드(Wanted) 채용 공고만 지원합니다.")
+            raise ValueError(
+                "현재는 사람인(Saramin), 원티드(Wanted) 채용 공고만 지원합니다."
+            )
 
         try:
             # 1. 크롤링 (Crawling)

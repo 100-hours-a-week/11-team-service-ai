@@ -8,7 +8,7 @@ from shared.schema.job_posting import (
 )
 from api.service.job_posting import JobPostingService
 
-router = APIRouter(prefix="/api/v1/job-posting", tags=["Job Posting"])
+router = APIRouter(prefix="/ai/api/v1/job-posting", tags=["Job Posting"])
 
 
 @router.post(
