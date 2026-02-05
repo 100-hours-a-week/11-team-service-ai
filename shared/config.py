@@ -43,7 +43,6 @@ class Settings(BaseSettings):
         """Constructs the Weaviate connection URL."""
         return f"http://{self.WEAVIATE_HOST}:{self.WEAVIATE_PORT}"
 
-
     # LLM 공급자
     LLM_PROVIDER: str = "openai"  # openai or gemini
 

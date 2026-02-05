@@ -1,15 +1,18 @@
+import logging
 from shared.db.connection import get_db
 from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 from .infrastructure.persistence.doc_repository import SqlAlchemyDocRepository
-from openai import AsyncOpenAI
 from shared.config import settings
-from .infrastructure.adapters.llm.openai_agent import OpenAiAnalyst
+from .infrastructure.adapters.llm.openai_agent import LLMAnalyst
 from .infrastructure.adapters.llm.mock_agent import MockAnalyst
 from .domain.interface.adapter_interfaces import AnalystAgent
 from .infrastructure.adapters.storage.s3_storage import S3FileStorage
 from .infrastructure.adapters.parser.pdf_extractor import PyPdfExtractor
 from .application.services.analyzer import ApplicationAnalyzer
 from shared.schema.applicant import EvaluateRequest, EvaluateResponse
+from langchain_core.language_models import BaseChatModel
+
+logger = logging.getLogger(__name__)
 
 
 async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
@@ -33,8 +36,36 @@ async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
         if getattr(settings, "use_mock", False):
             agent = MockAnalyst()
         else:
-            openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-            agent = OpenAiAnalyst(client=openai_client)
+            llm_model: BaseChatModel
+            if getattr(settings, "LLM_PROVIDER", "openai") == "gemini":
+                from langchain_google_genai import ChatGoogleGenerativeAI
+
+                model = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+                logger.info(f"🤖 Initializing LLMJobExtractor with gemini ({model})")
+
+                llm_model = ChatGoogleGenerativeAI(
+                    model=model,
+                    google_api_key=settings.GOOGLE_API_KEY,
+                    temperature=0,
+                )
+            else:
+                from langchain_openai import ChatOpenAI
+                from pydantic import SecretStr
+
+                model = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+                logger.info(f"🤖 Initializing LLMJobExtractor with OpenAI ({model})")
+
+                llm_model = ChatOpenAI(
+                    model=model,
+                    temperature=0,
+                    api_key=(
+                        SecretStr(settings.OPENAI_API_KEY)
+                        if settings.OPENAI_API_KEY
+                        else None
+                    ),
+                    model_kwargs={"response_format": {"type": "json_object"}},
+                )
+            agent = LLMAnalyst(llm=llm_model)
 
         # 2. Application Layer 서비스에 의존성 주입 (Wiring)
         analyzer = ApplicationAnalyzer(

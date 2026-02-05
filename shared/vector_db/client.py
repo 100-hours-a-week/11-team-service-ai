@@ -31,7 +31,7 @@ class WeaviateConnectionManager:
                 host=settings.WEAVIATE_HOST,
                 port=settings.WEAVIATE_PORT,
                 grpc_port=settings.WEAVIATE_GRPC_PORT,
-                headers={"X-OpenAI-Api-Key": settings.OPENAI_API_KEY},
+                headers={"X-OpenAI-Api-Key": settings.OPENAI_API_KEY or ""},
             )
 
             logger.info(

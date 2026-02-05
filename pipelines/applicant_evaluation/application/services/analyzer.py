@@ -83,21 +83,9 @@ class ApplicationAnalyzer:
         )
 
         # 6. 응답 반환 (DTO 변환)
-        # 6. 응답 반환 (Schema 변환)
-        # TODO: PipelineEvaluateResponse 대신 shared.schema.applicant.EvaluateResponse 사용으로 변경됨에 따라 매핑 수정
-        from shared.schema.applicant import CompetencyScore
+        from ..dtos import PipelineEvaluateResponse
 
-        return EvaluateResponse(
-            overall_score=float(report.overall_score),
-            competency_scores=[
-                CompetencyScore(
-                    name=r.name, score=float(r.score), description=r.description
-                )
-                for r in report.competency_scores
-            ],
-            one_line_review=report.one_line_review,
-            feedback_detail=report.feedback_detail,
-        )
+        return PipelineEvaluateResponse.from_domain(report)
 
     async def _prepare_documents(self, user_id: int, job_id: int, documents):
         """텍스트 추출이 필요한 문서들을 처리하여 저장소에 저장하는 헬퍼 메서드 (Async)"""
