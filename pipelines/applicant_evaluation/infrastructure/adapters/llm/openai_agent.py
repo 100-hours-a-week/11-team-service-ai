@@ -87,10 +87,14 @@ class LLMAnalyst(AnalystAgent):
                 }
             )
 
+            logger.info(
+                f"✅ Evaluated criteria: {criteria.name} (Score: {result.score})"
+            )
+
             return CompetencyResult(
                 name=criteria.name, score=result.score, description=result.description
             )
-
+            
         except Exception as e:
             logger.error(f"❌ Evaluation failed for {criteria.name}: {e}")
             # 실패 시 기본값 반환 혹은 재시도 로직 (여기선 0점 처리)
