@@ -1,7 +1,7 @@
 import pytest
 import json
 
-from pipelines.applicant_evaluation.infrastructure.adapters.llm.openai_agent import (
+from pipelines.applicant_evaluation.infrastructure.adapters.llm.ai_agent import (
     LLMAnalyst,
 )
 from pipelines.applicant_evaluation.domain.models.job import JobInfo, EvaluationCriteria
