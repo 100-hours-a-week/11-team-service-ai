@@ -3,7 +3,7 @@ from shared.db.connection import get_db
 from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 from .infrastructure.persistence.doc_repository import SqlAlchemyDocRepository
 from shared.config import settings
-from .infrastructure.adapters.llm.openai_agent import LLMAnalyst
+from .infrastructure.adapters.llm.ai_agent import LLMAnalyst
 from .infrastructure.adapters.llm.mock_agent import MockAnalyst
 from .domain.interface.adapter_interfaces import AnalystAgent
 from .infrastructure.adapters.storage.s3_storage import S3FileStorage
