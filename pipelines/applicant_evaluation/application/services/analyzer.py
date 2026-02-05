@@ -71,7 +71,7 @@ class ApplicationAnalyzer:
         logger.info(
             f"🤖 Starting AI evaluation for {len(job_info.evaluation_criteria)} criteria for User: {user_id}"
         )
-        
+
         evaluation_tasks = [
             self.agent.evaluate_competency(
                 job_info=job_info,
@@ -85,7 +85,7 @@ class ApplicationAnalyzer:
         competency_results: List[CompetencyResult] = await asyncio.gather(
             *evaluation_tasks
         )
-        
+
         logger.info("✅ Individual competency evaluation complete.")
 
         # 5. 종합 평가 및 리포트 생성 (AI Synthesis -> Domain Factory)

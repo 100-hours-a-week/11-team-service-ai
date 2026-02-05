@@ -40,8 +40,10 @@ class JobExtractionService:
             if not raw_text or len(raw_text) < 50:
                 logger.warning("⚠️ Crawled content is too short.")
                 raise ValueError("Crawled content is empty or too short.")
-            
-            logger.info(f"✅ Crawling complete ({len(raw_text)} chars). Starting extraction...")
+
+            logger.info(
+                f"✅ Crawling complete ({len(raw_text)} chars). Starting extraction..."
+            )
 
             # 2. 추출 (Extraction)
             extracted_data = await self.extractor.extract(raw_text)
@@ -49,7 +51,9 @@ class JobExtractionService:
                 logger.error("❌ LLM Extraction returned empty result")
                 raise RuntimeError("LLM Extraction returned empty result")
 
-            logger.info(f"✅ Extraction complete for '{extracted_data.company_name}' - '{extracted_data.job_title}'")
+            logger.info(
+                f"✅ Extraction complete for '{extracted_data.company_name}' - '{extracted_data.job_title}'"
+            )
 
             # 3. Response 매핑 (Domain Model -> Presentation Schema)
             return JobDataMapper.to_analyze_response(extracted_data)
