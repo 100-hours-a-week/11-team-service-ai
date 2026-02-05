@@ -43,8 +43,17 @@ class Settings(BaseSettings):
         """Constructs the Weaviate connection URL."""
         return f"http://{self.WEAVIATE_HOST}:{self.WEAVIATE_PORT}"
 
-    # External APIs
-    OPENAI_API_KEY: str
+
+    # LLM 공급자
+    LLM_PROVIDER: str = "openai"  # openai or gemini
+
+    # OpenAI
+    OPENAI_API_KEY: str | None = None
+    OPENAI_MODEL: str = "gpt-4o-mini"
+
+    # Gemini
+    GOOGLE_API_KEY: str | None = None
+    GOOGLE_MODEL: str = "gemini-3-flash-preview"
 
     # AWS S3
     AWS_ACCESS_KEY_ID: str

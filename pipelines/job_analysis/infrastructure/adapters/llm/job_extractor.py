@@ -1,31 +1,22 @@
 import logging
 from typing import Optional
-from langchain_openai import ChatOpenAI
+from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import SecretStr
-
-from shared.config import settings
 from ....domain.interface.extractor import JobDataExtractor
 from ....domain.models.job_data import ExtractedJobData
 
 logger = logging.getLogger(__name__)
 
 
-class OpenAiJobExtractor(JobDataExtractor):
+class LLMJobExtractor(JobDataExtractor):
     """
-    OpenAI(LangChain)를 사용하여 텍스트에서 채용 공고 데이터를 추출하는 어댑터
+    LLM(LangChain)을 사용하여 텍스트에서 채용 공고 데이터를 추출하는 어댑터.
+    특정 LLM 구현체에 의존하지 않고 BaseChatModel을 주입받아 사용합니다.
     """
 
-    def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",  # 가성비 모델
-            temperature=0,  # 추출 작업이므로 창의성 0
-            api_key=(
-                SecretStr(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
-            ),
-            model_kwargs={"response_format": {"type": "json_object"}},
-        )
+    def __init__(self, llm: BaseChatModel):
+        self.llm = llm
 
         # Pydantic 모델을 사용하여 파서 설정
         self.parser = PydanticOutputParser(pydantic_object=ExtractedJobData)
