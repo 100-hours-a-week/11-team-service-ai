@@ -10,7 +10,7 @@ DATABASE_URL = settings.DATABASE_URL
 # pool_recycle: 연결이 끊어지는 것을 방지하기 위해 주기적으로 재생성 (초 단위)
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,  # 쿼리 로깅 여부 (개발 시 True 권장)
+    echo=False,  # 쿼리 로깅 여부 (개발 시 True 권장)
     pool_pre_ping=True,  # 연결 유효성 체크
     pool_recycle=3600,
 )

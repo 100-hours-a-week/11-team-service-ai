@@ -1,22 +1,20 @@
-from dataclasses import dataclass
 from typing import Optional
+from pydantic import BaseModel, Field
 
 
-@dataclass
-class FileInfo:
+class FileInfo(BaseModel):
     """파일명, 경로 등 원본 파일 메타데이터"""
 
-    file_path: str
-    file_type: str  # "RESUME" or "PORTFOLIO"
+    file_path: str = Field(description="파일 절대 경로")
+    file_type: str = Field(description="파일 유형 (RESUME, PORTFOLIO)")
 
 
-@dataclass
-class ParsedDoc:
+class ParsedDoc(BaseModel):
     """분석 가능한 상태로 추출된 텍스트 데이터"""
 
-    doc_type: str
-    text: str
-    is_valid: bool = True
+    doc_type: str = Field(description="문서 유형")
+    text: str = Field(description="추출된 텍스트 내용")
+    is_valid: bool = Field(default=True, description="유효성 여부")
 
     def is_analyzable(self) -> bool:
         """
@@ -26,19 +24,26 @@ class ParsedDoc:
         return self.is_valid and len(self.text.strip()) > 50
 
 
-@dataclass
-class ApplicantDocuments:
+class ApplicantDocuments(BaseModel):
     """한 지원자의 특정 공고에 대한 전체 제출 서류"""
 
-    resume_file: Optional[FileInfo] = None
-    portfolio_file: Optional[FileInfo] = None
+    resume_file: Optional[FileInfo] = Field(
+        default=None, description="이력서 원본 파일 정보"
+    )
+    portfolio_file: Optional[FileInfo] = Field(
+        default=None, description="포트폴리오 원본 파일 정보"
+    )
 
-    parsed_resume: Optional[ParsedDoc] = None
-    parsed_portfolio: Optional[ParsedDoc] = None
+    parsed_resume: Optional[ParsedDoc] = Field(
+        default=None, description="파싱된 이력서 데이터"
+    )
+    parsed_portfolio: Optional[ParsedDoc] = Field(
+        default=None, description="파싱된 포트폴리오 데이터"
+    )
 
     def has_all_files(self) -> bool:
         """이력서와 포트폴리오 파일 원본이 모두 존재하는지 확인"""
-        # TODO: 필수 서류 조건에 따라 로직 구체화 (둘 다 필수인지 등)
+        # 이력서만 필수
         return self.resume_file is not None and self.portfolio_file is not None
 
     def is_ready_for_analysis(self) -> bool:

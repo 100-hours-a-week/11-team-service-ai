@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -10,17 +9,6 @@ try:
 except ImportError:
     # shared 모듈이 경로에 없을 경우를 대비 (보통 pytest 실행 시, rootdir이 잡혀있어 괜찮음)
     pass
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """
-    pytest-asyncio의 기본 event_loop fixture를 session scope로 재정의.
-    이것이 없으면 'ScopeMismatch' 에러가 발생할 수 있음.
-    """
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="function")
