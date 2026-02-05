@@ -61,7 +61,11 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
 
           # LLM Configs
+          echo "LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}" >> .env
+          echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
+          echo "GOOGLE_MODEL=${{ secrets.GOOGLE_MODEL }}" >> .env
           echo "EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}" >> .env
 
           # Langfuse Configs
@@ -152,7 +156,11 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
 
           # LLM Configs
+          echo "LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}" >> .env
+          echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
+          echo "GOOGLE_MODEL=${{ secrets.GOOGLE_MODEL }}" >> .env
           echo "EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}" >> .env
 
           # Langfuse Configs

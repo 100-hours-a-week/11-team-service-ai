@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 from typing import List, Set
+from pydantic import BaseModel, Field
 from .evaluation import CompetencyResult
 from .job import JobInfo
 
@@ -9,24 +9,23 @@ class AnalysisReportError(Exception):
     pass
 
 
-@dataclass
-class OverallFeedback:
+class OverallFeedback(BaseModel):
     """종합 평가 결과 VO"""
 
-    one_line_review: str  # AI 한 줄 평가
-    feedback_detail: str  # 상세 피드백 (강점 및 보완점 통합)
+    one_line_review: str = Field(description="AI 한 줄 평가")
+    feedback_detail: str = Field(description="상세 피드백 (강점 및 보완점 통합)")
 
 
-@dataclass
-class AnalysisReport:
+class AnalysisReport(BaseModel):
     """
     최종 분석 리포트 (Aggregate Root)
     """
 
-    competency_scores: List[CompetencyResult]  # 세부 역량별 점수 리스트
-
-    one_line_review: str  # AI 한 줄 평가
-    feedback_detail: str  # 상세 피드백 (강점 및 보완점 통합)
+    competency_scores: List[CompetencyResult] = Field(
+        description="세부 역량별 점수 리스트"
+    )
+    one_line_review: str = Field(description="AI 한 줄 평가")
+    feedback_detail: str = Field(description="상세 피드백 (강점 및 보완점 통합)")
 
     @classmethod
     def create(
