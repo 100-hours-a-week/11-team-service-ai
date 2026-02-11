@@ -24,7 +24,7 @@ from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 # Infrastructure (Adapters)
 from .infrastructure.adapters.storage.s3_storage import S3FileStorage
 from .infrastructure.adapters.parser.pdf_extractor import PyPdfExtractor
-from .infrastructure.adapters.llm.ai_agent import LLMAnalyst
+from .infrastructure.adapters.llm.ai_agent.graph import LLMAnalyst
 from .infrastructure.adapters.llm.mock_agent import MockAnalyst
 
 logger = logging.getLogger(__name__)
@@ -81,8 +81,22 @@ async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:
         logger.info("🤖 Initializing Mock Analyst Agent")
         agent = MockAnalyst()
     else:
-        llm = _get_llm_model()
-        agent = LLMAnalyst(llm=llm)
+        # LLM 설정을 문자열로 전달 (Runtime Loading)
+        llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
+        
+        if llm_provider == "gemini":
+            model_name = getattr(settings, "GOOGLE_MODEL", "gemini-1.5-flash")
+            logger.info(f"🤖 Initializing Analyst Agent with Gemini ({model_name})")
+            # Gemini provider string adjustment if needed (e.g. 'google_genai')
+            # load_chat_model in utils.py handles 'google_genai' for Gemini
+            agent_provider = "gemini" 
+        else:
+            model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o")
+            logger.info(f"🤖 Initializing Analyst Agent with OpenAI ({model_name})")
+            agent_provider = "openai"
+
+        # LLMAnalyst 초기화 (객체 대신 설정값 전달)
+        agent = LLMAnalyst(model_name=model_name, model_provider=agent_provider)
 
     # 2. Infrastructure Adapters
     job_repo = SqlAlchemyJobRepository(session)
@@ -98,36 +112,3 @@ async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:
         extractor=extractor,
         agent=agent,
     )
-
-def _get_llm_model() -> BaseChatModel:
-    """
-    설정에 따라 LLM 모델 인스턴스를 반환 (OpenAI or Gemini)
-    """
-    provider = getattr(settings, "LLM_PROVIDER", "openai")
-    
-    if provider == "gemini":
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        # google_model이 설정에 없으면 gemini-1.5-flash를 기본값으로 사용
-        model_name = getattr(settings, "GOOGLE_MODEL", "gemini-1.5-flash")
-        logger.info(f"🤖 Initializing Analyst Agent with Gemini ({model_name})")
-        
-        return ChatGoogleGenerativeAI(
-            model=model_name,
-            google_api_key=settings.GOOGLE_API_KEY,
-            temperature=0,
-        )
-    else:
-        from langchain_openai import ChatOpenAI
-        from pydantic import SecretStr
-        model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o")
-        logger.info(f"🤖 Initializing Analyst Agent with OpenAI ({model_name})")
-
-        return ChatOpenAI(
-            model=model_name,
-            temperature=0,
-            api_key=(
-                SecretStr(settings.OPENAI_API_KEY)
-                if settings.OPENAI_API_KEY
-                else None
-            ),
-        )
