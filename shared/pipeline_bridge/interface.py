@@ -21,8 +21,9 @@ from job_analysis.main import (
     run_pipeline as run_job_analysis,
     delete_pipeline as delete_job_analysis,
 )
-from portfolio_analysis.main import run_pipeline as run_portfolio_analysis
-from resume_analysis.main import run_pipeline as run_resume_analysis
+
+# Resume Analysis와 Portfolio Analysis는 같은 파이프라인(resume_analysis)에서 처리
+from resume_analysis.main import run_resume_analysis, run_portfolio_analysis
 
 
 async def call_job_analysis(
