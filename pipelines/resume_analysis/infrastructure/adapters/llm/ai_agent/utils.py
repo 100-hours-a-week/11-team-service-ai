@@ -9,8 +9,14 @@ from typing import Optional
 
 from langchain_core.language_models import BaseChatModel
 from shared.config import settings
+from pydantic import BaseModel, Field
+
 
 logger = logging.getLogger(__name__)
+
+class AiResponse(BaseModel):
+    """응답결과 정형화"""
+    response: str = Field(description="응답결과")
 
 def load_chat_model(model_name: str, model_provider: str) -> BaseChatModel:
     """Load a chat model based on the provider and name."""

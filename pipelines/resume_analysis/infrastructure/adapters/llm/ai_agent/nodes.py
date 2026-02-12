@@ -1,4 +1,5 @@
 
+from langchain_core.language_models.chat_models import BaseChatModel
 import logging
 from typing import Any, Dict, List
 
@@ -12,10 +13,9 @@ from langgraph.runtime import Runtime
 from langgraph.types import Send, Command
 
 
-
 from .configuration import AnalyseContext, Configuration
 from .prompts import get_analysis_prompt, get_final_report_prompt
-from .utils import load_chat_model
+from .utils import load_chat_model, AiResponse
 
 logger = logging.getLogger(__name__)
 
@@ -74,20 +74,20 @@ async def execute_analysis_node(input_state: dict[str,str], config: RunnableConf
 async def _analyze_single_section(
     rtx: AnalyseContext,
     analysis_type: str,
-    llm: Any
+    llm: BaseChatModel
 ) -> SectionAnalysis:
     """단일 항목에 대한 분석 로직 (순수 함수)"""
 
     # 프롬프트 가져오기
     prompt = get_analysis_prompt(analysis_type)
-    chain = prompt | llm
+    chain = prompt | llm.with_structured_output(AiResponse)
 
     # Job Title Fallback Logic
     job_info = rtx.job_info
     job_title = job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
 
     # LLM 실행
-    response = await chain.ainvoke({
+    result:AiResponse = await chain.ainvoke({
         "job_title": job_title,
         "summary": job_info.summary or "내용 없음",
         "tech_stacks": ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음",
@@ -98,19 +98,9 @@ async def _analyze_single_section(
         "analysis_type": analysis_type
     })
 
-    # 결과 매핑 - content에서 텍스트만 추출
-    if isinstance(response.content, str):
-        content = response.content
-    elif isinstance(response.content, list):
-        # content가 리스트인 경우, type이 'text'인 항목만 추출
-        text_parts = [item.get('text', '') for item in response.content if isinstance(item, dict) and item.get('type') == 'text']
-        content = ''.join(text_parts)
-    else:
-        content = str(response.content)
-
     return SectionAnalysis(
         type=analysis_type,
-        analyse_result=content
+        analyse_result=result.response
     )
 
 async def generate_report_node(state: AnalysisState, config: RunnableConfig, runtime: Runtime[AnalyseContext]):
@@ -124,7 +114,7 @@ async def generate_report_node(state: AnalysisState, config: RunnableConfig, run
     rtx = runtime.context
 
     # 2. LLM 로드
-    llm = load_chat_model(cfg.model_name, cfg.model_provider)
+    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(AiResponse)
 
     # 3. 문서 타입에 따른 프롬프트 선택
     doc_type = rtx.doc_type.value
@@ -141,7 +131,7 @@ async def generate_report_node(state: AnalysisState, config: RunnableConfig, run
     chain = prompt | llm
 
     try:
-        response = await chain.ainvoke({
+        final_report:AiResponse = await chain.ainvoke({
             "job_title": job_title,
             "main_tasks": ", ".join(job_info.main_tasks) if job_info.main_tasks else "정보 없음",
             "tech_stacks": ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음",
@@ -150,16 +140,6 @@ async def generate_report_node(state: AnalysisState, config: RunnableConfig, run
             "analysis_results": analysis_results_text
         })
 
-        # response.content에서 텍스트만 추출
-        if isinstance(response.content, str):
-            final_report = response.content
-        elif isinstance(response.content, list):
-            # content가 리스트인 경우, type이 'text'인 항목만 추출
-            text_parts = [item.get('text', '') for item in response.content if isinstance(item, dict) and item.get('type') == 'text']
-            final_report = ''.join(text_parts)
-        else:
-            final_report = str(response.content)
-
         logger.info(f"Final report generated successfully for {doc_type}")
 
     except Exception as e:
@@ -167,7 +147,7 @@ async def generate_report_node(state: AnalysisState, config: RunnableConfig, run
         # Fallback: 간단한 요약 생성
         final_report = _create_fallback_report(section_results, doc_type)
 
-    return {"overall_review": final_report}
+    return {"overall_review": final_report.response}
 
 
 def _format_analysis_results(section_results: List[SectionAnalysis]) -> str:
