@@ -1,18 +1,6 @@
 import logging
-import asyncio
-from typing import Literal, List
 
 from langgraph.graph import StateGraph, START, END
-# Note: Send is available in langgraph.graph (most versions) or langgraph.types
-try:
-    from langgraph.types import Send
-except ImportError:
-    from langgraph.graph import Send
-
-from langchain_core.runnables import RunnableConfig
-from langgraph.runtime import Runtime
-from .....domain.models.report import ResumeAnalysisType, PortfolioAnalysisType
-
 
 from .....domain.interface.adapter_interfaces import AnalystAgent
 from .....domain.models.job import JobInfo
@@ -20,7 +8,7 @@ from .....domain.models.document import DocumentType
 from .....domain.models.report import AnalysisReport
 
 # Import local modules (relative)
-from .configuration import AnalyseContext, Configuration
+from .configuration import AnalyseContext
 from .state import AnalysisState
 from .nodes import execute_analysis_node, generate_report_node, plan_analysis
 
@@ -47,9 +35,9 @@ class LLMAnalyst(AnalystAgent):
         """
 
         builder = StateGraph(state_schema=AnalysisState, context_schema=AnalyseContext)
-        builder.add_node("plan_analysis", plan_analysis)
-        builder.add_node("execute_analysis_node", execute_analysis_node)
-        builder.add_node("generate_report_node", generate_report_node)
+        builder.add_node("plan_analysis", plan_analysis)  # type: ignore[call-overload]
+        builder.add_node("execute_analysis_node", execute_analysis_node)  # type: ignore[call-overload]
+        builder.add_node("generate_report_node", generate_report_node)  # type: ignore[call-overload]
 
         builder.add_edge(START, "plan_analysis")
         builder.add_edge("execute_analysis_node", "generate_report_node")
@@ -61,24 +49,22 @@ class LLMAnalyst(AnalystAgent):
         config = {
             "configurable": {
                 "model_provider": self.model_provider,
-                "model_name": self.model_name
+                "model_name": self.model_name,
             }
         }
 
         context_data = AnalyseContext(
-            job_info=job_info,
-            doc_type=doc_type,
-            doc_text=document_text
+            job_info=job_info, doc_type=doc_type, doc_text=document_text
         )
 
         # 그래프 실행
         final_state = await graph.ainvoke(
-            {"section_analyses": [], "overall_review": ""}, # 초기 상태
-            config=config, 
-            context=context_data
+            {"section_analyses": [], "overall_review": ""},  # type: ignore[arg-type]
+            config=config,  # type: ignore[arg-type]
+            context=context_data,  # type: ignore[call-arg]
         )
 
         return AnalysisReport.create(
             results=final_state["section_analyses"],
-            overall_review=final_state["overall_review"]
+            overall_review=final_state["overall_review"],
         )

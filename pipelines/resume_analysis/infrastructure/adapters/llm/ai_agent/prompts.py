@@ -1,12 +1,10 @@
-from typing import Dict, List
 from langchain_core.prompts import ChatPromptTemplate
 from .....domain.models.report import ResumeAnalysisType, PortfolioAnalysisType
 from .....domain.models.document import DocumentType
 
 # --- Resume Analysis Prompts ---
 
-RESUME_JOB_FIT_PROMPT = ChatPromptTemplate.from_template(
-    """
+RESUME_JOB_FIT_PROMPT = ChatPromptTemplate.from_template("""
     당신은 10년차 전문 커리어 코치입니다.
     지원자가 지원하려는 [채용 공고]에 자신의 [이력서]가 얼마나 부합하는지 확인하고, 어떤 부분을 보완하면 좋을지 구체적인 피드백을 제공해주세요.
 
@@ -38,11 +36,9 @@ RESUME_JOB_FIT_PROMPT = ChatPromptTemplate.from_template(
     - 정량적인 점수보다는, 구체적인 근거(이력서 내 문구)를 들어 정성적인 분석 내용을 작성하세요.
     - 강점(이미 잘 작성된 부분)과 개선 방향(어떻게 보완하면 좋을지)을 명확히 구분하여 서술하세요.
     - 순수한 텍스트로만 작성하고, 이스케이프 문자(\\n, \\, 등)는 절대 사용하지 마세요.
-    """
-)
+    """)
 
-RESUME_EXPERIENCE_CLARITY_PROMPT = ChatPromptTemplate.from_template(
-    """
+RESUME_EXPERIENCE_CLARITY_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
     지원자의 [이력서]에 기술된 경험들이 얼마나 구체적이고 명확하게 작성되었는지 분석하고, 더 효과적으로 어필할 수 있는 방법을 알려주세요.
 
@@ -64,11 +60,9 @@ RESUME_EXPERIENCE_CLARITY_PROMPT = ChatPromptTemplate.from_template(
     - 지원자에게 직접 조언하는 톤(예: "이 부분은 잘 작성되었습니다", "~를 추가하면 더 효과적입니다")으로 작성하세요.
     - 모호한 표현을 지적하고, 구체적인 개선 예시를 함께 제공하세요.
     - 순수한 텍스트로만 작성하고, 이스케이프 문자(\\n, \\, 등)는 절대 사용하지 마세요.
-    """
-)
+    """)
 
-RESUME_READABILITY_PROMPT = ChatPromptTemplate.from_template(
-    """
+RESUME_READABILITY_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
     지원자의 [이력서]가 채용 담당자가 읽기 쉽고 전문적으로 보이도록 작성되었는지 검토하고, 개선점을 알려주세요.
 
@@ -89,14 +83,12 @@ RESUME_READABILITY_PROMPT = ChatPromptTemplate.from_template(
     - 지원자에게 직접 조언하는 톤(예: "전반적으로 잘 작성되었습니다", "이 부분을 수정하면 더 좋습니다")으로 작성하세요.
     - 전체적인 인상을 요약하고, 가독성을 해치는 요소가 있다면 구체적인 개선 방법을 제시해주세요.
     - 순수한 텍스트로만 작성하고, 이스케이프 문자(\\n, \\, 등)는 절대 사용하지 마세요.
-    """
-)
+    """)
 
 
 # --- Portfolio Analysis Prompts ---
 
-PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template(
-    """
+PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
     지원자의 [포트폴리오]가 문제 해결 역량을 효과적으로 보여주고 있는지 분석하고, 어떻게 개선하면 좋을지 조언해주세요.
 
@@ -118,11 +110,9 @@ PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template(
     - 지원자에게 직접 조언하는 톤(예: "이 프로젝트는...", "~를 추가로 설명하면 더 좋습니다")으로 작성하세요.
     - 단순 기능 구현보다는 '왜'와 '어떻게'를 강조할 수 있는 방법을 제시하세요.
     - 순수한 텍스트로만 작성하고, 이스케이프 문자(\\n, \\, 등)는 절대 사용하지 마세요.
-    """
-)
+    """)
 
-PORTFOLIO_CONTRIBUTION_CLARITY_PROMPT = ChatPromptTemplate.from_template(
-    """
+PORTFOLIO_CONTRIBUTION_CLARITY_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
     지원자의 [포트폴리오] 프로젝트에서 본인의 기여도가 명확히 드러나는지 분석하고, 어떻게 표현하면 더 효과적일지 조언해주세요.
 
@@ -143,11 +133,9 @@ PORTFOLIO_CONTRIBUTION_CLARITY_PROMPT = ChatPromptTemplate.from_template(
     - 지원자에게 직접 조언하는 톤(예: "귀하의 역할이...", "~를 명시하면 더 명확합니다")으로 작성하세요.
     - 모호한 기여도 서술이 있다면 지적하고, 구체적인 표현 방법을 제안해주세요.
     - 순수한 텍스트로만 작성하고, 이스케이프 문자(\\n, \\, 등)는 절대 사용하지 마세요.
-    """
-)
+    """)
 
-PORTFOLIO_TECHNICAL_DEPTH_PROMPT = ChatPromptTemplate.from_template(
-    """
+PORTFOLIO_TECHNICAL_DEPTH_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
     지원자의 [포트폴리오]가 기술적 깊이를 효과적으로 보여주는지 분석하고, 채용 공고 요구사항에 맞춰 어떻게 개선할 수 있을지 조언해주세요.
 
@@ -170,11 +158,7 @@ PORTFOLIO_TECHNICAL_DEPTH_PROMPT = ChatPromptTemplate.from_template(
     - 지원자에게 직접 조언하는 톤(예: "이 프로젝트에서...", "~를 더 부각하면 좋습니다")으로 작성하세요.
     - 기술을 단순히 사용한 것인지, 깊이 있게 이해한 것인지 판단하고 개선 방향을 제시하세요.
     - 순수한 텍스트로만 작성하고, 이스케이프 문자(\\n, \\, 등)는 절대 사용하지 마세요.
-    """
-)
-
-
-
+    """)
 
 
 # --- Prompt Registry ---
@@ -184,7 +168,6 @@ PROMPT_REGISTRY = {
     ResumeAnalysisType.JOB_FIT: RESUME_JOB_FIT_PROMPT,
     ResumeAnalysisType.EXPERIENCE_CLARITY: RESUME_EXPERIENCE_CLARITY_PROMPT,
     ResumeAnalysisType.READABILITY: RESUME_READABILITY_PROMPT,
-    
     # Portfolio
     PortfolioAnalysisType.PROBLEM_SOLVING: PORTFOLIO_PROBLEM_SOLVING_PROMPT,
     PortfolioAnalysisType.CONTRIBUTION_CLARITY: PORTFOLIO_CONTRIBUTION_CLARITY_PROMPT,
@@ -193,8 +176,7 @@ PROMPT_REGISTRY = {
 
 # --- Final Report Generation Prompts ---
 
-RESUME_FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template(
-    """
+RESUME_FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
     지원자가 작성한 이력서에 대한 각 항목별 분석 결과를 종합하여, 개선을 위한 최종 종합 피드백을 작성해주세요.
 
@@ -221,11 +203,9 @@ RESUME_FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template(
     - 전문적이면서도 격려하는 톤을 유지하세요.
     - 분석 결과만 제공하고, extras, signature 등 추가적인 메타데이터는 절대 포함하지 마세요.
     - 순수한 텍스트로만 작성하고, 이스케이프 문자(\\n, \\, 등)는 절대 사용하지 마세요.
-    """
-)
+    """)
 
-PORTFOLIO_FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template(
-    """
+PORTFOLIO_FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
     지원자가 작성한 포트폴리오에 대한 각 항목별 분석 결과를 종합하여, 개선을 위한 최종 종합 피드백을 작성해주세요.
 
@@ -252,8 +232,8 @@ PORTFOLIO_FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template(
     - 전문적이면서도 격려하는 톤을 유지하세요.
     - 분석 결과만 제공하고, extras, signature 등 추가적인 메타데이터는 절대 포함하지 마세요.
     - 순수한 텍스트로만 작성하고, 이스케이프 문자(\\n, \\, 등)는 절대 사용하지 마세요.
-    """
-)
+    """)
+
 
 def get_analysis_prompt(analysis_type: str) -> ChatPromptTemplate:
     """분석 타입에 맞는 프롬프트 템플릿 반환"""
@@ -264,6 +244,7 @@ def get_analysis_prompt(analysis_type: str) -> ChatPromptTemplate:
             "이력서/포트폴리오 내용({doc_text})을 면밀히 분석해주세요. 기준: {analysis_type}"
         )
     return prompt
+
 
 def get_final_report_prompt(doc_type: str) -> ChatPromptTemplate:
     """문서 타입에 맞는 최종 리포트 프롬프트 반환"""

@@ -1,15 +1,14 @@
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
-from langchain_core.language_models import BaseChatModel
 from shared.db.connection import get_db
 
 
 from shared.config import settings
 from shared.schema.document import (
-    ResumeAnalyzeRequest, 
+    ResumeAnalyzeRequest,
     ResumeAnalyzeResponse,
     PortfolioAnalyzeRequest,
-    PortfolioAnalyzeResponse
+    PortfolioAnalyzeResponse,
 )
 
 from .domain.interface.adapter_interfaces import AnalystAgent
@@ -29,28 +28,27 @@ from .infrastructure.adapters.llm.mock_agent import MockAnalyst
 
 logger = logging.getLogger(__name__)
 
-async def run_resume_analysis(
-    request: ResumeAnalyzeRequest
-) -> ResumeAnalyzeResponse:
+
+async def run_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeResponse:
     """
     이력서 분석 파이프라인 실행
     """
     async for session in get_db():
         analyzer = await _create_analyzer(session)
-        
+
         result = await analyzer.analyze_resume(
-            user_id=int(request.user_id),
-            job_id=int(request.job_posting_id)
+            user_id=int(request.user_id), job_id=int(request.job_posting_id)
         )
-        
+
         # 성공 시 커밋 (데이터 지속성 보장)
         await session.commit()
         return result
-    
+
     raise RuntimeError("Failed to get DB session")
 
+
 async def run_portfolio_analysis(
-    request: PortfolioAnalyzeRequest
+    request: PortfolioAnalyzeRequest,
 ) -> PortfolioAnalyzeResponse:
     """
     포트폴리오 분석 파이프라인 실행
@@ -59,15 +57,15 @@ async def run_portfolio_analysis(
         analyzer = await _create_analyzer(session)
 
         result = await analyzer.analyze_portfolio(
-            user_id=int(request.user_id),
-            job_id=int(request.job_posting_id)
+            user_id=int(request.user_id), job_id=int(request.job_posting_id)
         )
-        
+
         # 성공 시 커밋
         await session.commit()
         return result
 
     raise RuntimeError("Failed to get DB session")
+
 
 async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:
     """
@@ -75,7 +73,7 @@ async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:
     """
     # 1. LLM & Agent
     agent: AnalystAgent
-    
+
     # settings.use_mock가 True인 경우 Mock Agent 사용
     if getattr(settings, "use_mock", False):
         logger.info("🤖 Initializing Mock Analyst Agent")
@@ -83,13 +81,13 @@ async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:
     else:
         # LLM 설정을 문자열로 전달 (Runtime Loading)
         llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
-        
+
         if llm_provider == "gemini":
             model_name = getattr(settings, "GOOGLE_MODEL", "gemini-1.5-flash")
             logger.info(f"🤖 Initializing Analyst Agent with Gemini ({model_name})")
             # Gemini provider string adjustment if needed (e.g. 'google_genai')
             # load_chat_model in utils.py handles 'google_genai' for Gemini
-            agent_provider = "gemini" 
+            agent_provider = "gemini"
         else:
             model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o")
             logger.info(f"🤖 Initializing Analyst Agent with OpenAI ({model_name})")

@@ -4,7 +4,6 @@ from ..models.report import AnalysisReport
 from ..models.document import DocumentType
 
 
-
 class FileStorage(Protocol):
     """파일 스토리지 (S3 등) 인터페이스 (Async)"""
 
@@ -34,7 +33,7 @@ class AnalystAgent(Protocol):
     ) -> AnalysisReport:
         """
         문서 분석 전체 파이프라인(LangGraph) 실행 (Async)
-        
+
         Args:
             job_info (JobInfo): 채용 공고 정보
             document_text (str): 분석할 문서(이력서 또는 포트폴리오)의 텍스트

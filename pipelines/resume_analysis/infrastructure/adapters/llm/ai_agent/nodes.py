@@ -1,7 +1,6 @@
-
 from langchain_core.language_models.chat_models import BaseChatModel
 import logging
-from typing import Any, Dict, List
+from typing import List, Union
 
 from langchain_core.runnables import RunnableConfig
 
@@ -28,17 +27,27 @@ def plan_analysis(state: AnalysisState, runtime: Runtime[AnalyseContext]):
     # execute_analysis_node에 analyse_type을 전달하여 병렬적으로 실행
     # Send로 실행되는 node의 State는 전체 그래프의 State와 분리됨
     if target_doc_type == DocumentType.RESUME:
-        sends = [Send("execute_analysis_node", {"analyse_type":type.value}) for type in ResumeAnalysisType]
+        sends = [
+            Send("execute_analysis_node", {"analyse_type": type.value})
+            for type in ResumeAnalysisType
+        ]
         return Command(goto=sends)
     elif target_doc_type == DocumentType.PORTFOLIO:
-        sends = [Send("execute_analysis_node", {"analyse_type":type.value}) for type in PortfolioAnalysisType]
+        sends = [
+            Send("execute_analysis_node", {"analyse_type": type.value})
+            for type in PortfolioAnalysisType
+        ]
         return Command(goto=sends)
 
 
-async def execute_analysis_node(input_state: dict[str,str], config: RunnableConfig, runtime: Runtime[AnalyseContext]):
+async def execute_analysis_node(
+    input_state: dict[str, str],
+    config: RunnableConfig,
+    runtime: Runtime[AnalyseContext],
+):
     """
     단일 항목에 대한 분석을 수행하는 노드 (Parallel Worker)
-    
+
     Args:
         input_state: SectionAnalysisState (Send API로 전달됨)
         config: RunnableConfig
@@ -53,30 +62,42 @@ async def execute_analysis_node(input_state: dict[str,str], config: RunnableConf
     # 2. Config & Context 로드
     cfg = Configuration.from_runnable_config(config)
     rtx = runtime.context
-    
+
     # 3. LLM 로드
     llm = load_chat_model(cfg.model_name, cfg.model_provider)
 
     logger.info(f"[{cfg.model_name}] Analyzing Section: {analysis_type} ...")
-    
+
     try:
         # 4. 분석 수행 (Helper Function 호출)
         result = await _analyze_single_section(rtx, analysis_type, llm)
-        
+
         # 5. 결과 반환 (Main State에 병합될 구조)
         return {"section_analyses": [result]}
-        
+
     except Exception as e:
         logger.info(f"Analysis Failed for {analysis_type}: {e}")
-        return {"section_analyses": []} # 실패 시 빈 리스트 반환 (전체 프로세스는 계속됨)
+        return {
+            "section_analyses": []
+        }  # 실패 시 빈 리스트 반환 (전체 프로세스는 계속됨)
 
 
 async def _analyze_single_section(
-    rtx: AnalyseContext,
-    analysis_type: str,
-    llm: BaseChatModel
+    rtx: AnalyseContext, analysis_type: str, llm: BaseChatModel
 ) -> SectionAnalysis:
     """단일 항목에 대한 분석 로직 (순수 함수)"""
+
+    # Convert string to proper enum type
+    typed_analysis_type: Union[ResumeAnalysisType, PortfolioAnalysisType]
+    try:
+        if hasattr(ResumeAnalysisType, analysis_type):
+            typed_analysis_type = ResumeAnalysisType(analysis_type)
+        elif hasattr(PortfolioAnalysisType, analysis_type):
+            typed_analysis_type = PortfolioAnalysisType(analysis_type)
+        else:
+            raise ValueError(f"Unknown analysis type: {analysis_type}")
+    except ValueError:
+        raise ValueError(f"Invalid analysis type: {analysis_type}")
 
     # 프롬프트 가져오기
     prompt = get_analysis_prompt(analysis_type)
@@ -84,37 +105,61 @@ async def _analyze_single_section(
 
     # Job Title Fallback Logic
     job_info = rtx.job_info
-    job_title = job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
-
-    # LLM 실행
-    result:AiResponse = await chain.ainvoke({
-        "job_title": job_title,
-        "summary": job_info.summary or "내용 없음",
-        "tech_stacks": ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음",
-        "main_tasks": ", ".join(job_info.main_tasks) if job_info.main_tasks else "정보 없음",
-        "qualifications": getattr(job_info, 'qualifications', None) and ", ".join(job_info.qualifications) or "정보 없음",
-        "preferred_points": getattr(job_info, 'preferred_points', None) and ", ".join(job_info.preferred_points) or "정보 없음",
-        "doc_text": rtx.doc_text,
-        "analysis_type": analysis_type
-    })
-
-    return SectionAnalysis(
-        type=analysis_type,
-        analyse_result=result.response
+    job_title = (
+        job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
     )
 
-async def generate_report_node(state: AnalysisState, config: RunnableConfig, runtime: Runtime[AnalyseContext]):
+    # LLM 실행
+    result = await chain.ainvoke(
+        {
+            "job_title": job_title,
+            "summary": job_info.summary or "내용 없음",
+            "tech_stacks": (
+                ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음"
+            ),
+            "main_tasks": (
+                ", ".join(job_info.main_tasks) if job_info.main_tasks else "정보 없음"
+            ),
+            "qualifications": (
+                ", ".join(getattr(job_info, "qualifications", []))
+                if getattr(job_info, "qualifications", None)
+                else "정보 없음"
+            ),
+            "preferred_points": (
+                ", ".join(getattr(job_info, "preferred_points", []))
+                if getattr(job_info, "preferred_points", None)
+                else "정보 없음"
+            ),
+            "doc_text": rtx.doc_text,
+            "analysis_type": analysis_type,
+        }
+    )
+
+    # Type guard - ensure result is AiResponse
+    if not isinstance(result, AiResponse):
+        raise TypeError(f"Expected AiResponse but got {type(result)}")
+
+    return SectionAnalysis(type=typed_analysis_type, analyse_result=result.response)
+
+
+async def generate_report_node(
+    state: AnalysisState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
+):
     """최종 레포트 생성 노드 (Reducer 이후) - LLM을 통한 종합 분석"""
     section_results = state["section_analyses"]
 
-    logger.info(f"generate_report_node: Processing {len(section_results)} section analyses")
+    logger.info(
+        f"generate_report_node: Processing {len(section_results)} section analyses"
+    )
 
     # 1. Config & Context 로드
     cfg = Configuration.from_runnable_config(config)
     rtx = runtime.context
 
     # 2. LLM 로드
-    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(AiResponse)
+    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(
+        AiResponse
+    )
 
     # 3. 문서 타입에 따른 프롬프트 선택
     doc_type = rtx.doc_type.value
@@ -125,20 +170,44 @@ async def generate_report_node(state: AnalysisState, config: RunnableConfig, run
 
     # 5. Job Info 준비
     job_info = rtx.job_info
-    job_title = job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
+    job_title = (
+        job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
+    )
 
     # 6. LLM 체인 실행
     chain = prompt | llm
 
     try:
-        final_report:AiResponse = await chain.ainvoke({
-            "job_title": job_title,
-            "main_tasks": ", ".join(job_info.main_tasks) if job_info.main_tasks else "정보 없음",
-            "tech_stacks": ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음",
-            "qualifications": getattr(job_info, 'qualifications', None) and ", ".join(job_info.qualifications) or "정보 없음",
-            "preferred_points": getattr(job_info, 'preferred_points', None) and ", ".join(job_info.preferred_points) or "정보 없음",
-            "analysis_results": analysis_results_text
-        })
+        final_report = await chain.ainvoke(
+            {
+                "job_title": job_title,
+                "main_tasks": (
+                    ", ".join(job_info.main_tasks)
+                    if job_info.main_tasks
+                    else "정보 없음"
+                ),
+                "tech_stacks": (
+                    ", ".join(job_info.tech_stacks)
+                    if job_info.tech_stacks
+                    else "정보 없음"
+                ),
+                "qualifications": (
+                    ", ".join(getattr(job_info, "qualifications", []))
+                    if getattr(job_info, "qualifications", None)
+                    else "정보 없음"
+                ),
+                "preferred_points": (
+                    ", ".join(getattr(job_info, "preferred_points", []))
+                    if getattr(job_info, "preferred_points", None)
+                    else "정보 없음"
+                ),
+                "analysis_results": analysis_results_text,
+            }
+        )
+
+        # Type guard - ensure result is AiResponse
+        if not isinstance(final_report, AiResponse):
+            raise TypeError(f"Expected AiResponse but got {type(final_report)}")
 
         logger.info(f"Final report generated successfully for {doc_type}")
 
@@ -162,7 +231,9 @@ def _format_analysis_results(section_results: List[SectionAnalysis]) -> str:
     return "\n".join(formatted_lines)
 
 
-def _create_fallback_report(section_results: List[SectionAnalysis], doc_type: str) -> str:
+def _create_fallback_report(
+    section_results: List[SectionAnalysis], doc_type: str
+) -> AiResponse:
     """LLM 실패 시 사용할 Fallback 리포트"""
     summary_lines = [f"# {doc_type.upper()} 분석 결과\n"]
 
@@ -172,4 +243,4 @@ def _create_fallback_report(section_results: List[SectionAnalysis], doc_type: st
 
     summary_lines.append("\n---\n**Note**: 자동 생성된 요약 리포트입니다.")
 
-    return "\n".join(summary_lines)
+    return AiResponse(response="\n".join(summary_lines))

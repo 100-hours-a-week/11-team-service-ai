@@ -6,7 +6,7 @@ from sqlalchemy.exc import NoResultFound
 import datetime
 
 from ...domain.interface.repository_interfaces import DocRepository
-from ...domain.models.document import ApplicantDocument
+from ...domain.models.document import ApplicantDocument, DocumentType
 
 
 from shared.db.model.models import (
@@ -41,8 +41,8 @@ class SqlAlchemyDocRepository(DocRepository):
         doc_stmt = (
             select(ApplicationDocument)
             .options(
-                joinedload(ApplicationDocument.file),     # 파일 경로
-                joinedload(ApplicationDocument.parsed)    # 파싱된 텍스트
+                joinedload(ApplicationDocument.file),  # 파일 경로
+                joinedload(ApplicationDocument.parsed),  # 파싱된 텍스트
             )
             .where(
                 ApplicationDocument.job_application_id
@@ -63,14 +63,14 @@ class SqlAlchemyDocRepository(DocRepository):
         # 3-B. 파싱 정보
         parsed_list = doc.parsed if doc.parsed else []  # type: ignore
         parsed_record = parsed_list[0] if parsed_list else None
-        
+
         extracted_text = None
-        
+
         if parsed_record:
             extracted_text = str(parsed_record.raw_text)
 
         return ApplicantDocument(
-            doc_type=str(doc.doc_type),
+            doc_type=DocumentType(doc.doc_type),
             file_path=file_path,
             extracted_text=extracted_text,
         )
@@ -109,10 +109,12 @@ class SqlAlchemyDocRepository(DocRepository):
         existing_parsed = parse_result.scalars().first()
 
         now = datetime.datetime.now()
-        
+
         # 모델의 status 제거 -> 추출 텍스트 존재 여부로 판단
         target_text = document.extracted_text if document.extracted_text else ""
-        computed_status = "COMPLETED" if target_text and len(target_text) > 0 else "FAILED"
+        computed_status = (
+            "COMPLETED" if target_text and len(target_text) > 0 else "FAILED"
+        )
 
         if existing_parsed:
             # Update

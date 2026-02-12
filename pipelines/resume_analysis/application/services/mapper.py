@@ -1,5 +1,10 @@
-from ...domain.models.report import AnalysisReport, ResumeAnalysisType, PortfolioAnalysisType
+from ...domain.models.report import (
+    AnalysisReport,
+    ResumeAnalysisType,
+    PortfolioAnalysisType,
+)
 from shared.schema.document import ResumeAnalyzeResponse, PortfolioAnalyzeResponse
+
 
 class ReportMapper:
     """

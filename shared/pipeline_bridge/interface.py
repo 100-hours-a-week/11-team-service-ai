@@ -21,11 +21,10 @@ from job_analysis.main import (
     run_pipeline as run_job_analysis,
     delete_pipeline as delete_job_analysis,
 )
+
 # Resume Analysis와 Portfolio Analysis는 같은 파이프라인(resume_analysis)에서 처리
-from resume_analysis.main import (
-    run_resume_analysis,
-    run_portfolio_analysis
-)
+from resume_analysis.main import run_resume_analysis, run_portfolio_analysis
+
 
 async def call_job_analysis(
     request: JobPostingAnalyzeRequest,
@@ -49,5 +48,7 @@ async def call_candidate_comparison(request: CompareRequest) -> CompareResponse:
     return await run_candidate_comparison(request)
 
 
-async def call_portfolio_analysis(request: PortfolioAnalyzeRequest) -> PortfolioAnalyzeResponse:
+async def call_portfolio_analysis(
+    request: PortfolioAnalyzeRequest,
+) -> PortfolioAnalyzeResponse:
     return await run_portfolio_analysis(request)

@@ -2,8 +2,9 @@ import pytest
 import asyncio
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from shared.config import settings
+
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -11,6 +12,7 @@ def event_loop():
     loop = asyncio.new_event_loop()
     yield loop
     loop.close()
+
 
 @pytest.fixture(scope="function")
 def db_engine(event_loop):
@@ -20,14 +22,11 @@ def db_engine(event_loop):
     """
     # settings에서 DATABASE_URL을 가져오거나 직접 지정
     DATABASE_URL = settings.DATABASE_URL
-    
-    engine = create_async_engine(
-        DATABASE_URL,
-        echo=False,
-        pool_pre_ping=True
-    )
+
+    engine = create_async_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
     yield engine
     event_loop.run_until_complete(engine.dispose())
+
 
 @pytest.fixture(scope="function")
 async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
@@ -37,7 +36,7 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
     connection = await db_engine.connect()
     transaction = await connection.begin()
 
-    session_factory = sessionmaker(
+    session_factory = async_sessionmaker(
         bind=connection,
         class_=AsyncSession,
         expire_on_commit=False,

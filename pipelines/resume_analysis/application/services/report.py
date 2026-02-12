@@ -33,14 +33,12 @@ class ApplicationAnalyzer:
         self.extractor = extractor
         self.agent = agent
 
-    async def analyze_resume(
-        self, user_id: int, job_id: int
-    ) -> ResumeAnalyzeResponse:
+    async def analyze_resume(self, user_id: int, job_id: int) -> ResumeAnalyzeResponse:
         """
         이력서 분석 실행
         """
         report = await self._run_analysis_pipeline(user_id, job_id, DocumentType.RESUME)
-        
+
         logger.info(f"✨ [Resume Analysis Complete] User: {user_id}")
         return ReportMapper.to_resume_response(report)
 
@@ -50,8 +48,10 @@ class ApplicationAnalyzer:
         """
         포트폴리오 분석 실행
         """
-        report = await self._run_analysis_pipeline(user_id, job_id, DocumentType.PORTFOLIO)
-        
+        report = await self._run_analysis_pipeline(
+            user_id, job_id, DocumentType.PORTFOLIO
+        )
+
         logger.info(f"✨ [Portfolio Analysis Complete] User: {user_id}")
         return ReportMapper.to_portfolio_response(report)
 
@@ -61,8 +61,8 @@ class ApplicationAnalyzer:
         """
         공통 분석 파이프라인 로직
         """
-        doc_type_str = target_doc_type.value # DB 조회 등에 사용
-        
+        doc_type_str = target_doc_type.value  # DB 조회 등에 사용
+
         logger.info(
             f"🚀 [{doc_type_str} Analysis Start] User: {user_id}, Job: {job_id}"
         )
@@ -94,10 +94,12 @@ class ApplicationAnalyzer:
         """
         # A. DB 조회
         document = await self.doc_repo.get_document(user_id, job_id, doc_type)
-        
+
         if not document:
-             logger.warning(f"Document record not found: User {user_id}, Job {job_id}, Type {doc_type}")
-             return None
+            logger.warning(
+                f"Document record not found: User {user_id}, Job {job_id}, Type {doc_type}"
+            )
+            return None
 
         # 이미 분석 가능한 텍스트가 있다면 반환
         if document.is_analyzable:
@@ -105,22 +107,26 @@ class ApplicationAnalyzer:
 
         # B. 텍스트가 없다면 파일 다운로드 및 추출 시도
         if not document.file_path:
-            logger.warning(f"File path missing for document: User {user_id}, Type {doc_type}")
+            logger.warning(
+                f"File path missing for document: User {user_id}, Type {doc_type}"
+            )
             return None
 
         try:
             logger.info(f"Downloading file from {document.file_path}...")
             file_content = await self.file_storage.download_file(document.file_path)
-            
-            logger.info(f"Extracting text from file...")
+
+            logger.info("Extracting text from file...")
             text = await self.extractor.extract_text(file_content)
-            
+
             # C. 추출 결과 저장 (상태 업데이트)
             document.update_text(text)
             await self.doc_repo.save_parsed_doc(user_id, job_id, document)
-            
+
             return text
-            
+
         except Exception as e:
-            logger.error(f"Failed to extract text for User {user_id}, Type {doc_type}: {e}")
+            logger.error(
+                f"Failed to extract text for User {user_id}, Type {doc_type}: {e}"
+            )
             return None
