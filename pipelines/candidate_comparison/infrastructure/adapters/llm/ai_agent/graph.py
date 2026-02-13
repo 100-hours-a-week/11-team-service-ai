@@ -1,21 +1,22 @@
 import logging
+from typing import Tuple
 
 from langgraph.graph import StateGraph, START, END
 
-from .....domain.interface.adapter_interfaces import AnalystAgent
+from .....domain.interface.adapter_interfaces import ComparisonAnalyzer
 from .....domain.models.job import JobInfo
-from .....domain.models.document import DocumentType
-from .....domain.models.report import AnalysisReport
+from .....domain.models.report import ComparisonReport
+from .....domain.models.candidate import Candidate
 
 # Import local modules (relative)
-from .configuration import AnalyseContext
-from .state import AnalysisState
-from .nodes import execute_analysis_node, generate_report_node, plan_analysis
+from .configuration import CandidateContext
+from .state import CandidateState
+from .nodes import agent_me_attack, agent_competitor_attack, finalize_evaluation, check_turn
 
 logger = logging.getLogger(__name__)
 
 
-class LLMAnalyst(AnalystAgent):
+class LLMAnalyst(ComparisonAnalyzer):
     """
     LangGraph 기반의 AI 분석 에이전트 (Map-Reduce Orchestrator)
     """
@@ -24,24 +25,34 @@ class LLMAnalyst(AnalystAgent):
         self.model_name = model_name
         self.model_provider = model_provider
 
-    async def run_analysis(
+    async def analyze_candidates(
         self,
+        my_candidate: Candidate,
+        competitor_candidate: Candidate,
         job_info: JobInfo,
-        document_text: str,
-        doc_type: DocumentType = DocumentType.RESUME,
-    ) -> AnalysisReport:
+    ) -> Tuple[str, str]:
         """
         문서 분석 전체 파이프라인(LangGraph) 실행
         """
 
-        builder = StateGraph(state_schema=AnalysisState, context_schema=AnalyseContext)
-        builder.add_node("plan_analysis", plan_analysis)  # type: ignore[call-overload]
-        builder.add_node("execute_analysis_node", execute_analysis_node)  # type: ignore[call-overload]
-        builder.add_node("generate_report_node", generate_report_node)  # type: ignore[call-overload]
+        builder = StateGraph(state_schema=CandidateState, context_schema=CandidateContext)
+        builder.add_node("agent_me_attack", agent_me_attack)
+        builder.add_node("agent_competitor_attack", agent_competitor_attack)
+        builder.add_node("finalize_evaluation", finalize_evaluation)
 
-        builder.add_edge(START, "plan_analysis")
-        builder.add_edge("execute_analysis_node", "generate_report_node")
-        builder.add_edge("generate_report_node", END)
+        builder.add_edge(START, "agent_me_attack")
+        builder.add_edge("agent_me_attack", "agent_competitor_attack")
+
+        builder.add_conditional_edges(
+            source="agent_competitor_attack", # 조건부 로직을 시작할 노드
+            path=check_turn, # 조건을 판단할 함수
+            path_map={
+                "continue": "agent_me_attack",  # 함수의 반환값이 "continue"면 agent_me_attack로 이동
+                "end": "finalize_evaluation"    # 함수의 반환값이 "end"면 finalize_evaluation로 이동
+            }
+        )
+
+        builder.add_edge("finalize_evaluation", END)
 
         graph = builder.compile()
 
@@ -53,18 +64,15 @@ class LLMAnalyst(AnalystAgent):
             }
         }
 
-        context_data = AnalyseContext(
-            job_info=job_info, doc_type=doc_type, doc_text=document_text
+        context_data = CandidateContext(
+            job_info=job_info, my_candidate=my_candidate, competitor_candidate=competitor_candidate
         )
 
         # 그래프 실행
         final_state = await graph.ainvoke(
-            {"section_analyses": [], "overall_review": ""},  # type: ignore[arg-type]
-            config=config,  # type: ignore[arg-type]
-            context=context_data,  # type: ignore[call-arg]
+            input=CandidateState(turn_count=0, messages=[]),
+            config=config,
+            context=context_data,
         )
 
-        return AnalysisReport.create(
-            results=final_state["section_analyses"],
-            overall_review=final_state["overall_review"],
-        )
+        return (final_state["strengths"], final_state["weaknesses"])

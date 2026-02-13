@@ -2,15 +2,16 @@ from dataclasses import dataclass
 from typing import Optional
 from langchain_core.runnables import RunnableConfig
 from .....domain.models.job import JobInfo
-from .....domain.models.document import DocumentType
+from .....domain.models.candidate import Candidate
 
 
 # 1. 고정된 입력값 (Runtime Context) - 데이터 클래스 권장
 @dataclass
-class AnalyseContext:
+class CandidateContext:
     job_info: JobInfo  # 공고 내용
-    doc_type: DocumentType  # 'resume', 'portfolio' 등
-    doc_text: str  # 문서 본문
+    my_candidate : Candidate
+    competitor_candidate : Candidate
+
 
 
 # 2. 실행 설정 (Configuration)

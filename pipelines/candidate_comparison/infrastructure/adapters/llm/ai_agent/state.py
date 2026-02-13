@@ -1,9 +1,10 @@
-import operator
 from typing import Annotated, List
-from typing_extensions import TypedDict
-from .....domain.models.report import SectionAnalysis
+from pydantic import BaseModel, Field
+from langgraph.graph import add_messages
+from langchain_core.messages import BaseMessage
 
-
-class AnalysisState(TypedDict):
-    section_analyses: Annotated[List[SectionAnalysis], operator.add]
-    overall_review: str
+class CandidateState(BaseModel):
+    turn_count:int = Field(default=0)
+    messages: Annotated[List[BaseMessage], add_messages] = Field(default_factory=list)
+    strengths:str = Field(default="")
+    weaknesses:str = Field(default="")
