@@ -91,7 +91,7 @@ class SqlAlchemyCandidateRepository(CandidateRepository):
             )
         )
         doc_result = await self.session.execute(doc_stmt)
-        docs = doc_result.scalars().all()
+        docs = doc_result.scalars().unique().all()
 
         parsed_resume: Optional[str] = None
         parsed_portfolio: Optional[str] = None

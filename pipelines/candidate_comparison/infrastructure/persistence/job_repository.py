@@ -60,6 +60,7 @@ class SqlAlchemyJobRepository(JobRepository):
         # 4. 도메인 객체 생성
         return JobInfo(
             job_posting_id=str(job_master.job_master_id),
+            job_title=str(job_master.job_title or ""),
             company_name=job_master.company.name if job_master.company else "Unknown",
             main_tasks=(
                 job_master.main_tasks if isinstance(job_master.main_tasks, list) else []

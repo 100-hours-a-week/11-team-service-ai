@@ -13,6 +13,7 @@ class JobInfo(BaseModel):
     """채용 공고 핵심 정보"""
 
     job_posting_id: str = Field(description="공고 고유 ID")
+    job_title: str = Field(description="공고 제목")
     company_name: str = Field(description="회사명")
     main_tasks: List[str] = Field(description="주요 업무 리스트")
     tech_stacks: List[str] = Field(description="기술 스택 리스트")
