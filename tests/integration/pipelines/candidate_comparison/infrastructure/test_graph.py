@@ -70,7 +70,7 @@ async def main():
     logger.info("🚀 Starting LangGraph-based Candidate Comparison Analysis")
     logger.info("=" * 80)
 
-    analyzer = LLMAnalyst(model_name="gpt-4o", model_provider="openai")
+    analyzer = LLMAnalyst(model_name="gemini-3-flash-preview", model_provider="gemini")
 
     strengths, weaknesses = await analyzer.analyze_candidates(
         my_candidate=my_candidate,
