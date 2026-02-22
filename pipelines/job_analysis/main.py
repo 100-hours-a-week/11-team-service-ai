@@ -10,6 +10,8 @@ from .infrastructure.adapters.crawling.router import DynamicRoutingCrawler
 from .infrastructure.adapters.llm.job_extractor import LLMJobExtractor
 
 from shared.config import settings
+from shared.utils import load_chat_model
+
 from .infrastructure.adapters.llm.mock_extractor import MockJobExtractor
 
 from langchain_core.language_models import BaseChatModel
@@ -29,34 +31,15 @@ async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeRe
         extractor_impl = MockJobExtractor()
     else:
         llm_model: BaseChatModel
-        if getattr(settings, "LLM_PROVIDER", "openai") == "gemini":
-            from langchain_google_genai import ChatGoogleGenerativeAI
-
-            model = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
-            logger.info(f"🤖 Initializing LLMJobExtractor with gemini ({model})")
-
-            llm_model = ChatGoogleGenerativeAI(
-                model=model,
-                google_api_key=settings.GOOGLE_API_KEY,
-                temperature=0,
-            )
+        model_provider = getattr(settings, "LLM_PROVIDER", "openai")
+        if model_provider == "gemini":
+            model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+        elif model_provider == "vllm":
+            model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
         else:
-            from langchain_openai import ChatOpenAI
-            from pydantic import SecretStr
-
-            model = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
-            logger.info(f"🤖 Initializing LLMJobExtractor with OpenAI ({model})")
-
-            llm_model = ChatOpenAI(
-                model=model,
-                temperature=0,
-                api_key=(
-                    SecretStr(settings.OPENAI_API_KEY)
-                    if settings.OPENAI_API_KEY
-                    else None
-                ),
-                model_kwargs={"response_format": {"type": "json_object"}},
-            )
+            model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+            
+        llm_model = load_chat_model(model_name=model_name, model_provider=model_provider)
 
         extractor_impl = LLMJobExtractor(llm=llm_model)
 

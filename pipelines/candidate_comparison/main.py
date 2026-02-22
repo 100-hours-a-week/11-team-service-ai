@@ -17,6 +17,8 @@ from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 
 # Infrastructure (Adapters)
 from .infrastructure.adapters.llm.mock_agent import MockComparisonAnalyzer
+from .infrastructure.adapters.llm.ai_agent.graph import LLMAnalyst
+
 
 logger = logging.getLogger(__name__)
 
@@ -54,21 +56,16 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
             logger.info("🤖 Using Mock Comparison Analyzer")
             analyzer = MockComparisonAnalyzer()
         else:
-            # TODO: Real LLM Comparison Agent 구현 후 교체
-            logger.warning(
-                "⚠️  Real LLM Comparison Agent not implemented yet. Using Mock."
-            )
-            analyzer = MockComparisonAnalyzer()
-
-            # 실제 LLM Agent 구현 예시:
-            # from .infrastructure.adapters.llm.ai_agent.graph import LLMComparisonAnalyzer
-            # llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
-            # if llm_provider == "gemini":
-            #     model_name = getattr(settings, "GOOGLE_MODEL", "gemini-1.5-flash")
-            #     analyzer = LLMComparisonAnalyzer(model_name=model_name, model_provider="gemini")
-            # else:
-            #     model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o")
-            #     analyzer = LLMComparisonAnalyzer(model_name=model_name, model_provider="openai")
+            analyzer: LLMAnalyst
+            llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
+            if llm_provider == "gemini":
+                model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+            elif llm_provider == "vllm":
+                model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
+            else:
+                model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+            
+            analyzer = LLMAnalyst(model_name=model_name, model_provider=llm_provider)
 
         # 3. Application Service에 의존성 주입 (Wiring)
         use_case = ComparisonUseCase(

@@ -17,7 +17,7 @@ from .state import CandidateState
 from pydantic import BaseModel, Field
 
 from .prompts import DEBATE_AGENT_PROMPT, OPENING_STATEMENT_PROMPT, FINAL_DECISION_PROMPT
-from .utils import load_chat_model, AiResponse
+from shared.utils import load_chat_model, AiResponse
 
 logger = logging.getLogger(__name__)
 

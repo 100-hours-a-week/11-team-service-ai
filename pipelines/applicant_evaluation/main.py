@@ -3,6 +3,7 @@ from shared.db.connection import get_db
 from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 from .infrastructure.persistence.doc_repository import SqlAlchemyDocRepository
 from shared.config import settings
+from shared.utils import load_chat_model
 from .infrastructure.adapters.llm.ai_agent import LLMAnalyst
 from .infrastructure.adapters.llm.mock_agent import MockAnalyst
 from .domain.interface.adapter_interfaces import AnalystAgent
@@ -37,34 +38,15 @@ async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
             agent = MockAnalyst()
         else:
             llm_model: BaseChatModel
-            if getattr(settings, "LLM_PROVIDER", "openai") == "gemini":
-                from langchain_google_genai import ChatGoogleGenerativeAI
-
-                model = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
-                logger.info(f"🤖 Initializing LLMJobExtractor with gemini ({model})")
-
-                llm_model = ChatGoogleGenerativeAI(
-                    model=model,
-                    google_api_key=settings.GOOGLE_API_KEY,
-                    temperature=0,
-                )
+            model_provider = getattr(settings, "LLM_PROVIDER", "openai")
+            if model_provider == "gemini":
+                model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+            elif model_provider == "vllm":
+                model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
             else:
-                from langchain_openai import ChatOpenAI
-                from pydantic import SecretStr
-
-                model = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
-                logger.info(f"🤖 Initializing LLMJobExtractor with OpenAI ({model})")
-
-                llm_model = ChatOpenAI(
-                    model=model,
-                    temperature=0,
-                    api_key=(
-                        SecretStr(settings.OPENAI_API_KEY)
-                        if settings.OPENAI_API_KEY
-                        else None
-                    ),
-                    model_kwargs={"response_format": {"type": "json_object"}},
-                )
+                model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+            
+            llm_model = load_chat_model(model_name=model_name, model_provider=model_provider)
             agent = LLMAnalyst(llm=llm_model)
 
         # 2. Application Layer 서비스에 의존성 주입 (Wiring)

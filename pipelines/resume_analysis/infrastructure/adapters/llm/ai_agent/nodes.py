@@ -14,7 +14,7 @@ from langgraph.types import Send, Command
 
 from .configuration import AnalyseContext, Configuration
 from .prompts import get_analysis_prompt, get_final_report_prompt
-from .utils import load_chat_model, AiResponse
+from shared.utils import load_chat_model, AiResponse
 
 logger = logging.getLogger(__name__)
 
