@@ -44,7 +44,6 @@ packages = [
     "pipelines/resume_analysis",
     "pipelines/applicant_evaluation",
     "pipelines/candidate_comparison",
-    "pipelines/portfolio_analysis"
 ]
 
 [dependency-groups]

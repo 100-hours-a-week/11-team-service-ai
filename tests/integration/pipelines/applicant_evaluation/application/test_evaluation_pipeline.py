@@ -128,17 +128,5 @@ async def test_run_pipeline_end_to_end(db_session, pipeline_data):
     assert isinstance(response, EvaluateResponse)
     assert response.overall_score == 75.0  # Mock Agent Default Score
 
-    # DB 저장 확인
-    # AiApplicantEvaluation 테이블 조회
-    # conn = db_session.connection() # 현재 세션 커넥션 사용
-    # ORM 조회 (세션 사용)
-    # flush가 필요할 수 있음 (pipeline 내부 commit은 mock session에서는 무효할 수 있으나 여기선 real session yield함)
-    # 하지만 run_pipeline 끝에 await db_session.commit()이 있음.
-    # -> 테스트 환경의 db_session은 rollback 모드(nested transaction)여야 하는데,
-    # conftest.py에서 sessionmaker로 만든 세션은 commit()을 호출하면 실제 DB에 반영하려 할 것임.
-    # 이는 '데이터 보존' 정책과 충돌할 수 있음.
-    # 보통 테스트 세션의 commit()은 아무 일도 안 하거나 flush만 하도록 막아야 함.
-    # 일단 조회해보고 데이터가 있으면 성공.
-
     # (여기서는 간단히 검증)
     assert response.one_line_review.startswith("[Mock]")

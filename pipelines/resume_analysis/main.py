@@ -85,16 +85,15 @@ async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:
         if llm_provider == "gemini":
             model_name = getattr(settings, "GOOGLE_MODEL", "gemini-1.5-flash")
             logger.info(f"🤖 Initializing Analyst Agent with Gemini ({model_name})")
-            # Gemini provider string adjustment if needed (e.g. 'google_genai')
-            # load_chat_model in utils.py handles 'google_genai' for Gemini
-            agent_provider = "gemini"
+        elif llm_provider == "vllm":
+            model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
+            logger.info(f"🤖 Initializing Analyst Agent with vLLM ({model_name})")
         else:
             model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o")
             logger.info(f"🤖 Initializing Analyst Agent with OpenAI ({model_name})")
-            agent_provider = "openai"
 
         # LLMAnalyst 초기화 (객체 대신 설정값 전달)
-        agent = LLMAnalyst(model_name=model_name, model_provider=agent_provider)
+        agent = LLMAnalyst(model_name=model_name, model_provider=llm_provider)
 
     # 2. Infrastructure Adapters
     job_repo = SqlAlchemyJobRepository(session)
