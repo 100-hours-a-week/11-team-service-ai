@@ -1,20 +1,23 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
+
 class CandidateError(Exception):
     """지원자 도메인 관련 예외"""
 
     pass
 
+
 class ApplicantDocuments(BaseModel):
     """한 지원자의 특정 공고에 대한 전체 제출 서류"""
 
-    parsed_resume: str = Field(
+    parsed_resume: Optional[str] = Field(
         default=None, description="파싱된 이력서 데이터"
     )
     parsed_portfolio: Optional[str] = Field(
         default=None, description="파싱된 포트폴리오 데이터"
     )
+
 
 class CompetencyScore(BaseModel):
     """개별 역량 평가 점수"""
@@ -36,6 +39,7 @@ class EvaluationResult(BaseModel):
     서류 평가 결과 (Internal Model)
     특정 공고 기준에 따라 AI가 분석한 데이터
     """
+
     competency_scores: List[CompetencyScore] = Field(
         description="세부 역량별 점수 리스트"
     )
@@ -54,7 +58,6 @@ class EvaluationResult(BaseModel):
         return round(average, 1)
 
 
-
 class Candidate(BaseModel):
     """
     지원자 Aggregate Root
@@ -66,11 +69,11 @@ class Candidate(BaseModel):
 
     def is_ready_for_comparison(self) -> bool:
         """비교 가능한 상태인지 확인 (서류 + 평가 결과 모두 필요)"""
-        
+
         # 1. 서류: 이력서가 파싱되어 있는지 확인 (포트폴리오는 옵션일 수 있음)
         documents_ready = bool(self.documents and self.documents.parsed_resume)
-        
+
         # 2. 평가: 평가 결과 객체가 있고, 검사 점수 리스트가 비어있지 않은지 확인
         evaluation_ready = bool(self.evaluation and self.evaluation.competency_scores)
-        
+
         return documents_ready and evaluation_ready

@@ -45,8 +45,10 @@ async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
                 model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
             else:
                 model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
-            
-            llm_model = load_chat_model(model_name=model_name, model_provider=model_provider)
+
+            llm_model = load_chat_model(
+                model_name=model_name, model_provider=model_provider
+            )
             agent = LLMAnalyst(llm=llm_model)
 
         # 2. Application Layer 서비스에 의존성 주입 (Wiring)

@@ -7,7 +7,6 @@ from sqlalchemy import (
     Date,
     ForeignKey,
     Text,
-    DECIMAL,
     JSON,
     TIMESTAMP,
 )
@@ -189,8 +188,9 @@ class AiApplicantEvaluation(Base):
 
     application = relationship("JobApplication")
 
+
 # comparison은 아래와 같은 json구조로 돼어있음
 # [{"name": "직무 적합성 (Job Fit)", "score": 75, "description": "지원자는 다양한 프로그래밍 언어와 개발 스택을 보유하고 있으며,..... 부여합니다."},
-#  {"name": "문화 적합성 (Culture Fit)", "score": 85, "description": "지원자는 다양한 팀참여는 팀워크와 협업의 중요성을 잘 이해하고 있음을 보여줍니다. 그러나, 더 많은 경험이 필요할 것으로 보이며, 특히 SCM, MES,..... 니다."}, 
+#  {"name": "문화 적합성 (Culture Fit)", "score": 85, "description": "지원자는 다양한 팀참여는 팀워크와 협업의 중요성을 잘 이해하고 있음을 보여줍니다. 그러나, 더 많은 경험이 필요할 것으로 보이며, 특히 SCM, MES,..... 니다."},
 # {"name": "성장 가능성 (Growth Potential)", "score": 85, "description": "지원자는 다양 .... 평가됩니다."}, {"name": "문제 해결 능력 (Problem Solving)", "score": 75, "description": "지원자는 다양한 .....필요합니다."}
 # ]

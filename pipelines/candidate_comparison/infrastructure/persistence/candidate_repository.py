@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -13,7 +13,6 @@ from ...domain.models.candidate import (
 from shared.db.model.models import (
     JobApplication,
     ApplicationDocument,
-    ApplicationDocumentParsed,
     AiApplicantEvaluation,
 )
 
@@ -32,18 +31,20 @@ class SqlAlchemyCandidateRepository(CandidateRepository):
         self.session = session
 
     async def find_candidate(
-        self, user_id: int, job_master_id: int
+        self, candidate_id: str, job_posting_id: str
     ) -> Optional[Candidate]:
         """
         지원자 애그리거트 조회
 
         Args:
-            user_id: 지원자 ID
-            job_master_id: 공고 ID
+            candidate_id: 지원자 ID
+            job_posting_id: 공고 ID
 
         Returns:
             Candidate: 서류 + 평가 결과를 포함한 애그리거트
         """
+        user_id = int(candidate_id)
+        job_master_id = int(job_posting_id)
         # 1. JobApplication 조회
         app_stmt = select(JobApplication).where(
             JobApplication.user_id == user_id,
@@ -55,7 +56,7 @@ class SqlAlchemyCandidateRepository(CandidateRepository):
         if not application:
             return None
 
-        job_application_id = application.job_application_id
+        job_application_id = int(application.job_application_id)  # type: ignore
 
         # 2. 서류 조회 (이력서 + 포트폴리오)
         documents = await self._get_documents(job_application_id)
@@ -70,9 +71,7 @@ class SqlAlchemyCandidateRepository(CandidateRepository):
         # 4. Candidate 애그리거트 생성
         return Candidate(documents=documents, evaluation=evaluation)
 
-    async def _get_documents(
-        self, job_application_id: int
-    ) -> ApplicantDocuments:
+    async def _get_documents(self, job_application_id: int) -> ApplicantDocuments:
         """
         지원자의 서류(이력서 + 포트폴리오) 조회
 
@@ -149,7 +148,7 @@ class SqlAlchemyCandidateRepository(CandidateRepository):
         )
 
     def _parse_competency_scores(
-        self, comparison_scores_json: any
+        self, comparison_scores_json: Any
     ) -> list[CompetencyScore]:
         """
         JSON 역량 점수를 CompetencyScore 리스트로 변환

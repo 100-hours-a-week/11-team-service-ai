@@ -67,7 +67,8 @@ class CandidateComparisonService:
         역량명 기준으로 매칭하여 ComparisonMetric 생성
         """
         my_scores = {
-            score.name: score.score for score in my_candidate.evaluation.competency_scores
+            score.name: score.score
+            for score in my_candidate.evaluation.competency_scores
         }
         competitor_scores = {
             score.name: score.score

@@ -1,14 +1,10 @@
-from langchain_core.language_models.chat_models import BaseChatModel
 import logging
-from typing import List, Union
 
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
-from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
+from langchain_core.messages import AIMessage
 
-from .....domain.interface.adapter_interfaces import ComparisonAnalyzer
 from .....domain.models.job import JobInfo
-from .....domain.models.report import ComparisonReport
 from .....domain.models.candidate import Candidate
 
 from .configuration import CandidateContext, Configuration
@@ -16,26 +12,36 @@ from .state import CandidateState
 
 from pydantic import BaseModel, Field
 
-from .prompts import DEBATE_AGENT_PROMPT, OPENING_STATEMENT_PROMPT, FINAL_DECISION_PROMPT
+from .prompts import (
+    DEBATE_AGENT_PROMPT,
+    OPENING_STATEMENT_PROMPT,
+    FINAL_DECISION_PROMPT,
+)
 from shared.utils import load_chat_model, AiResponse
+from typing import cast
 
 logger = logging.getLogger(__name__)
+
 
 class FinalDecisionOutput(BaseModel):
     strengths: str = Field(description="내 지원자의 핵심 강점 요약")
     weaknesses: str = Field(description="내 지원자의 주요 약점 요약")
 
 
-async def agent_me_attack(state: CandidateState, config: RunnableConfig, runtime: Runtime[CandidateContext]):
+async def agent_me_attack(
+    state: CandidateState, config: RunnableConfig, runtime: Runtime[CandidateContext]
+):
     """내 지원자(My Candidate) 입장에서 방어 및 공격"""
     logger.info("🤖 Agent Me: Defending & Attacking...")
 
     # 1. Config & Context 로드
     cfg = Configuration.from_runnable_config(config)
-    rtx = runtime.context # CandidateContext (job_info, candidates)
+    rtx = runtime.context  # CandidateContext (job_info, candidates)
 
     # 2. LLM 로드 (AiResponse structured output 사용)
-    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(AiResponse)
+    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(
+        AiResponse
+    )
 
     # 3. 정보 포맷팅
     job_info_text = _format_job_info(rtx.job_info)
@@ -53,25 +59,29 @@ async def agent_me_attack(state: CandidateState, config: RunnableConfig, runtime
     # 5. 체인 실행
     chain = prompt | llm
 
-    ai_response: AiResponse = await chain.ainvoke({
-        "me": "Agent_Me",
-        "other": "Agent_Competitor",
-        "job_info": job_info_text,
-        "my_candidate_info": my_info,
-        "competitor_info": comp_info,
-        "chat_history": state.messages
-    })
+    ai_response = cast(
+        AiResponse,
+        await chain.ainvoke(
+            {
+                "me": "Agent_Me",
+                "other": "Agent_Competitor",
+                "job_info": job_info_text,
+                "my_candidate_info": my_info,
+                "competitor_info": comp_info,
+                "chat_history": state.messages,
+            }
+        ),
+    )
 
     # AIMessage 생성 (structured output의 response 필드 사용)
-    message = AIMessage(
-        content=f"[Agent_Me]\n{ai_response.response}",
-        name="Agent_Me"
-    )
+    message = AIMessage(content=f"[Agent_Me]\n{ai_response.response}", name="Agent_Me")
     logger.info(f"\n[Agent_Me Response]:\n{message.content}\n")
     return {"messages": [message]}
 
 
-async def agent_competitor_attack(state: CandidateState, config: RunnableConfig, runtime: Runtime[CandidateContext]):
+async def agent_competitor_attack(
+    state: CandidateState, config: RunnableConfig, runtime: Runtime[CandidateContext]
+):
     """경쟁 지원자(Competitor) 입장에서 방어 및 공격"""
     logger.info("🤖 Agent Competitor: Defending & Attacking...")
 
@@ -79,7 +89,9 @@ async def agent_competitor_attack(state: CandidateState, config: RunnableConfig,
     rtx = runtime.context
 
     # AiResponse structured output 사용
-    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(AiResponse)
+    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(
+        AiResponse
+    )
 
     job_info_text = _format_job_info(rtx.job_info)
     my_info = _format_candidate_info(rtx.competitor_candidate)
@@ -90,19 +102,23 @@ async def agent_competitor_attack(state: CandidateState, config: RunnableConfig,
     logger.info("💬 Agent_Competitor: Responding to Agent_Me")
 
     # 역할 반전 (who <-> other)
-    ai_response: AiResponse = await chain.ainvoke({
-        "me": "Agent_Competitor",
-        "other": "Agent_Me",
-        "job_info": job_info_text,
-        "my_candidate_info": my_info,
-        "competitor_info": comp_info,
-        "chat_history": state.messages
-    })
+    ai_response = cast(
+        AiResponse,
+        await chain.ainvoke(
+            {
+                "me": "Agent_Competitor",
+                "other": "Agent_Me",
+                "job_info": job_info_text,
+                "my_candidate_info": my_info,
+                "competitor_info": comp_info,
+                "chat_history": state.messages,
+            }
+        ),
+    )
 
     # AIMessage 생성 (structured output의 response 필드 사용)
     message = AIMessage(
-        content=f"[Agent_Competitor]\n{ai_response.response}",
-        name="Agent_Competitor"
+        content=f"[Agent_Competitor]\n{ai_response.response}", name="Agent_Competitor"
     )
     logger.info(f"\n[Agent_Competitor Response]:\n{message.content}\n")
 
@@ -121,40 +137,46 @@ async def check_turn(state: CandidateState):
         return "end"
 
 
-async def finalize_evaluation(state: CandidateState, config: RunnableConfig, runtime: Runtime[CandidateContext]):
+async def finalize_evaluation(
+    state: CandidateState, config: RunnableConfig, runtime: Runtime[CandidateContext]
+):
     """최종 판정 및 리포트 생성"""
     logger.info("⚖️ Finalizing Evaluation...")
 
     cfg = Configuration.from_runnable_config(config)
     rtx = runtime.context
-    
+
     # Structured Output 사용 (FinalDecisionOutput)
-    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(FinalDecisionOutput)
-    
+    llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(
+        FinalDecisionOutput
+    )
+
     job_info_text = _format_job_info(rtx.job_info)
     my_info = _format_candidate_info(rtx.my_candidate)
     comp_info = _format_candidate_info(rtx.competitor_candidate)
-    
+
     chain = FINAL_DECISION_PROMPT | llm
-    
+
     try:
-        result: FinalDecisionOutput = await chain.ainvoke({
-            "job_info": job_info_text,
-            "my_candidate_info": my_info,
-            "competitor_info": comp_info,
-            "chat_history": state.messages
-        })
-        
-        return {
-            "strengths": result.strengths, 
-            "weaknesses": result.weaknesses
-        }
-        
+        result = cast(
+            FinalDecisionOutput,
+            await chain.ainvoke(
+                {
+                    "job_info": job_info_text,
+                    "my_candidate_info": my_info,
+                    "competitor_info": comp_info,
+                    "chat_history": state.messages,
+                }
+            ),
+        )
+
+        return {"strengths": result.strengths, "weaknesses": result.weaknesses}
+
     except Exception as e:
         logger.error(f"Failed to generate structured report: {e}")
         return {
             "strengths": "분석 실패 (오류 발생)",
-            "weaknesses": "분석 실패 (오류 발생)"
+            "weaknesses": "분석 실패 (오류 발생)",
         }
 
 
@@ -166,6 +188,7 @@ def _format_job_info(job: JobInfo) -> str:
     - 자격 요건: {', '.join(getattr(job, 'qualifications', []))}
     - 우대 사항: {', '.join(getattr(job, 'preferred_points', []))}
     """
+
 
 def _format_candidate_info(candidate: Candidate) -> str:
     return f"""

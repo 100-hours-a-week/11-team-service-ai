@@ -19,7 +19,6 @@ from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 from .infrastructure.adapters.llm.mock_agent import MockComparisonAnalyzer
 from .infrastructure.adapters.llm.ai_agent.graph import LLMAnalyst
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +55,6 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
             logger.info("🤖 Using Mock Comparison Analyzer")
             analyzer = MockComparisonAnalyzer()
         else:
-            analyzer: LLMAnalyst
             llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
             if llm_provider == "gemini":
                 model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
@@ -64,7 +62,7 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
                 model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
             else:
                 model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
-            
+
             analyzer = LLMAnalyst(model_name=model_name, model_provider=llm_provider)
 
         # 3. Application Service에 의존성 주입 (Wiring)
@@ -76,9 +74,9 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
 
         # 4. 비즈니스 로직 실행 (Async)
         result = await use_case.compare_candidates(
-            my_candidate_id=int(request.user_id),
-            competitor_candidate_id=int(request.competitor),
-            job_posting_id=int(request.job_posting_id),
+            my_candidate_id=str(request.user_id),
+            competitor_candidate_id=str(request.competitor),
+            job_posting_id=str(request.job_posting_id),
         )
 
         # 5. 트랜잭션 커밋 (읽기 전용이지만 일관성 유지)

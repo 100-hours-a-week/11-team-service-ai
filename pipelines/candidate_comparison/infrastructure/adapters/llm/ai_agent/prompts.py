@@ -131,6 +131,9 @@ FINAL_DECISION_PROMPT = ChatPromptTemplate.from_messages(
         ),
         # 대화 기록 (LangGraph state['messages']가 여기에 주입됨)
         MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "위 토론 내용을 종합하여 내 지원자의 **강점**과 **약점**을 정리한 최종 리포트를 작성해주세요."),
+        (
+            "human",
+            "위 토론 내용을 종합하여 내 지원자의 **강점**과 **약점**을 정리한 최종 리포트를 작성해주세요.",
+        ),
     ]
 )

@@ -64,7 +64,9 @@ class ComparisonUseCase:
             competitor_candidate_id, job_posting_id
         )
         if not competitor_candidate:
-            logger.error(f"❌ Competitor candidate not found: {competitor_candidate_id}")
+            logger.error(
+                f"❌ Competitor candidate not found: {competitor_candidate_id}"
+            )
             raise ValueError(f"Candidate not found: {competitor_candidate_id}")
 
         job_info = await self.job_repo.find_job(job_posting_id)
@@ -73,7 +75,6 @@ class ComparisonUseCase:
             raise ValueError(f"Job not found: {job_posting_id}")
 
         logger.info("✅ Data retrieval complete")
-
 
         # 2. AI 분석 호출 (Infrastructure Adapter)
         logger.info("🤖 Starting AI comparison analysis...")

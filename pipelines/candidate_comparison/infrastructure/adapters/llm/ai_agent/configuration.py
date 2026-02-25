@@ -9,9 +9,8 @@ from .....domain.models.candidate import Candidate
 @dataclass
 class CandidateContext:
     job_info: JobInfo  # 공고 내용
-    my_candidate : Candidate
-    competitor_candidate : Candidate
-
+    my_candidate: Candidate
+    competitor_candidate: Candidate
 
 
 # 2. 실행 설정 (Configuration)

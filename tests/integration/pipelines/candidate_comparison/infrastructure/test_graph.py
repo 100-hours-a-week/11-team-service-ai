@@ -11,6 +11,7 @@ from candidate_comparison.infrastructure.adapters.llm.ai_agent.graph import LLMA
 
 logger = logging.getLogger(__name__)
 
+
 async def main():
     """
     LangGraph 기반 지원자 비교 분석 테스트 함수
@@ -21,13 +22,23 @@ async def main():
         job_posting_id="job-001",
         job_title="백엔드 개발자",
         company_name="테크 컴퍼니",
-        main_tasks=["RESTful API 설계 및 개발", "데이터베이스 최적화", "마이크로서비스 아키텍처 구축"],
+        main_tasks=[
+            "RESTful API 설계 및 개발",
+            "데이터베이스 최적화",
+            "마이크로서비스 아키텍처 구축",
+        ],
         tech_stacks=["Python", "FastAPI", "PostgreSQL", "Docker", "Kubernetes"],
         summary="백엔드 시스템을 설계하고 개발할 수 있는 경력 3년 이상의 개발자를 찾습니다.",
         evaluation_criteria=[
             {"name": "기술 역량", "description": "요구 기술 스택에 대한 실무 경험"},
-            {"name": "문제 해결 능력", "description": "복잡한 시스템 문제를 분석하고 해결한 경험"},
-            {"name": "협업 능력", "description": "팀 프로젝트 경험 및 커뮤니케이션 역량"},
+            {
+                "name": "문제 해결 능력",
+                "description": "복잡한 시스템 문제를 분석하고 해결한 경험",
+            },
+            {
+                "name": "협업 능력",
+                "description": "팀 프로젝트 경험 및 커뮤니케이션 역량",
+            },
         ],
     )
 
@@ -39,9 +50,19 @@ async def main():
         ),
         evaluation=EvaluationResult(
             competency_scores=[
-                CompetencyScore(name="기술 역량", score=85.0, feedback="Python 및 Django 경험이 풍부함"),
-                CompetencyScore(name="문제 해결 능력", score=80.0, feedback="시스템 최적화 경험 보유"),
-                CompetencyScore(name="협업 능력", score=75.0, feedback="팀 프로젝트 다수 참여"),
+                CompetencyScore(
+                    name="기술 역량",
+                    score=85.0,
+                    feedback="Python 및 Django 경험이 풍부함",
+                ),
+                CompetencyScore(
+                    name="문제 해결 능력",
+                    score=80.0,
+                    feedback="시스템 최적화 경험 보유",
+                ),
+                CompetencyScore(
+                    name="협업 능력", score=75.0, feedback="팀 프로젝트 다수 참여"
+                ),
             ],
             one_line_review="탄탄한 백엔드 경험을 보유한 개발자",
             feedback_detail="Django 경험이 많으나 FastAPI 경험은 다소 부족함. 전반적으로 우수한 역량 보유.",
@@ -56,9 +77,19 @@ async def main():
         ),
         evaluation=EvaluationResult(
             competency_scores=[
-                CompetencyScore(name="기술 역량", score=90.0, feedback="FastAPI와 K8s 실무 경험 풍부"),
-                CompetencyScore(name="문제 해결 능력", score=88.0, feedback="대용량 트래픽 처리 경험 우수"),
-                CompetencyScore(name="협업 능력", score=82.0, feedback="MSA 프로젝트에서 리드 경험"),
+                CompetencyScore(
+                    name="기술 역량",
+                    score=90.0,
+                    feedback="FastAPI와 K8s 실무 경험 풍부",
+                ),
+                CompetencyScore(
+                    name="문제 해결 능력",
+                    score=88.0,
+                    feedback="대용량 트래픽 처리 경험 우수",
+                ),
+                CompetencyScore(
+                    name="협업 능력", score=82.0, feedback="MSA 프로젝트에서 리드 경험"
+                ),
             ],
             one_line_review="최신 기술 스택에 능숙한 시니어 개발자",
             feedback_detail="FastAPI 및 컨테이너 오케스트레이션 경험이 우수함. 공고 요구사항과 매우 잘 부합.",

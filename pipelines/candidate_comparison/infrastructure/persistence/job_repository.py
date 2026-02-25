@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -21,16 +21,17 @@ class SqlAlchemyJobRepository(JobRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def find_job(self, job_master_id: int) -> Optional[JobInfo]:
+    async def find_job(self, job_posting_id: str) -> Optional[JobInfo]:
         """
         채용 공고 정보 조회
 
         Args:
-            job_master_id: 공고 ID
+            job_posting_id: 공고 ID
 
         Returns:
             JobInfo: 공고 정보 + 평가 기준
         """
+        job_master_id = int(job_posting_id)
         # 1. JobMaster + Company 조회
         stmt = (
             select(JobMaster)
@@ -71,7 +72,7 @@ class SqlAlchemyJobRepository(JobRepository):
         )
 
     def _parse_evaluation_criteria(
-        self, criteria_json: any
+        self, criteria_json: Any
     ) -> list[EvaluationCriteria]:
         """
         JSON 평가 기준을 EvaluationCriteria 리스트로 변환

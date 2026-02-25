@@ -72,9 +72,9 @@ class MockComparisonAnalyzer(ComparisonAnalyzer):
             )
         else:
             weaknesses = (
-                f"[Mock] 전반적으로 우수하나, "
-                f"지속적인 학습과 최신 기술 트렌드 파악을 통해 "
-                f"경쟁 우위를 더욱 공고히 할 수 있습니다."
+                "[Mock] 전반적으로 우수하나, "
+                "지속적인 학습과 최신 기술 트렌드 파악을 통해 "
+                "경쟁 우위를 더욱 공고히 할 수 있습니다."
             )
 
         logger.info("[Mock] Comparison analysis completed")
