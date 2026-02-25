@@ -1,0 +1,40 @@
+# Version control
+.git/
+.github/
+.gitignore
+
+# Python environment (installed in container)
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment files
+.env
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+
+# Testing / Caches
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Development files
+.vscode/
+.claude/
+
+# OS files
+.DS_Store
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Project specific
+images/
+temp_table/
