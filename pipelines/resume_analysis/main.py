@@ -11,6 +11,7 @@ from shared.schema.document import (
     PortfolioAnalyzeResponse,
 )
 
+from .domain.models.document import DocumentType
 from .domain.interface.adapter_interfaces import AnalystAgent
 
 # Application Service
@@ -33,18 +34,34 @@ async def run_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeRes
     """
     이력서 분석 파이프라인 실행
     """
+    target_doc_type = DocumentType.RESUME
+    analyzer = None
+
+    # --- [Step 1] 데이터 준비 (세션 1) ---
     async for session in get_db():
         analyzer = await _create_analyzer(session)
-
-        result = await analyzer.analyze_resume(
-            user_id=int(request.user_id), job_id=int(request.job_posting_id)
+        job_info, target_text = await analyzer.prepare_analysis_data(
+            user_id=int(request.user_id),
+            job_id=int(request.job_posting_id),
+            target_doc_type=target_doc_type,
         )
-
-        # 성공 시 커밋 (데이터 지속성 보장)
+        # 이력서를 다운로드/추출했다면 상태가 변경되었을 수 있으므로 커밋
         await session.commit()
-        return result
+        break  # DB 세션 즉시 반납
 
-    raise RuntimeError("Failed to get DB session")
+    if not analyzer:
+        raise RuntimeError("Failed to override analyzer from DB session")
+
+    # --- [Step 2] AI 추론 대기 (DB 커넥션 없음) ---
+    # DB 세션이 반환된 상태에서 느린 작업 진행
+    report = await analyzer.run_ai_analysis(
+        job_info=job_info,
+        target_text=target_text,
+        target_doc_type=target_doc_type,
+    )
+
+    # --- [Step 3] 최종 응답 포맷팅 반환 ---
+    return analyzer.format_resume_response(report, int(request.user_id))
 
 
 async def run_portfolio_analysis(
@@ -53,18 +70,32 @@ async def run_portfolio_analysis(
     """
     포트폴리오 분석 파이프라인 실행
     """
+    target_doc_type = DocumentType.PORTFOLIO
+    analyzer = None
+
+    # --- [Step 1] 데이터 준비 (세션 1) ---
     async for session in get_db():
         analyzer = await _create_analyzer(session)
-
-        result = await analyzer.analyze_portfolio(
-            user_id=int(request.user_id), job_id=int(request.job_posting_id)
+        job_info, target_text = await analyzer.prepare_analysis_data(
+            user_id=int(request.user_id),
+            job_id=int(request.job_posting_id),
+            target_doc_type=target_doc_type,
         )
-
-        # 성공 시 커밋
         await session.commit()
-        return result
+        break
 
-    raise RuntimeError("Failed to get DB session")
+    if not analyzer:
+        raise RuntimeError("Failed to override analyzer from DB session")
+
+    # --- [Step 2] AI 추론 대기 (DB 커넥션 없음) ---
+    report = await analyzer.run_ai_analysis(
+        job_info=job_info,
+        target_text=target_text,
+        target_doc_type=target_doc_type,
+    )
+
+    # --- [Step 3] 최종 응답 포맷팅 반환 ---
+    return analyzer.format_portfolio_response(report, int(request.user_id))
 
 
 async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:

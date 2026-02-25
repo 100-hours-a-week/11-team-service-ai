@@ -11,7 +11,6 @@ from .infrastructure.adapters.storage.s3_storage import S3FileStorage
 from .infrastructure.adapters.parser.pdf_extractor import PyPdfExtractor
 from .application.services.analyzer import ApplicationAnalyzer
 from shared.schema.applicant import EvaluateRequest, EvaluateResponse
-from langchain_core.language_models import BaseChatModel
 
 logger = logging.getLogger(__name__)
 
@@ -21,52 +20,65 @@ async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
     지원자 평가 파이프라인의 메인 진입점 (Async Entrypoint)
     외부(API Router)에서 호출할 때 이 함수를 사용합니다.
     """
-    # DB 세션 라이프사이클 관리 (Async Generator)
+    user_id = int(request.user_id)
+    job_id = int(request.job_posting_id)
+    analyzer = None
+
+    # --- [Step 1] 데이터 준비 (세션 1) ---
     async for db_session in get_db():
-        # 1. Infrastructure Layer의 구현체 생성 (Dependencies)
-        job_repo = SqlAlchemyJobRepository(db_session)
-        doc_repo = SqlAlchemyDocRepository(db_session)
-
-        file_storage = S3FileStorage()
-        extractor = PyPdfExtractor()
-
-        # External Clients (DI) & Mock Selection
-        # use_mock 프로퍼티가 있다면 그것을 사용 (dev profile 체크 포함됨)
-        # 또는 settings.USE_MOCK을 직접 사용해도 됨
-        agent: AnalystAgent
-        if getattr(settings, "use_mock", False):
-            agent = MockAnalyst()
-        else:
-            llm_model: BaseChatModel
-            model_provider = getattr(settings, "LLM_PROVIDER", "openai")
-            if model_provider == "gemini":
-                model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
-            elif model_provider == "vllm":
-                model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
-            else:
-                model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
-
-            llm_model = load_chat_model(
-                model_name=model_name, model_provider=model_provider
-            )
-            agent = LLMAnalyst(llm=llm_model)
-
-        # 2. Application Layer 서비스에 의존성 주입 (Wiring)
-        analyzer = ApplicationAnalyzer(
-            job_repo=job_repo,
-            doc_repo=doc_repo,
-            file_storage=file_storage,
-            extractor=extractor,
-            agent=agent,
+        analyzer = await _create_analyzer(db_session)
+        job_info, resume_text, portfolio_text = await analyzer.prepare_evaluation_data(
+            user_id=user_id, job_id=job_id
         )
-
-        # 3. 비즈니스 로직 실행 (Async)
-        # 서비스 계층의 run 메서드도 async여야 함
-        result = await analyzer.run(int(request.user_id), int(request.job_posting_id))
-
-        # 4. 트랜잭션 커밋 (저장소 변경사항 반영)
+        # 서류 추출 등으로 인한 DB 변경사항 커밋
         await db_session.commit()
+        break  # DB 세션 즉시 반납
 
-        return result
+    if not analyzer:
+        raise RuntimeError("Failed to obtain database session")
 
-    raise RuntimeError("Failed to obtain database session")
+    # --- [Step 2] AI 추론 대기 (DB 커넥션 없음) ---
+    # DB 세션이 반환된 상태에서 느린 작업 진행
+    report = await analyzer.run_ai_evaluation(
+        job_info=job_info,
+        resume_text=resume_text,
+        portfolio_text=portfolio_text,
+        user_id=user_id,
+    )
+
+    # --- [Step 3] 최종 응답 포맷팅 반환 ---
+    # DB 세션 없이 반환 수행
+    return analyzer.format_response(report=report, user_id=user_id, job_id=job_id)
+
+
+async def _create_analyzer(db_session) -> ApplicationAnalyzer:
+    job_repo = SqlAlchemyJobRepository(db_session)
+    doc_repo = SqlAlchemyDocRepository(db_session)
+
+    file_storage = S3FileStorage()
+    extractor = PyPdfExtractor()
+
+    agent: AnalystAgent
+    if getattr(settings, "use_mock", False):
+        agent = MockAnalyst()
+    else:
+        model_provider = getattr(settings, "LLM_PROVIDER", "openai")
+        if model_provider == "gemini":
+            model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+        elif model_provider == "vllm":
+            model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
+        else:
+            model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+
+        llm_model = load_chat_model(
+            model_name=model_name, model_provider=model_provider
+        )
+        agent = LLMAnalyst(llm=llm_model)
+
+    return ApplicationAnalyzer(
+        job_repo=job_repo,
+        doc_repo=doc_repo,
+        file_storage=file_storage,
+        extractor=extractor,
+        agent=agent,
+    )

@@ -41,50 +41,67 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
         f"for job {request.job_posting_id}"
     )
 
-    # DB 세션 라이프사이클 관리 (Async Generator)
+    use_case = None
+
+    # --- [Step 1] 데이터 준비 (세션 1) ---
     async for db_session in get_db():
-        # 1. Infrastructure Layer 구현체 생성 (Dependencies)
-        candidate_repo = SqlAlchemyCandidateRepository(db_session)
-        job_repo = SqlAlchemyJobRepository(db_session)
-
-        # 2. AI Analyzer 선택 (Mock or Real)
-        analyzer: ComparisonAnalyzer
-
-        # use_mock가 True인 경우 Mock Agent 사용
-        if getattr(settings, "use_mock", False):
-            logger.info("🤖 Using Mock Comparison Analyzer")
-            analyzer = MockComparisonAnalyzer()
-        else:
-            llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
-            if llm_provider == "gemini":
-                model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
-            elif llm_provider == "vllm":
-                model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
-            else:
-                model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
-
-            analyzer = LLMAnalyst(model_name=model_name, model_provider=llm_provider)
-
-        # 3. Application Service에 의존성 주입 (Wiring)
-        use_case = ComparisonUseCase(
-            candidate_repo=candidate_repo,
-            job_repo=job_repo,
-            ai_analyzer=analyzer,
+        use_case = _create_use_case(db_session)
+        my_candidate, competitor_candidate, job_info = (
+            await use_case.prepare_comparison_data(
+                my_candidate_id=str(request.user_id),
+                competitor_candidate_id=str(request.competitor),
+                job_posting_id=str(request.job_posting_id),
+            )
         )
-
-        # 4. 비즈니스 로직 실행 (Async)
-        result = await use_case.compare_candidates(
-            my_candidate_id=str(request.user_id),
-            competitor_candidate_id=str(request.competitor),
-            job_posting_id=str(request.job_posting_id),
-        )
-
-        # 5. 트랜잭션 커밋 (읽기 전용이지만 일관성 유지)
         await db_session.commit()
+        break
 
-        logger.info(
-            f"✨ [Pipeline Complete] Comparison finished for user {request.user_id}"
-        )
-        return result
+    if not use_case:
+        raise RuntimeError("Failed to obtain database session")
 
-    raise RuntimeError("Failed to obtain database session")
+    # --- [Step 2] AI 분석 (DB 연결 불필요) ---
+    strengths, weaknesses = await use_case.run_ai_comparison(
+        my_candidate=my_candidate,
+        competitor_candidate=competitor_candidate,
+        job_info=job_info,
+    )
+
+    # --- [Step 3] 최종 응답 포맷팅 및 반환 (DB 연결 불필요) ---
+    result = use_case.format_comparison_response(
+        my_candidate=my_candidate,
+        competitor_candidate=competitor_candidate,
+        strengths=strengths,
+        weaknesses=weaknesses,
+    )
+
+    logger.info(
+        f"✨ [Pipeline Complete] Comparison finished for user {request.user_id}"
+    )
+    return result
+
+
+def _create_use_case(db_session) -> ComparisonUseCase:
+    candidate_repo = SqlAlchemyCandidateRepository(db_session)
+    job_repo = SqlAlchemyJobRepository(db_session)
+
+    analyzer: ComparisonAnalyzer
+
+    if getattr(settings, "use_mock", False):
+        logger.info("🤖 Using Mock Comparison Analyzer")
+        analyzer = MockComparisonAnalyzer()
+    else:
+        llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
+        if llm_provider == "gemini":
+            model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+        elif llm_provider == "vllm":
+            model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
+        else:
+            model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+
+        analyzer = LLMAnalyst(model_name=model_name, model_provider=llm_provider)
+
+    return ComparisonUseCase(
+        candidate_repo=candidate_repo,
+        job_repo=job_repo,
+        ai_analyzer=analyzer,
+    )

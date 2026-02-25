@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # Import Service & Domain
 from pipelines.resume_analysis.application.services.report import ApplicationAnalyzer
+from pipelines.resume_analysis.domain.models.document import DocumentType
 
 # Import Persistence (Real)
 from pipelines.resume_analysis.infrastructure.persistence.job_repository import (
@@ -78,7 +79,13 @@ async def test_analyze_resume_integration(db_session: AsyncSession):
     job_id = 9901
 
     try:
-        response = await service.analyze_resume(user_id, job_id)
+        job_info, target_text = await service.prepare_analysis_data(
+            user_id, job_id, DocumentType.RESUME
+        )
+        report = await service.run_ai_analysis(
+            job_info, target_text, DocumentType.RESUME
+        )
+        response = service.format_resume_response(report, user_id)
 
         # 4. 검증
         assert response is not None
@@ -125,7 +132,13 @@ async def test_analyze_portfolio_integration(db_session: AsyncSession):
     job_id = 9901
 
     try:
-        response = await service.analyze_portfolio(user_id, job_id)
+        job_info, target_text = await service.prepare_analysis_data(
+            user_id, job_id, DocumentType.PORTFOLIO
+        )
+        report = await service.run_ai_analysis(
+            job_info, target_text, DocumentType.PORTFOLIO
+        )
+        response = service.format_portfolio_response(report, user_id)
 
         # 4. 검증
         assert response is not None
