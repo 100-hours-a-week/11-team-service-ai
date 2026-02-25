@@ -33,35 +33,14 @@ class ApplicationAnalyzer:
         self.extractor = extractor
         self.agent = agent
 
-    async def analyze_resume(self, user_id: int, job_id: int) -> ResumeAnalyzeResponse:
-        """
-        이력서 분석 실행
-        """
-        report = await self._run_analysis_pipeline(user_id, job_id, DocumentType.RESUME)
-
-        logger.info(f"✨ [Resume Analysis Complete] User: {user_id}")
-        return ReportMapper.to_resume_response(report)
-
-    async def analyze_portfolio(
-        self, user_id: int, job_id: int
-    ) -> PortfolioAnalyzeResponse:
-        """
-        포트폴리오 분석 실행
-        """
-        report = await self._run_analysis_pipeline(
-            user_id, job_id, DocumentType.PORTFOLIO
-        )
-
-        logger.info(f"✨ [Portfolio Analysis Complete] User: {user_id}")
-        return ReportMapper.to_portfolio_response(report)
-
-    async def _run_analysis_pipeline(
+    async def prepare_analysis_data(
         self, user_id: int, job_id: int, target_doc_type: DocumentType
-    ) -> AnalysisReport:
+    ):
         """
-        공통 분석 파이프라인 로직
+        [Step 1] 데이터 준비 (DB 세션 필요)
+        DB에서 공고 정보와 문서 텍스트를 조회하고, 없으면 추출하여 저장합니다.
         """
-        doc_type_str = target_doc_type.value  # DB 조회 등에 사용
+        doc_type_str = target_doc_type.value
 
         logger.info(
             f"🚀 [{doc_type_str} Analysis Start] User: {user_id}, Job: {job_id}"
@@ -79,12 +58,38 @@ class ApplicationAnalyzer:
                 f"{doc_type_str} 파일이 존재하지 않거나 텍스트를 추출할 수 없습니다."
             )
 
-        # 3. AI 분석 실행 (LangGraph)
+        return job_info, target_text
+
+    async def run_ai_analysis(
+        self, job_info, target_text: str, target_doc_type: DocumentType
+    ) -> AnalysisReport:
+        """
+        [Step 2] AI 추론 실행 (DB 세션 불필요)
+        추출된 순수 텍스트 데이터를 받아 AI 에이전트를 호출합니다.
+        """
         return await self.agent.run_analysis(
             job_info=job_info,
             document_text=target_text,
             doc_type=target_doc_type,
         )
+
+    def format_resume_response(
+        self, report: AnalysisReport, user_id: int
+    ) -> ResumeAnalyzeResponse:
+        """
+        [Step 3] 이력서 분석 결과 포맷팅 (DB 세션 불필요)
+        """
+        logger.info(f"✨ [Resume Analysis Complete] User: {user_id}")
+        return ReportMapper.to_resume_response(report)
+
+    def format_portfolio_response(
+        self, report: AnalysisReport, user_id: int
+    ) -> PortfolioAnalyzeResponse:
+        """
+        [Step 3] 포트폴리오 분석 결과 포맷팅 (DB 세션 불필요)
+        """
+        logger.info(f"✨ [Portfolio Analysis Complete] User: {user_id}")
+        return ReportMapper.to_portfolio_response(report)
 
     async def _get_or_extract_text(
         self, user_id: int, job_id: int, doc_type: str

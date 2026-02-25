@@ -27,25 +27,14 @@ class ComparisonUseCase:
         self.job_repo = job_repo
         self.ai_analyzer = ai_analyzer
 
-    async def compare_candidates(
+    async def prepare_comparison_data(
         self,
         my_candidate_id: str,
         competitor_candidate_id: str,
         job_posting_id: str,
-    ) -> CompareResponse:
+    ):
         """
-        두 지원자를 비교하여 리포트 생성
-
-        Args:
-            my_candidate_id: 내 지원자 ID
-            competitor_candidate_id: 비교 대상 지원자 ID
-            job_posting_id: 공고 ID
-
-        Returns:
-            CompareResponse: 비교 결과 응답 스키마
-
-        Raises:
-            ValueError: 지원자 또는 공고를 찾을 수 없는 경우
+        [Step 1] 데이터 준비 (DB 세션 필요)
         """
         logger.info(
             f"🚀 [Comparison Start] My: {my_candidate_id}, "
@@ -80,26 +69,31 @@ class ComparisonUseCase:
             raise ValueError(f"Job not found: {job_posting_id}")
 
         logger.info("✅ Data retrieval complete")
+        return my_candidate, competitor_candidate, job_info
 
-        # 2. AI 분석 호출 (Infrastructure Adapter)
+    async def run_ai_comparison(self, my_candidate, competitor_candidate, job_info):
+        """
+        [Step 2] AI 분석 호출 (DB 세션 불필요)
+        """
         logger.info("🤖 Starting AI comparison analysis...")
         strengths, weaknesses = await self.ai_analyzer.analyze_candidates(
             my_candidate, competitor_candidate, job_info
         )
         logger.info("✅ AI analysis complete")
+        return strengths, weaknesses
 
-        # 4. 비교 리포트 생성 (Domain Service)
+    def format_comparison_response(
+        self, my_candidate, competitor_candidate, strengths, weaknesses
+    ) -> CompareResponse:
+        """
+        [Step 3] 비교 리포트 생성 및 DTO 반환 (DB 세션 불필요)
+        """
         logger.info("📊 Generating comparison report...")
         report = CandidateComparisonService.generate_comparison_report(
             my_candidate, competitor_candidate, strengths, weaknesses
         )
 
-        # 5. 도메인 모델을 API 응답 스키마로 변환 (Mapper)
         logger.info("🔄 Converting to API response schema...")
         response = ComparisonMapper.to_compare_response(report)
 
-        logger.info(
-            f"✨ [Comparison Complete] My: {my_candidate_id}, "
-            f"Competitor: {competitor_candidate_id}"
-        )
         return response

@@ -75,7 +75,13 @@ async def test_run_success_all_docs_ready(analyzer, mock_dependencies):
     )
 
     # 2. Execute
-    response = await analyzer.run(user_id, job_id)
+    job_info, resume_text, portfolio_text = await analyzer.prepare_evaluation_data(
+        user_id, job_id
+    )
+    report = await analyzer.run_ai_evaluation(
+        job_info, resume_text, portfolio_text, user_id
+    )
+    response = analyzer.format_response(report, user_id, job_id)
 
     # 3. Verify
     assert isinstance(response, EvaluateResponse)
@@ -139,7 +145,13 @@ async def test_run_needs_document_processing(analyzer, mock_dependencies):
     )
 
     # 2. Execute
-    await analyzer.run(user_id, job_id)
+    job_info, resume_text, portfolio_text = await analyzer.prepare_evaluation_data(
+        user_id, job_id
+    )
+    report = await analyzer.run_ai_evaluation(
+        job_info, resume_text, portfolio_text, user_id
+    )
+    _ = analyzer.format_response(report, user_id, job_id)
 
     # 3. Verify Extraction Flow
     # 실제 ApplicantDocuments.get_missing_parsed_types() 로직에 의해 RESUME이 감지되었는지 확인
@@ -159,4 +171,4 @@ async def test_run_job_not_found(analyzer, mock_dependencies):
     mock_dependencies["job_repo"].get_job_info.return_value = None
 
     with pytest.raises(ValueError, match="Job not found"):
-        await analyzer.run(user_id=1, job_id=999)
+        await analyzer.prepare_evaluation_data(user_id=1, job_id=999)
