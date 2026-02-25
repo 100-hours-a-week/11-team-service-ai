@@ -56,18 +56,23 @@ class ComparisonUseCase:
         my_candidate = await self.candidate_repo.find_candidate(
             my_candidate_id, job_posting_id
         )
-        if not my_candidate:
-            logger.error(f"❌ My candidate not found: {my_candidate_id}")
-            raise ValueError(f"Candidate not found: {my_candidate_id}")
+        if not my_candidate or not my_candidate.is_ready_for_comparison():
+            logger.error(f"❌ My candidate not found or not ready: {my_candidate_id}")
+            raise ValueError(f"Candidate not found or not ready: {my_candidate_id}")
 
         competitor_candidate = await self.candidate_repo.find_candidate(
             competitor_candidate_id, job_posting_id
         )
-        if not competitor_candidate:
+        if (
+            not competitor_candidate
+            or not competitor_candidate.is_ready_for_comparison()
+        ):
             logger.error(
-                f"❌ Competitor candidate not found: {competitor_candidate_id}"
+                f"❌ Competitor candidate not found or not ready: {competitor_candidate_id}"
             )
-            raise ValueError(f"Candidate not found: {competitor_candidate_id}")
+            raise ValueError(
+                f"Candidate not found or not ready: {competitor_candidate_id}"
+            )
 
         job_info = await self.job_repo.find_job(job_posting_id)
         if not job_info:

@@ -66,6 +66,8 @@ jobs:
           echo "OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}" >> .env
           echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
           echo "GOOGLE_MODEL=${{ secrets.GOOGLE_MODEL }}" >> .env
+          echo "VLLM_BASE_URL=${{ secrets.VLLM_BASE_URL }}" >> .env
+          echo "VLLM_MODEL=${{ secrets.VLLM_MODEL }}" >> .env
           echo "EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}" >> .env
 
           # Langfuse Configs
@@ -161,6 +163,8 @@ jobs:
           echo "OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}" >> .env
           echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
           echo "GOOGLE_MODEL=${{ secrets.GOOGLE_MODEL }}" >> .env
+          echo "VLLM_BASE_URL=${{ secrets.VLLM_BASE_URL }}" >> .env
+          echo "VLLM_MODEL=${{ secrets.VLLM_MODEL }}" >> .env
           echo "EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}" >> .env
 
           # Langfuse Configs
