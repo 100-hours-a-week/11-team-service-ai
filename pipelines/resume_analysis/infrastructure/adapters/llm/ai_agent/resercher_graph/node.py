@@ -5,8 +5,12 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.types import Send, Command
 from langgraph.runtime import Runtime
 
+from pydantic import BaseModel, Field
+
 from .state import ResearcherState, SubResearcherState, TechInfo, TechCompetencyFactor
-from ..configuration import AnalyseContext
+from ..configuration import AnalyseContext, Configuration
+from .prompt import EXTRACT_UNKNOWN_TECH_PROMPT, EXTRACT_TECH_FACTOR_PROMPT
+from shared.utils import load_chat_model
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +18,25 @@ logger = logging.getLogger(__name__)
 async def extract_unknown_tech_node(
     state: ResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
-    # TODO LLM호출하여 모르는 기술스택 추출해야 함
-    unknown_tech = ["Redis", "Zustand"]
+    class UnknownTechList(BaseModel):
+        techs: list[str] = Field(description="추출된 모르는 기술 스택 또는 키워드 목록")
 
+    cfg = Configuration.from_runnable_config(config)
+    rtx = runtime.context
+
+    llm = load_chat_model(cfg.model_name, cfg.model_provider)
+    prompt = EXTRACT_UNKNOWN_TECH_PROMPT
+    chain = prompt | llm.with_structured_output(UnknownTechList)
+
+    result = await chain.ainvoke(
+        {
+            "job_info": rtx.job_info.model_dump_json(ensure_ascii=False) if hasattr(rtx.job_info, "model_dump_json") else str(rtx.job_info),
+            "doc_text": rtx.doc_text
+        }
+    )
+
+    unknown_tech = result.techs if result and result.techs else []
+    
     sends = [
         Send("research_stack_node", {"keyword": tech, "result": ""})
         for tech in unknown_tech
@@ -32,8 +52,25 @@ async def extract_unknown_tech_node(
 async def extract_tech_factor_node(
     state: ResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
-    # TODO unknown_tech를 컨텍스트에 추가하고 평가 키워드를 추출해야 함
-    tech_factors = ["Redis를 활용한 대규모 오버헤드 처리", "Zustand 도입을 통한 리렌더링 최적화"]
+    class TechFactorsList(BaseModel):
+        tech_factors: list[str] = Field(description="추출된 모르는 기술 스택 또는 키워드 목록")
+
+    cfg = Configuration.from_runnable_config(config)
+    rtx = runtime.context
+
+    llm = load_chat_model(cfg.model_name, cfg.model_provider)
+    prompt = EXTRACT_TECH_FACTOR_PROMPT
+    chain = prompt | llm.with_structured_output(TechFactorsList)
+
+    result = await chain.ainvoke(
+        {
+            "job_info": rtx.job_info.model_dump_json(ensure_ascii=False) if hasattr(rtx.job_info, "model_dump_json") else str(rtx.job_info),
+            "doc_text": rtx.doc_text,
+            "tech_info": [info.model_dump() for info in state.get("tech_info", [])]
+        }
+    )
+
+    tech_factors = result.tech_factors if result and result.tech_factors else []
 
     sends = [
         Send("research_factor_node", {"keyword": factor, "result": ""})
@@ -46,7 +83,7 @@ async def extract_tech_factor_node(
         
     return Command(goto=sends)
 
-# TODO 3-1. 메인 - 서브그래프 어댑터 래퍼 노드 (기술 스택 검색용)
+# 메인 - 서브그래프 어댑터 래퍼 노드 (기술 스택 검색용)
 async def research_stack_node(
     state: SubResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
@@ -60,7 +97,7 @@ async def research_stack_node(
     info = TechInfo(subject=keyword, content=result)
     return {"tech_info": [info]}
 
-# TODO 3-2. 메인 - 서브그래프 어댑터 래퍼 노드 (평가 키워드 검색용)
+# 메인 - 서브그래프 어댑터 래퍼 노드 (평가 키워드 검색용)
 async def research_factor_node(
     state: SubResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
@@ -79,7 +116,7 @@ async def research_factor_node(
 # [공통 서브그래프용 노드들 (State: SubResearcherState 내에서 순환)]
 # ======================================================================
 
-# TODO 공통 1. 벡터DB 검색 노드
+# 벡터DB 검색 노드
 async def vector_db_search_node(
     state: SubResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
@@ -88,14 +125,14 @@ async def vector_db_search_node(
     # TODO 벡터db검색 필요
     # 목업 결과: 실제로는 Weaviate 등에서 score를 반환해야 합니다.
     # 테스트를 위해 임의의 점수를 부여 (0.0 ~ 1.0)
-    mock_score = 0.85 if "Redis" in keyword else (0.3 if "대규모" in keyword else 0.6)
+    mock_score = 0.5
     
     return {
         "result": f"[DB검색 기반] {keyword} 기본 지식 데이터",
         "search_score": mock_score
     }
 
-# TODO 공통 2. 임계점 판별 라우터 (AI를 통해 적절한 데이터인지 확인 전 1차 필터링)
+# 임계점 판별 라우터 (AI를 통해 적절한 데이터인지 확인 전 1차 필터링)
 def evaluate_threshold_router(
     state: SubResearcherState
 ) -> Literal["__end__", "ai_judge_node", "tavily_search_node"]:
@@ -114,7 +151,7 @@ def evaluate_threshold_router(
         # 임계점 애매 (0.4 ~ 0.8) -> AI 판별로 넘겨서 적합한지 검증
         return "ai_judge_node"
 
-# TODO 공통 3. AI 판별 노드 (임계점 애매한 경우 데이터 적합성 평가)
+# AI 판별 노드 (임계점 애매한 경우 데이터 적합성 평가)
 async def ai_judge_node(
     state: SubResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
@@ -124,14 +161,14 @@ async def ai_judge_node(
     current_result = state.get("result", "")
     
     # Mock-up: "Zustand"가 포함되어 있으면 부적합(False)으로 판별한다고 가정
-    mock_is_valid = False if "Zustand" in keyword else True
+    mock_is_valid = False
     
     return {
         "result": current_result + " -> [AI 검증 시도됨]",
         "is_valid": mock_is_valid
     }
 
-# TODO 공통 4. AI 판별 결과에 따른 라우터
+# AI 판별 결과에 따른 라우터
 def ai_judge_router(state: SubResearcherState) -> Literal["__end__", "tavily_search_node"]:
     is_valid = state.get("is_valid", False)
     
@@ -141,12 +178,49 @@ def ai_judge_router(state: SubResearcherState) -> Literal["__end__", "tavily_sea
     else:
         return "tavily_search_node" # 유사하지 않음 (정보 부족) -> 웹 검색 보강
 
-# TODO 공통 5. tavily 검색 + 청킹 + 임베딩 노드
+from tavily import AsyncTavilyClient
+from shared.config import settings
+
+# tavily 검색 (현재는 문서 추가 없이 컨텍스트 텍스트만 덧붙임)
+# TODO 청킹 + 임베딩 로직 추가 필요
 async def tavily_search_node(
     state: SubResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
     keyword = state["keyword"]
-    logger.info(f"[{keyword}] Tavily 웹 검색 및 임베딩 진행 중...")
+    logger.info(f"[{keyword}] Tavily 웹 검색 진행 중...")
     
     current_result = state.get("result", "")
-    return {"result": current_result + " -> [Tavily 웹 검색 보강된 지식]"}
+
+    try:
+        # 1. 비동기 클라이언트로 Tavily API 호출
+        client = AsyncTavilyClient(api_key=settings.TAVILY_API_KEY)
+        
+        # 2. 쿼리 생성 및 탐색
+        query = f"{keyword} 기술의 핵심 개념과 동작 원리, 활용 사례"
+        response = await client.search(
+            query=query,
+            search_depth="advanced",
+            include_answer=True, # Tavily가 자체적으로 요약한 텍스트 활성화
+            max_results=3        # 너무 긴 컨텍스트 방지를 위해 결과 개수 제한
+        )
+        
+        # 3. 검색 결과 컨텍스트 구성
+        # 1순위: Tavily의 AI가 요약한 파편화되지 않은 직관적인 답변
+        if response.get("answer"):
+            tavily_context = response["answer"]
+        # 2순위: 답변이 생성되지 않았다면, 검색된 개별 결과물의 본문을 연결
+        else:
+            results = response.get("results", [])
+            tavily_context = "\n\n".join([f"- {r.get('title', '웹문서')}: {r.get('content', '')}" for r in results])
+            
+        if not tavily_context:
+            tavily_context = "추가적인 웹 검색 결과가 없습니다."
+
+    except Exception as e:
+        logger.error(f"[{keyword}] Tavily 검색 중 에러 발생: {e}")
+        tavily_context = f"웹 검색 실패 ({str(e)})"
+    
+    # 4. 기존 (VDB 등에서 가져왔던) 결과에 웹 검색 문서를 보강하여 반환
+    final_result = f"{current_result}\n\n[Tavily 웹 검색 보강 자료]\n{tavily_context}".strip()
+    
+    return {"result": final_result}

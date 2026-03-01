@@ -21,25 +21,34 @@ async def main():
     
     config = {
         "configurable": {
-            "model_provider": "gemini",
-            "model_name": "gemini-flash3",
+            "model_provider": "vllm",
+            "model_name": "Qwen/Qwen3-8B-AWQ",
         }
     }
 
     # Mock 데이터 생성
     job_info = JobInfo(
-        company_name="테스트 기업",
-        main_tasks=["웹 프론트엔드 개발", "성능 최적화"],
-        tech_stacks=["React", "TypeScript", "Zustand", "Redis"],
-        summary="대규모 트래픽을 처리하는 프론트엔드 엔지니어 모십니다.",
+        company_name="카카오(Kakao)",
+        main_tasks=[
+            "대규모 언어 모델(LLM)을 활용한 AI 에이전트 파이프라인 설계 및 구현",
+            "LangChain, LlamaIndex, LangGraph 등을 활용한 RAG 및 복잡한 워크플로우 개발",
+            "vLLM, TensorRT-LLM 등을 이용한 오픈소스 LLM 분산 인퍼런스 시스템 구축 및 최적화",
+            "Vector DB를 활용한 대규모 문서 기반 검색 및 추천 시스템 구축"
+        ],
+        tech_stacks=[
+            "Python", "PyTorch", "LangChain", "LangGraph", "LlamaIndex", 
+            "vLLM", "TensorRT", "FAISS", "Milvus", "Qdrant", "Docker", "Kubernetes", "FastAPI"
+        ],
+        summary="최신 LLM 기술과 Agentic Workflow를 활용하여 새로운 AI 서비스를 개척할 AI 엔지니어를 모십니다. 단순 API 호출을 넘어, 추론 최적화 및 복잡한 아키텍처 설계 경험이 있는 분을 환영합니다.",
         evaluation_criteria=[
-            EvaluationCriteria(name="문제해결능력", description="어려운 기술적 문제를 해결한 경험"),
-            EvaluationCriteria(name="성능최적화", description="렌더링 최적화 및 로딩 속도 개선 경험"),
+            EvaluationCriteria(name="Agentic 워크플로우 및 RAG 설계", description="LangGraph, LangChain 등을 활용해 복잡한 AI 에이전트 시스템 및 RAG 구조를 설계하고 성능을 개선한 경험"),
+            EvaluationCriteria(name="인퍼런스/서빙 최적화", description="vLLM, TensorRT-LLM 등을 활용하여 모델 추론 속도 향상 및 GPU 메모리 최적화를 이뤄낸 경험"),
+            EvaluationCriteria(name="AI 퀄리티 문제 해결", description="환각(Hallucination) 제어, 프롬프트 엔지니어링, 혹은 파라미터 미세조정(PEFT/QLoRA)을 통한 품질 개선 경험")
         ]
     )
     
     doc_type = DocumentType.RESUME
-    document_text = "저는 프론트엔드 개발자입니다. 대규모 트래픽 환경에서 Redis를 이용한 캐싱 도입 경험이 있고, Zustand로 상태 관리를 최적화했습니다."
+    document_text = "안녕하세요, 4년 차 AI 엔지니어입니다. 이전 직장에서 LangGraph와 FastAPI를 연동해 멀티 에이전트 기반 RAG 시스템을 구축했습니다. 검색 정확도를 향상시키기 위해 Milvus 벡터 DB와 BM25를 결합한 Hybrid Search를 도입했고, 자체 서비스용 LLM은 vLLM 서버로 띄워 PagedAttention 방식으로 GPU 메모리 오작동 없이 동시 접속을 효율적으로 처리한 경험이 있습니다. 또한 모델의 도메인 특화 성능을 높이기 위해 QLoRA로 Llama-3 모델을 미세조정한 경험도 보유하고 있습니다."
 
     context_data = AnalyseContext(
         job_info=job_info, doc_type=doc_type, doc_text=document_text
