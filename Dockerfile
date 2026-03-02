@@ -28,9 +28,9 @@ RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
     uv sync --frozen --no-dev --no-install-project
 
 #================================
-# 개발 스테이지
+# 로컬 개발 스테이지
 #================================
-FROM base AS development
+FROM base AS dev
 
 COPY pyproject.toml uv.lock ./
 
@@ -53,9 +53,9 @@ EXPOSE 8000
 CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 #================================
-# 프로덕션 스테이지
+# 실행 스테이지
 #================================
-FROM base AS production
+FROM base AS runtime
 
 COPY --from=deps /app/.venv /app/.venv
 
