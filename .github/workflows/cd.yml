@@ -47,13 +47,7 @@ jobs:
           SHA_SHORT="${GITHUB_SHA::7}"
           BRANCH="${GITHUB_REF_NAME}"
 
-          if [ "$BRANCH" == "develop" ]; then
-            echo "tag_latest=develop-latest" >> $GITHUB_OUTPUT
-            echo "tag_sha=develop-${SHA_SHORT}" >> $GITHUB_OUTPUT
-            echo "target_env=dev" >> $GITHUB_OUTPUT
-            echo "ssm_env_path=/dev/ai/DOT_ENV" >> $GITHUB_OUTPUT
-            echo "env_label=DEV" >> $GITHUB_OUTPUT
-          elif [[ "$BRANCH" == release/* ]]; then
+          if [[ "$BRANCH" == release/* ]]; then
             echo "tag_latest=staging-latest" >> $GITHUB_OUTPUT
             echo "tag_sha=staging-${SHA_SHORT}" >> $GITHUB_OUTPUT
             echo "target_env=staging" >> $GITHUB_OUTPUT
@@ -65,6 +59,12 @@ jobs:
             echo "target_env=prod" >> $GITHUB_OUTPUT
             echo "ssm_env_path=/prod/ai/DOT_ENV" >> $GITHUB_OUTPUT
             echo "env_label=PROD" >> $GITHUB_OUTPUT
+          else
+            echo "tag_latest=develop-latest" >> $GITHUB_OUTPUT
+            echo "tag_sha=develop-${SHA_SHORT}" >> $GITHUB_OUTPUT
+            echo "target_env=dev" >> $GITHUB_OUTPUT
+            echo "ssm_env_path=/dev/ai/DOT_ENV" >> $GITHUB_OUTPUT
+            echo "env_label=DEV" >> $GITHUB_OUTPUT
           fi
 
       # ----------------------------
