@@ -35,7 +35,7 @@ class ApplicationAnalyzer:
         self.extractor = extractor
         self.agent = agent
 
-    async def run(self, user_id: int, job_id: int) -> EvaluateResponse:
+    async def prepare_evaluation_data(self, user_id: int, job_id: int):
         logger.info(f"🚀 [Evaluation Start] User: {user_id}, Job: {job_id}")
 
         # 1. 채용 공고 정보 조회
@@ -66,6 +66,11 @@ class ApplicationAnalyzer:
             documents.parsed_portfolio.text if documents.parsed_portfolio else ""
         )
 
+        return job_info, resume_text, portfolio_text
+
+    async def run_ai_evaluation(
+        self, job_info, resume_text: str, portfolio_text: str, user_id: int
+    ) -> AnalysisReport:
         # 4. 개별 역량 평가 (AI 호출 Loop -> Parallel)
         # asyncio.gather를 사용하여 병렬 평가 수행
         logger.info(
@@ -97,7 +102,11 @@ class ApplicationAnalyzer:
         report = AnalysisReport.create(
             job_info=job_info, results=competency_results, feedback=overall_feedback
         )
+        return report
 
+    def format_response(
+        self, report: AnalysisReport, user_id: int, job_id: int
+    ) -> EvaluateResponse:
         # 6. 응답 반환 (DTO 변환)
         from ..dtos import PipelineEvaluateResponse
 

@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str | None = None
     GOOGLE_MODEL: str = "gemini-3-flash-preview"
 
+    # VLLM
+    VLLM_BASE_URL: str | None = None
+    VLLM_MODEL: str = "Qwen/Qwen3-32B-FP8"
+
     # AWS S3
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
