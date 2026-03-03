@@ -26,7 +26,7 @@ class WantedCrawler(BasePlaywrightCrawler):
     def _parse_page(self, page: Page) -> str:
         # 원티드는 SPA — 루트 컨테이너가 렌더링될 때까지 대기
         try:
-            page.wait_for_selector(self._ROOT, timeout=10000)
+            page.wait_for_selector(self._ROOT, timeout=30000)
         except Exception:
             logger.warning(
                 f"⚠️ Failed to load page content from {page.url} (Title: {page.title()})"
