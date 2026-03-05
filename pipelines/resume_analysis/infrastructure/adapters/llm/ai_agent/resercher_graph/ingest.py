@@ -1,75 +1,111 @@
-# from langchain_core.embeddings import Embeddings
-# from langchain_openai import OpenAIEmbeddings
-# from shared.config import settings
+import logging
+from datetime import date
+import uuid
+import json
 
-# def get_embeddings_model() -> Embeddings:
-#     return OpenAIEmbeddings(model="text-embedding-3-small", chunk_size=200)
+from shared.config import settings
+from shared.vector_db.client import get_weaviate_client
 
-# def ingest_docs():
-#     text_splitter = RecursiveCharacterTextSplitter(chunk_size=4000, chunk_overlap=200)
-#     embedding = get_embeddings_model()
+from langchain_openai import OpenAIEmbeddings
+from langchain_weaviate import WeaviateVectorStore
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-#     with weaviate.connect_to_local(
-#         host = settings.WEAVIATE_HOST,
-#         port = settings.WEAVIATE_PORT,
-#         grpc_port = settings.WEAVIATE_GRPC_PORT,
-#         skip_init_checks=True
-#     ) as weaviate_client:
-#         # General Guides and Tutorials
-#         general_guides_and_tutorials_vectorstore = WeaviateVectorStore(
-#             client=weaviate_client,
-#             index_name=WEAVIATE_GENERAL_GUIDES_AND_TUTORIALS_INDEX_NAME,
-#             text_key="text",
-#             embedding=embedding,
-#             # Weaviate에 쿼리 시 반환할 메타데이터 속성 지정, 따라서 Ducument 저장시에 해당 속성이 반드시 포함되어야 함
-#             attributes=["source", "title"],
-#         )
 
-#         # 어떤 문서가 이미 벡터 저장소에 저장되었는지 기록하는 역활을 함 (중복 인덱싱 방지)
-#         record_manager = SQLRecordManager(
-#             namespace=f"weaviate/{WEAVIATE_GENERAL_GUIDES_AND_TUTORIALS_INDEX_NAME}",
-#             db_url=RECORD_MANAGER_DB_URL,
-#         )
-#         record_manager.create_schema()
-        
-#         # general_guides_and_tutorials_docs = ingest_general_guides_and_tutorials()
-#         general_guides_and_tutorials_docs = load_single_url("https://m.sports.naver.com/kbaseball/article/022/0004086120")
-#         # general_guides_and_tutorials_docs = load_notion_docs("/Users/haram/Desktop/카카오부캠/코드/rag-base/test/sample_data/test")
+from langchain_classic.indexes import index
+from langchain_classic.indexes import SQLRecordManager
 
-#         # 문서 분할
-#         docs_transformed = text_splitter.split_documents(
-#             general_guides_and_tutorials_docs
-#         )
-#         # 필터링: 너무 짧은 문서는 제외
-#         docs_transformed = [
-#             doc for doc in docs_transformed if len(doc.page_content) > 10
-#         ]
+logger = logging.getLogger(__name__)
 
-#         # weaviate에서 검색을 할 때 metadata의 source, title 필드를 포함하여 반환하도록 설정했으므로 문서에도 해당 필드가 반드시 포함되어야 함
-#         for doc in docs_transformed:
-#             if "source" not in doc.metadata:
-#                 doc.metadata["source"] = ""
-#             if "title" not in doc.metadata:
-#                 doc.metadata["title"] = ""
-#         indexing_stats = index(
-#             docs_transformed,
-#             record_manager,
-#             general_guides_and_tutorials_vectorstore,
-#             cleanup="full",
-#             # 벡터db의 metadata에 포함된 source 필드를 고유 식별자로 사용, record_manager에서는 group_id컬럼에 식별자를 저장하여 중복 인덱싱 방지
-#             # 만약 source_id_key를 사용하지 않는다면 page_content의 해시값이 고유 식별자로 사용됨
-#             # 문서가 조금만 바껴도 해시값이 달라지기 때문에 동일 문서임에도 불구하고 중복 인덱싱될 수 있음, 따라서 source와 같은 고유 식별자를 사용하는 것이 좋음
-#             source_id_key="source",
-#             force_update=(os.environ.get("FORCE_UPDATE") or "false").lower() == "true",
-#         )
-#         logger.info(f"Indexing stats: {indexing_stats}")
-#         num_vecs = (
-#             weaviate_client.collections.get(
-#                 WEAVIATE_GENERAL_GUIDES_AND_TUTORIALS_INDEX_NAME
-#             )
-#             .aggregate.over_all()
-#             .total_count
-#         )
-#         logger.info(
-#             f"General Guides and Tutorials now has this many vectors: {num_vecs}",
-#         )
+def get_embeddings_model() -> OpenAIEmbeddings:
+    return OpenAIEmbeddings(
+        model="text-embedding-3-small",
+        api_key=settings.OPENAI_API_KEY,
+        chunk_size=200,
+    )
+
+# tavily응답 포맷 : 'query', 'response_time', 'follow_up_questions', 'answer', 'images', 'results', 'request_id'
+# results = 'url', 'title', 'content', 'score', 'raw_content'
+
+# 벡터 DB들은 ID 값으로 일반 해시 문자열(sha256 등)이 아닌 반드시 정규 규격의 UUID를 요구합니다. (Not valid 'uuid' 에러 방지)
+def custom_uuid_encoder(doc: Document) -> str:
+    # 1. 메타데이터를 일관된 형태의 문자열(JSON)로 직렬화 (키 정렬 보장)
+    try:
+        serialized_meta = json.dumps(doc.metadata, sort_keys=True, ensure_ascii=False)
+    except Exception:
+        serialized_meta = str(doc.metadata)
+
+    # 2. 문서 본문과 직렬화된 메타데이터를 모두 조합하여 완벽하게 고유한 UUID5 생성
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, doc.page_content + serialized_meta))
+
+def ingest_docs(tavilly_response:dict[str:str]):
+
+    # 1. 문서로드
+    results = list(tavilly_response.get("results"))
+    query = tavilly_response.get("query")
+    documents = [
+        Document(
+            page_content=doc.get("content"),
+            metadata={
+                "query":query,
+                "url":doc.get("url"),
+                "title":doc.get("title"),
+                "created_at":str(date.today())
+            }
+        )
+        for doc in results
+    ]
+
+    # 2. 청킹 (고도화: 문맥 단절 방지 및 검색 모델 파악에 최적화된 설정)
+    # - chunk_size: 글자 수 기준. 1000은 정보가 너무 많아 중요도가 희석될 수 있으므로 핵심만 담기 위해 500으로 축소
+    # - chunk_overlap: 잘린 문단 간의 문맥(Context)을 유지하기 위해 오버랩을 50으로 증가
+    # - separators: 문장 한가운데가 뚝 끊기는 것을 방지(단락 -> 줄바꿈 -> 마침표/물음표 순으로 쪼갬)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500, 
+        chunk_overlap=50,
+        separators=["\n\n", "\n", ". ", "? ", "! ", " ", ""]
+    )
+    # 문서 분할
+    docs_transformed = text_splitter.split_documents(documents)
+        # 필터링: 너무 짧은 문서는 제외
+    docs_transformed = [
+        doc for doc in docs_transformed if len(doc.page_content) > 10
+    ]
+
+    # [에러 수정] 기존 shared.vector_db.connection.get_weaviate_client()는 '싱글톤(하나뿐인)' 객체를 반환
+    # 여러 비동기 쓰레드에서 병렬로 ingest_docs를 실행할 때, 한 쓰레드가 with문을 먼저 종료해버리면
+    # 전체 Weaviate 클라이언트가 강제로 닫혀버려 다른 쓰레드에서 "WeaviateClient is closed" 에러(일괄 저장 실패)가 발생
+    # 따라서 싱글톤을 닫아버리는 with 문 대신, 클라이언트 상태만 검증하고 그대로 재사용하도록 변경하였음
+    weaviate_client = get_weaviate_client()
+    if not weaviate_client.is_connected():
+        weaviate_client.connect()
+
+    # 3. 임베딩 모델 선언
+    embedding = get_embeddings_model()
+
+    # 랭체인은 벡터db에 컬렉션이 없는 경우 자동 생성
+    vectorstore = WeaviateVectorStore(
+        client=weaviate_client,
+        index_name="TECH_DOCUMENT",
+        text_key="text",
+        embedding=embedding,
+        attributes=["query", "url", "title", "created_at"]
+    )
+
+    
+    # 4. 문서의 중복, 삭제 동기화를 관리하며 문서를 저장
+    # 어떤 문서가 이미 벡터 저장소에 저장되었는지 기록하는 역활을 함 (중복 인덱싱 방지)
+    record_manager = SQLRecordManager(
+        namespace=f"weaviate/TECH_DOCUMENT",
+        db_url="sqlite:///record_manager_cache.sql",
+    )
+    record_manager.create_schema()
+
+    index(
+        docs_transformed,
+        record_manager,
+        vectorstore,
+        cleanup="incremental",
+        source_id_key="url",
+        key_encoder=custom_uuid_encoder # 일반 해시 문자열 대신 벡터DB가 요구하는 유효한 정규 UUID 생성 함수 지정
+    )

@@ -74,6 +74,13 @@ async def main():
     # JSON 이쁘게 포맷팅해서 출력
     print(json.dumps(result, indent=2, default=custom_serializer, ensure_ascii=False))
 
+    # 앱/테스트 스크립트 종료 전, 메모리 누수 방지를 위해 Weaviate 공용 클라이언트를 정석적으로 닫아줌
+    try:
+        from shared.vector_db.client import WeaviateConnectionManager
+        WeaviateConnectionManager.close()
+    except Exception as e:
+        logging.error(f"Weaviate 클라이언트 종료 중 에러: {e}")
+
 if __name__ == "__main__":
     # 비동기 시작점
     asyncio.run(main())

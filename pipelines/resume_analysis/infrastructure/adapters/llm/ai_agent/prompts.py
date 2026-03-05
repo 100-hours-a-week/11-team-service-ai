@@ -147,7 +147,7 @@ PORTFOLIO_TECHNICAL_DEPTH_PROMPT = ChatPromptTemplate.from_template("""
     [사전 조사된 특화 기술 정보 및 평가 기준]
     - 주요 기술 문맥:
     {tech_contexts}
-    - 기술 역량 평가 필수 기준:
+    - 기술 역량 평가 기준:
     {evaluation_factors}
 
     [내 포트폴리오 내용]

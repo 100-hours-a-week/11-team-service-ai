@@ -79,7 +79,7 @@ async def execute_tech_analyze_node(
         # 서브 그래프를 생성하여 tech_info정보를 가져와야 함
         researcher = TechResearcher()
         research_state = await researcher.start_researcher(
-            config=config, runtime=runtime
+            config=config, runtime=rtx
         )
 
         # 4. 분석 수행

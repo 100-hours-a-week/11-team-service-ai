@@ -6,7 +6,6 @@ from langgraph.runtime import Runtime
 from .state import ResearcherState, SubResearcherState
 from ..configuration import AnalyseContext, Configuration
 
-# 작성한 Mock-up 노드 및 라우터 임포트
 from .node import (
     extract_unknown_tech_node,
     extract_tech_factor_node,
