@@ -1,0 +1,83 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    hostname: rabbitmq
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    networks:
+      - infra-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - infra-network
+
+  weaviate:
+    image: semitechnologies/weaviate:1.34.0
+    container_name: rag-weaviate
+    restart: always
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_MODULES: ''
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - infra-network
+
+  db:
+    image: mysql:8.0.44
+    container_name: mysql-container
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      # 루트 비밀번호 설정 (필수)
+      MYSQL_ROOT_PASSWORD: Qwerty123456!
+      # 초기 데이터베이스 생성 (선택)
+      MYSQL_DATABASE: service_db
+      # 일반 사용자 계정 생성 (선택)
+      MYSQL_USER: developer
+      MYSQL_PASSWORD: Qwerty123456!
+    ports:
+      - "3306:3306"
+    volumes:
+      # 로컬에 데이터 저장 (컨테이너 삭제시 데이터 유지)
+      - mysql_data:/var/lib/mysql
+      # 로컬의 init.sql 파일을 컨테이너 내부의 자동 실행 폴더 안으로 넣음
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - infra-network
+
+networks:
+  infra-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  weaviate_data:
+    driver: local

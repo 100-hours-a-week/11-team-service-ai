@@ -14,6 +14,35 @@ cp .env.example .env
 
 ---
 
+## 🏗️ 인프라 환경 구축 (Infrastructure Setup)
+
+본 프로젝트는 데이터베이스(MySQL), 벡터 DB(Weaviate), 캐시(Redis), 메시지 큐(RabbitMQ) 등의 백그라운드 인프라를 필요로 합니다.
+생성된 `docker-compose-infra.yml` 파일을 통하여 명령어 한 줄로 전체 인프라망을 구축할 수 있습니다.
+
+### 1. 인프라 전체 자동 실행 (백그라운드)
+```bash
+docker-compose -f docker-compose-infra.yml up -d
+```
+
+### 2. 구동 상태 및 로그 확인
+```bash
+# 전체 컨테이너 작동 상태 확인
+docker-compose -f docker-compose-infra.yml ps
+
+# 전체 실시간 로그 모니터링
+docker-compose -f docker-compose-infra.yml logs -f
+
+# 특정 서비스(예: weaviate) 로그만 확인
+docker-compose -f docker-compose-infra.yml logs -f weaviate
+```
+
+### 3. 인프라 종료 및 컨테이너 삭제
+```bash
+docker-compose -f docker-compose-infra.yml down
+```
+
+---
+
 ## 📦 패키지 설치 (Installation)
 
 빠른 속도의 Python 패키지 매니저인 **uv**를 사용합니다.

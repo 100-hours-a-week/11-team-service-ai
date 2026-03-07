@@ -67,5 +67,11 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL:str
     TAVILY_API_KEY:str
 
+    # rabbitmq
+    RABBITMQ_URL:str
+
+    # redis
+    REDIS_URL:str
+
 
 settings = Settings()  # type: ignore

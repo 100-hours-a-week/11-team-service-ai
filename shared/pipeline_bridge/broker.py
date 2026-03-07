@@ -1,0 +1,48 @@
+from aio_pika import ExchangeType
+from taskiq_aio_pika import AioPikaBroker
+from taskiq_redis import RedisAsyncResultBackend
+
+from shared.config import settings
+from .constants import (
+    QUEUE_JOB_ANALYSIS,
+    QUEUE_RESUME_ANALYSIS,
+    QUEUE_APPLICANT_EVALUATION,
+    QUEUE_CANDIDATE_COMPARISON,
+)
+
+# --- Taskiq Result Backend Configuration ---
+result_backend = RedisAsyncResultBackend(
+    redis_url=settings.REDIS_URL
+)
+
+# 브로커 팩토리 함수: 파이프라인(도메인)별로 독립된 큐를 가진 브로커를 생성
+def create_broker(queue_name: str) -> AioPikaBroker:
+    return AioPikaBroker(
+        url=settings.RABBITMQ_URL,
+        queue_name=queue_name, # 기본으로 바라볼 RabbitMQ Queue 이름 지정
+        exchange_name="ai_exchange", # 여러 브로커가 속할 허브 이름 통일
+        routing_key=queue_name, # 정확히 해당 큐 이름으로 라우팅되도록 보장
+        exchange_type=ExchangeType.DIRECT, # Direct 타입이어야만 라우팅 키 기반 일대일 매칭이 정확히 수행됨
+    ).with_result_backend(result_backend)
+
+# --- Domains Brokers ---
+
+# 1. 채용 공고 분석 전담 브로커
+broker_job = create_broker(QUEUE_JOB_ANALYSIS)
+
+# 2. 이력서 및 포트폴리오 분석 전담 브로커
+broker_resume = create_broker(QUEUE_RESUME_ANALYSIS)
+
+# 3. 지원자 역량 평가 전담 브로커
+broker_evaluate = create_broker(QUEUE_APPLICANT_EVALUATION)
+
+# 4. 지원자 비교 전담 브로커
+broker_compare = create_broker(QUEUE_CANDIDATE_COMPARISON)
+
+# 모든 브로커를 모듈에서 참조하기 쉽게 묶어줌
+brokers = [
+    broker_job,
+    broker_resume,
+    broker_evaluate,
+    broker_compare
+]

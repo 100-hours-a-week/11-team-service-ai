@@ -17,9 +17,14 @@ class DocumentService:
         """
         Analyze resume details.
         """
-        return await call_resume_analysis(
+        task = await call_resume_analysis.kiq(
             ResumeAnalyzeRequest(user_id=user_id, job_posting_id=job_posting_id)
         )
+        task_result = await task.wait_result()
+        
+        if task_result.is_err:
+            raise Exception(f"Worker Error: {task_result.error}")
+        return task_result.return_value
 
     async def analyze_portfolio(
         self, user_id: str, job_posting_id: str
@@ -27,6 +32,11 @@ class DocumentService:
         """
         Analyze portfolio details.
         """
-        return await call_portfolio_analysis(
+        task = await call_portfolio_analysis.kiq(
             PortfolioAnalyzeRequest(user_id=user_id, job_posting_id=job_posting_id)
         )
+        task_result = await task.wait_result()
+        
+        if task_result.is_err:
+            raise Exception(f"Worker Error: {task_result.error}")
+        return task_result.return_value

@@ -10,8 +10,25 @@ from api.core.exception import CustomException, ErrorCode
 from api.routes import applicant, document, job_posting
 from shared.schema.common_schema import ApiResponse, ErrorDetail
 import uvicorn
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="AI Service API")
+from shared.pipeline_bridge.broker import brokers
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # FastAPI 서버 구동 시: 브로커 연결 (Connection 생성) 및 큐 선언 대기
+    for broker in brokers:
+        await broker.startup()
+    
+    yield
+    
+    # FastAPI 서버 종료 시: 브로커 소켓 연결 안전하게 해제 (Graceful Shutdown)
+    for broker in brokers:
+        await broker.shutdown()
+
+
+app = FastAPI(title="AI Service API", lifespan=lifespan)
 
 logging.basicConfig(
     level=logging.INFO,

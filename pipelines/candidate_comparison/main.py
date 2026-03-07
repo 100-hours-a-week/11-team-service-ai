@@ -19,9 +19,13 @@ from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 from .infrastructure.adapters.llm.mock_agent import MockComparisonAnalyzer
 from .infrastructure.adapters.llm.ai_agent.graph import LLMAnalyst
 
+from shared.pipeline_bridge.broker import broker_compare
+from shared.pipeline_bridge.constants import TASK_CANDIDATE_COMPARE
+
 logger = logging.getLogger(__name__)
 
 
+@broker_compare.task(task_name=TASK_CANDIDATE_COMPARE)
 async def run_pipeline(request: CompareRequest) -> CompareResponse:
     """
     지원자 비교 파이프라인의 메인 진입점 (Async Entrypoint)

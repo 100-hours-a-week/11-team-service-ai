@@ -12,9 +12,13 @@ from .infrastructure.adapters.parser.pdf_extractor import PyPdfExtractor
 from .application.services.analyzer import ApplicationAnalyzer
 from shared.schema.applicant import EvaluateRequest, EvaluateResponse
 
+from shared.pipeline_bridge.broker import broker_evaluate
+from shared.pipeline_bridge.constants import TASK_APPLICANT_EVALUATE
+
 logger = logging.getLogger(__name__)
 
 
+@broker_evaluate.task(task_name=TASK_APPLICANT_EVALUATE)
 async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
     """
     지원자 평가 파이프라인의 메인 진입점 (Async Entrypoint)

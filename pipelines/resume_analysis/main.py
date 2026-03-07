@@ -27,9 +27,13 @@ from .infrastructure.adapters.parser.pdf_extractor import PyPdfExtractor
 from .infrastructure.adapters.llm.ai_agent.graph import LLMAnalyst
 from .infrastructure.adapters.llm.mock_agent import MockAnalyst
 
+from shared.pipeline_bridge.broker import broker_resume
+from shared.pipeline_bridge.constants import TASK_RESUME_ANALYZE, TASK_PORTFOLIO_ANALYZE
+
 logger = logging.getLogger(__name__)
 
 
+@broker_resume.task(task_name=TASK_RESUME_ANALYZE)
 async def run_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeResponse:
     """
     이력서 분석 파이프라인 실행
@@ -64,6 +68,7 @@ async def run_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeRes
     return analyzer.format_resume_response(report, int(request.user_id))
 
 
+@broker_resume.task(task_name=TASK_PORTFOLIO_ANALYZE)
 async def run_portfolio_analysis(
     request: PortfolioAnalyzeRequest,
 ) -> PortfolioAnalyzeResponse:

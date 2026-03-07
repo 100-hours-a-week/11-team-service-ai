@@ -12,11 +12,20 @@ class JobPostingService:
         Analyze job posting URL.
         Ideally calling the pipeline.
         """
-        # Dummy Implementation
-        return await call_job_analysis(JobPostingAnalyzeRequest(url=url))
+        task = await call_job_analysis.kiq(JobPostingAnalyzeRequest(url=url))
+        task_result = await task.wait_result()
+        
+        if task_result.is_err:
+            raise Exception(f"Worker Error: {task_result.error}")
+        return task_result.return_value
 
     async def delete_job_posting(self, job_posting_id: int) -> JobPostingDeleteResponse:
         """
         Delete job posting data.
         """
-        return await call_job_deletion(job_posting_id)
+        task = await call_job_deletion.kiq(job_posting_id)
+        task_result = await task.wait_result()
+        
+        if task_result.is_err:
+            raise Exception(f"Worker Error: {task_result.error}")
+        return task_result.return_value
