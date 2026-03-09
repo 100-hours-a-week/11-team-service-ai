@@ -28,9 +28,9 @@ RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
     uv sync --frozen --no-dev --no-install-project
 
 #================================
-# 개발 스테이지
+# 로컬 개발 스테이지
 #================================
-FROM base AS development
+FROM base AS dev
 
 COPY pyproject.toml uv.lock ./
 
@@ -39,9 +39,12 @@ RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
 
 COPY --chown=appuser:appgroup . .
 
+ENV PYTHONPATH="/app:/app/pipelines"
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 RUN uv run playwright install --with-deps chromium
 
-RUN chown -R appuser:appgroup /app/.venv
+RUN chown -R appuser:appgroup /app/.venv /ms-playwright
 
 USER appuser
 
@@ -50,17 +53,21 @@ EXPOSE 8000
 CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 #================================
-# 프로덕션 스테이지
+# 실행 스테이지
 #================================
-FROM base AS production
+FROM base AS runtime
 
 COPY --from=deps /app/.venv /app/.venv
 
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN /app/.venv/bin/playwright install --with-deps chromium
 
 COPY --chown=appuser:appgroup . .
 
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app:/app/pipelines"
+
+RUN chown -R appuser:appgroup /ms-playwright
 
 USER appuser
 
