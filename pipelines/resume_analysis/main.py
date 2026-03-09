@@ -1,9 +1,11 @@
+from shared.pipeline_bridge.broker import broker_portfolio
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared.db.connection import get_db
 
 
 from shared.config import settings
+from shared.utils import send_eval_job_callback
 from shared.schema.document import (
     ResumeAnalyzeRequest,
     ResumeAnalyzeResponse,
@@ -65,10 +67,19 @@ async def run_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeRes
     )
 
     # --- [Step 3] 최종 응답 포맷팅 반환 ---
-    return analyzer.format_resume_response(report, int(request.user_id))
+    result = analyzer.format_resume_response(report, int(request.user_id))
+    
+    if getattr(request, "evalJobId", None):
+        await send_eval_job_callback(
+            eval_job_id=request.evalJobId, 
+            success=True, 
+            data=result.model_dump()
+        )
+        
+    return result
 
 
-@broker_resume.task(task_name=TASK_PORTFOLIO_ANALYZE)
+@broker_portfolio.task(task_name=TASK_PORTFOLIO_ANALYZE)
 async def run_portfolio_analysis(
     request: PortfolioAnalyzeRequest,
 ) -> PortfolioAnalyzeResponse:
@@ -100,7 +111,16 @@ async def run_portfolio_analysis(
     )
 
     # --- [Step 3] 최종 응답 포맷팅 반환 ---
-    return analyzer.format_portfolio_response(report, int(request.user_id))
+    result = analyzer.format_portfolio_response(report, int(request.user_id))
+    
+    if getattr(request, "evalJobId", None):
+        await send_eval_job_callback(
+            eval_job_id=request.evalJobId, 
+            success=True, 
+            data=result.model_dump()
+        )
+        
+    return result
 
 
 async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:

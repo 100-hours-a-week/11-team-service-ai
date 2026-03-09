@@ -14,18 +14,20 @@ router = APIRouter(prefix="/ai/api/v1/job-posting", tags=["Job Posting"])
 @router.post(
     "/analyze",
     response_model=ApiResponse[JobPostingAnalyzeResponse],
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     summary="채용 공고 분석",
 )
 async def analyze_job_posting(request: JobPostingAnalyzeRequest):
     service = JobPostingService()
-    result = await service.analyze_job_posting(request.url)
+    result = await service.analyze_job_posting(request)
     return ApiResponse(success=True, data=result)
 
 
 @router.delete(
     "/{job_posting_id}",
     response_model=ApiResponse[JobPostingDeleteResponse],
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     summary="공고 삭제",
 )

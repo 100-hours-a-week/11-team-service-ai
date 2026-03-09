@@ -15,6 +15,7 @@ class ErrorDetail(BaseModel):
 
 
 class ApiResponse(BaseModel, Generic[T]):
+    evalJobId: Optional[str] = Field(default=None, description="평가 작업 ID")
     success: bool = Field(..., description="요청 처리 성공 여부")
     timestamp: datetime = Field(
         default_factory=datetime.now, description="응답 생성 일시 (ISO 8601)"

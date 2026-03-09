@@ -3,7 +3,7 @@ from shared.db.connection import get_db
 from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 from .infrastructure.persistence.doc_repository import SqlAlchemyDocRepository
 from shared.config import settings
-from shared.utils import load_chat_model
+from shared.utils import load_chat_model, send_eval_job_callback
 from .infrastructure.adapters.llm.ai_agent import LLMAnalyst
 from .infrastructure.adapters.llm.mock_agent import MockAnalyst
 from .domain.interface.adapter_interfaces import AnalystAgent
@@ -11,6 +11,7 @@ from .infrastructure.adapters.storage.s3_storage import S3FileStorage
 from .infrastructure.adapters.parser.pdf_extractor import PyPdfExtractor
 from .application.services.analyzer import ApplicationAnalyzer
 from shared.schema.applicant import EvaluateRequest, EvaluateResponse
+from shared.schema.common_schema import ApiResponse
 
 from shared.pipeline_bridge.broker import broker_evaluate
 from shared.pipeline_bridge.constants import TASK_APPLICANT_EVALUATE
@@ -52,7 +53,17 @@ async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
 
     # --- [Step 3] 최종 응답 포맷팅 반환 ---
     # DB 세션 없이 반환 수행
-    return analyzer.format_response(report=report, user_id=user_id, job_id=job_id)
+    result = analyzer.format_response(report=report, user_id=user_id, job_id=job_id)
+    
+    if getattr(request, "evalJobId", None):
+        # 콜백 전송 (백그라운드 처리 권장되나 워커이므로 await)
+        await send_eval_job_callback(
+            eval_job_id=request.evalJobId, 
+            success=True, 
+            data=result.model_dump()
+        )
+        
+    return result
 
 
 async def _create_analyzer(db_session) -> ApplicationAnalyzer:

@@ -14,6 +14,7 @@ from shared.schema.job_posting import (
 from shared.pipeline_bridge.broker import (
     broker_job,
     broker_resume,
+    broker_portfolio,
     broker_evaluate,
     broker_compare,
 )
@@ -43,8 +44,7 @@ async def call_applicant_evaluation(request: EvaluateRequest):
 async def call_resume_analysis(request: ResumeAnalyzeRequest):
     pass
 
-
-@broker_resume.task(task_name=TASK_PORTFOLIO_ANALYZE)
+@broker_portfolio.task(task_name=TASK_PORTFOLIO_ANALYZE)
 async def call_portfolio_analysis(request: PortfolioAnalyzeRequest):
     pass
 

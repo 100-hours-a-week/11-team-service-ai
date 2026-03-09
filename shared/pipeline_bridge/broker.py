@@ -4,8 +4,10 @@ from taskiq_redis import RedisAsyncResultBackend
 
 from shared.config import settings
 from .constants import (
+    EXCHANGE_NAME,
     QUEUE_JOB_ANALYSIS,
     QUEUE_RESUME_ANALYSIS,
+    QUEUE_PORTFOLIO_ANALYSIS,
     QUEUE_APPLICANT_EVALUATION,
     QUEUE_CANDIDATE_COMPARISON,
 )
@@ -20,7 +22,7 @@ def create_broker(queue_name: str) -> AioPikaBroker:
     return AioPikaBroker(
         url=settings.RABBITMQ_URL,
         queue_name=queue_name, # 기본으로 바라볼 RabbitMQ Queue 이름 지정
-        exchange_name="ai_exchange", # 여러 브로커가 속할 허브 이름 통일
+        exchange_name=EXCHANGE_NAME, # 여러 브로커가 속할 허브 이름 통일
         routing_key=queue_name, # 정확히 해당 큐 이름으로 라우팅되도록 보장
         exchange_type=ExchangeType.DIRECT, # Direct 타입이어야만 라우팅 키 기반 일대일 매칭이 정확히 수행됨
     ).with_result_backend(result_backend)
@@ -32,6 +34,7 @@ broker_job = create_broker(QUEUE_JOB_ANALYSIS)
 
 # 2. 이력서 및 포트폴리오 분석 전담 브로커
 broker_resume = create_broker(QUEUE_RESUME_ANALYSIS)
+broker_portfolio = create_broker(QUEUE_PORTFOLIO_ANALYSIS)
 
 # 3. 지원자 역량 평가 전담 브로커
 broker_evaluate = create_broker(QUEUE_APPLICANT_EVALUATION)
@@ -43,6 +46,7 @@ broker_compare = create_broker(QUEUE_CANDIDATE_COMPARISON)
 brokers = [
     broker_job,
     broker_resume,
+    broker_portfolio,
     broker_evaluate,
     broker_compare
 ]

@@ -14,6 +14,9 @@ from contextlib import asynccontextmanager
 
 from shared.pipeline_bridge.broker import brokers
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -103,6 +106,22 @@ async def custom_exception_handler(request: Request, exc: CustomException):
 async def root():
     print("hello")
     return {"message": "AI Model Server is running 🚀"}
+
+
+@app.post("/api/internal/ai/callback", tags=["Internal"])
+async def receive_callback(payload: dict):
+    """
+    [테스트/임시용] 워커가 처리 완료 후 보내는 콜백(Webhook)을 수신하는 서버 엔드포인트입니다.
+    스프링 서버가 아직 연동되지 않았을 때 로컬에서 결과를 확인하기 위해 사용합니다.
+    """
+    import json
+    
+    logger.info("================== [CALLBACK RECEIVED] ==================")
+    logger.info(json.dumps(payload, indent=2, ensure_ascii=False))
+    logger.info("=========================================================")
+    
+    return {"status": "Callback received"}
+
 
 
 # Include Routers

@@ -1,8 +1,10 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
 # 3.4 이력서 분석
 class ResumeAnalyzeRequest(BaseModel):
+    evalJobId: Optional[str] = Field(default=None, description="평가 작업 ID")
     user_id: str = Field(..., description="분석할 사용자 ID")
     job_posting_id: str = Field(..., description="관련 채용 공고 ID")
 
@@ -16,6 +18,7 @@ class ResumeAnalyzeResponse(BaseModel):
 
 # 3.5 포트폴리오 분석
 class PortfolioAnalyzeRequest(BaseModel):
+    evalJobId: Optional[str] = Field(default=None, description="평가 작업 ID")
     user_id: str = Field(..., description="분석할 사용자 ID")
     job_posting_id: str = Field(..., description="관련 채용 공고 ID")
 

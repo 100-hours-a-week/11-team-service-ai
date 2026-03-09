@@ -6,13 +6,16 @@ from shared.schema.job_posting import (
 from shared.pipeline_bridge import call_job_analysis, call_job_deletion
 
 
+import logging
+logger = logging.getLogger(__name__)
+
 class JobPostingService:
-    async def analyze_job_posting(self, url: str) -> JobPostingAnalyzeResponse:
+    async def analyze_job_posting(self, request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeResponse:
         """
         Analyze job posting URL.
         Ideally calling the pipeline.
         """
-        task = await call_job_analysis.kiq(JobPostingAnalyzeRequest(url=url))
+        task = await call_job_analysis.kiq(request)
         task_result = await task.wait_result()
         
         if task_result.is_err:

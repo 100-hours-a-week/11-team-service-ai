@@ -45,7 +45,7 @@ RUN chown -R appuser:appgroup /app/.venv
 
 USER appuser
 
-CMD ["uv", "run", "taskiq", "worker", "shared.pipeline_bridge.interface:broker_resume", "resume_analysis.main"]
+CMD ["bash", "-c", "uv run taskiq worker shared.pipeline_bridge.interface:broker_resume resume_analysis.main & uv run taskiq worker shared.pipeline_bridge.interface:broker_portfolio resume_analysis.main & wait -n"]
 
 #================================
 # 프로덕션 스테이지
@@ -62,4 +62,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 USER appuser
 
-CMD ["taskiq", "worker", "shared.pipeline_bridge.interface:broker_resume", "resume_analysis.main"]
+CMD ["bash", "-c", "taskiq worker shared.pipeline_bridge.interface:broker_resume resume_analysis.main & taskiq worker shared.pipeline_bridge.interface:broker_portfolio resume_analysis.main & wait -n"]

@@ -10,7 +10,7 @@ from .infrastructure.adapters.crawling.router import DynamicRoutingCrawler
 from .infrastructure.adapters.llm.job_extractor import LLMJobExtractor
 
 from shared.config import settings
-from shared.utils import load_chat_model
+from shared.utils import load_chat_model, send_eval_job_callback
 
 from .infrastructure.adapters.llm.mock_extractor import MockJobExtractor
 
@@ -52,7 +52,16 @@ async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeRe
     service = JobExtractionService(
         crawler=DynamicRoutingCrawler(), extractor=extractor_impl
     )
-    return await service.extract_job_data(request.url)
+    result = await service.extract_job_data(request.url)
+    
+    if getattr(request, "evalJobId", None):
+        await send_eval_job_callback(
+            eval_job_id=request.evalJobId, 
+            success=True, 
+            data=result.model_dump()
+        )
+
+    return result
 
 
 # TODO: 삭제 파이프라인 구현, 벡터db에 저장된 내용만 삭제

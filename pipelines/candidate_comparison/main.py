@@ -1,6 +1,7 @@
 import logging
 from shared.db.connection import get_db
 from shared.config import settings
+from shared.utils import send_eval_job_callback
 from shared.schema.applicant import CompareRequest, CompareResponse
 
 # Domain Interface
@@ -77,6 +78,13 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
         strengths=strengths,
         weaknesses=weaknesses,
     )
+    
+    if getattr(request, "evalJobId", None):
+        await send_eval_job_callback(
+            eval_job_id=request.evalJobId, 
+            success=True, 
+            data=result.model_dump()
+        )
 
     logger.info(
         f"✨ [Pipeline Complete] Comparison finished for user {request.user_id}"

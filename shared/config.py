@@ -73,5 +73,8 @@ class Settings(BaseSettings):
     # redis
     REDIS_URL:str
 
+    # MQ_CALLBACK_URL
+    MQ_CALLBACK_URL:str
+
 
 settings = Settings()  # type: ignore
