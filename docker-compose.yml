@@ -1,0 +1,119 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+      target: development
+    container_name: ai_api_server
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - REDIS_URL=redis://redis:6379
+      - DB_HOST=mysql-container
+      - WEAVIATE_HOST=rag-weaviate
+    volumes:
+      # 로컬에서 코드를 수정하면 컨테이너 내부에도 즉시 반영(Hot Reload)되도록 마운트
+      - ./api:/app/api
+      - ./shared:/app/shared
+    # docker-compose-infra.yml에서 생성된 RabbitMQ, Redis, DB 네트워크와 연결
+    networks:
+      - infra-network
+    restart: unless-stopped
+
+  worker_evaluate:
+    build:
+      context: .
+      dockerfile: pipelines/applicant_evaluation/Dockerfile
+      target: development
+    container_name: ai_worker_evaluate
+    # API 서버보다 늦게, RabbitMQ 통신이 보장된 후 기동되도록 권장
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - REDIS_URL=redis://redis:6379
+      - DB_HOST=mysql-container
+      - WEAVIATE_HOST=rag-weaviate
+    volumes:
+      # 내부에서 코드를 수정하면 워커가 이를 감지하여 Taskiq Task 재시작(--reload)
+      - ./shared:/app/shared
+      - ./pipelines/applicant_evaluation:/app/pipelines/applicant_evaluation
+    networks:
+      - infra-network
+    restart: unless-stopped
+
+  worker_job:
+    build:
+      context: .
+      dockerfile: pipelines/job_analysis/Dockerfile
+      target: development
+    container_name: ai_worker_job
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - REDIS_URL=redis://redis:6379
+      - DB_HOST=mysql-container
+      - WEAVIATE_HOST=rag-weaviate
+    volumes:
+      - ./shared:/app/shared
+      - ./pipelines/job_analysis:/app/pipelines/job_analysis
+    networks:
+      - infra-network
+    restart: unless-stopped
+
+  worker_resume:
+    build:
+      context: .
+      dockerfile: pipelines/resume_analysis/Dockerfile
+      target: development
+    container_name: ai_worker_resume
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - REDIS_URL=redis://redis:6379
+      - DB_HOST=mysql-container
+      - WEAVIATE_HOST=rag-weaviate
+    volumes:
+      - ./shared:/app/shared
+      - ./pipelines/resume_analysis:/app/pipelines/resume_analysis
+    networks:
+      - infra-network
+    restart: unless-stopped
+
+  worker_compare:
+    build:
+      context: .
+      dockerfile: pipelines/candidate_comparison/Dockerfile
+      target: development
+    container_name: ai_worker_compare
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - REDIS_URL=redis://redis:6379
+      - DB_HOST=mysql-container
+      - WEAVIATE_HOST=rag-weaviate
+    volumes:
+      - ./shared:/app/shared
+      - ./pipelines/candidate_comparison:/app/pipelines/candidate_comparison
+    networks:
+      - infra-network
+    restart: unless-stopped
+
+networks:
+  infra-network:
+    name: ai_infra-network
+    external: true

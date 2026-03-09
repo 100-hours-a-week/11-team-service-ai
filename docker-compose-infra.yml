@@ -20,7 +20,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
-    restart: always
+    restart: unless-stopped
     ports:
       - 6379:6379
     healthcheck:
@@ -34,7 +34,7 @@ services:
   weaviate:
     image: semitechnologies/weaviate:1.34.0
     container_name: rag-weaviate
-    restart: always
+    restart: unless-stopped
     ports:
       - "8080:8080"
       - "50051:50051"
@@ -52,7 +52,7 @@ services:
   db:
     image: mysql:8.0.44
     container_name: mysql-container
-    restart: always
+    restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password
     environment:
       # 루트 비밀번호 설정 (필수)

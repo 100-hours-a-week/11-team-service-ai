@@ -4,19 +4,18 @@ FROM python:${PYTHON_VERSION}-slim AS base
 
 WORKDIR /app
 
-# 필수 패키지 설치
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     build-essential \
     libpq-dev \
+    libmagic1 \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
-# 서버 권한 설정
 RUN groupadd -g 1001 appgroup && \
     useradd -u 1001 -g appgroup -s /bin/bash -m appuser && \
     chown -R appuser:appgroup /app
 
-# 패키지 매니저 uv를 복사
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 #================================
@@ -26,12 +25,11 @@ FROM base AS deps
 
 COPY pyproject.toml uv.lock ./
 
-# 라이브리 캐시 파일 저장 및 의존성 설치
 RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
     uv sync --frozen --no-dev --no-install-project
 
 #================================
-# 개발 스테이지
+# 개발 스테이지 (Hot Reload)
 #================================
 FROM base AS development
 
@@ -40,17 +38,18 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
     uv sync --frozen --no-install-project
 
-COPY --chown=appuser:appgroup api/ ./api/
+# 채용 공고 크롤링을 수행하는 모듈이므로 Playwright(Chromium) 브라우저를 설치
+RUN /app/.venv/bin/playwright install --with-deps chromium
+
 COPY --chown=appuser:appgroup shared/ ./shared/
+COPY --chown=appuser:appgroup pipelines/job_analysis/ ./pipelines/job_analysis/
 COPY --chown=appuser:appgroup README.md .
 
 RUN chown -R appuser:appgroup /app/.venv
 
 USER appuser
 
-EXPOSE 8000
-
-CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "api", "--reload-dir", "shared"]
+CMD ["uv", "run", "taskiq", "worker", "shared.pipeline_bridge.interface:broker_job", "job_analysis.main"]
 
 #================================
 # 프로덕션 스테이지
@@ -59,14 +58,14 @@ FROM base AS production
 
 COPY --from=deps /app/.venv /app/.venv
 
-COPY --chown=appuser:appgroup api/ ./api/
+RUN /app/.venv/bin/playwright install --with-deps chromium
+
 COPY --chown=appuser:appgroup shared/ ./shared/
+COPY --chown=appuser:appgroup pipelines/job_analysis/ ./pipelines/job_analysis/
 COPY --chown=appuser:appgroup README.md .
 
 ENV PATH="/app/.venv/bin:$PATH"
 
 USER appuser
 
-EXPOSE 8000
-
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["taskiq", "worker", "shared.pipeline_bridge.interface:broker_job", "job_analysis.main"]
