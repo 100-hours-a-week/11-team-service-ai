@@ -13,7 +13,11 @@ from langgraph.types import Send, Command
 
 
 from .configuration import AnalyseContext, Configuration
-from .prompts import get_analysis_prompt, get_final_report_prompt, PORTFOLIO_TECHNICAL_DEPTH_PROMPT
+from .prompts import (
+    get_analysis_prompt,
+    get_final_report_prompt,
+    PORTFOLIO_TECHNICAL_DEPTH_PROMPT,
+)
 from shared.utils import load_chat_model, AiResponse
 from .resercher_graph.graph import TechResearcher
 from .resercher_graph.state import ResearcherState
@@ -45,6 +49,7 @@ def plan_analysis(state: AnalysisState, runtime: Runtime[AnalyseContext]):
         ]
 
         return Command(goto=sends)
+
 
 async def execute_tech_analyze_node(
     input_state: dict[str, str],
@@ -78,9 +83,7 @@ async def execute_tech_analyze_node(
 
         # 서브 그래프를 생성하여 tech_info정보를 가져와야 함
         researcher = TechResearcher()
-        research_state = await researcher.start_researcher(
-            config=config, runtime=rtx
-        )
+        research_state = await researcher.start_researcher(config=config, runtime=rtx)
 
         # 4. 분석 수행
         result = await _analyze_tech_section(rtx, analysis_type, llm, research_state)
@@ -144,16 +147,20 @@ async def _analyze_tech_section(
     research_state: ResearcherState,
 ) -> SectionAnalysis:
     """기술 역량에 특화된 분석 로직 (서브그래프 결과 연동)"""
-    
+
     typed_analysis_type = PortfolioAnalysisType(analysis_type)
 
     # 서브그래프에서 획득한 평가 요소와 기술 정보를 언래핑
     tech_info_list = research_state.get("tech_info", [])
     factors_list = research_state.get("tech_competency_factors", [])
-    
-    tech_contexts_str = "\n".join([f"- [{info.subject}]: {info.content}" for info in tech_info_list])
-    factors_str = "\n".join([f"- {factor.factor_name}: {factor.content}" for factor in factors_list])
-    
+
+    tech_contexts_str = "\n".join(
+        [f"- [{info.subject}]: {info.content}" for info in tech_info_list]
+    )
+    factors_str = "\n".join(
+        [f"- {factor.factor_name}: {factor.content}" for factor in factors_list]
+    )
+
     # 두 정보가 없을 경우 대비 기본값 처리
     if not tech_contexts_str.strip():
         tech_contexts_str = "추가 조사된 특화 기술 문맥 없음"
@@ -195,6 +202,7 @@ async def _analyze_tech_section(
         raise TypeError(f"Expected AiResponse but got {type(result)}")
 
     return SectionAnalysis(type=typed_analysis_type, analyse_result=result.response)
+
 
 async def _analyze_single_section(
     rtx: AnalyseContext, analysis_type: str, llm: BaseChatModel

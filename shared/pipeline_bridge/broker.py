@@ -13,19 +13,21 @@ from .constants import (
 )
 
 # --- Taskiq Result Backend Configuration ---
-result_backend = RedisAsyncResultBackend(
+result_backend: RedisAsyncResultBackend = RedisAsyncResultBackend(
     redis_url=settings.REDIS_URL
 )
+
 
 # 브로커 팩토리 함수: 파이프라인(도메인)별로 독립된 큐를 가진 브로커를 생성
 def create_broker(queue_name: str) -> AioPikaBroker:
     return AioPikaBroker(
         url=settings.RABBITMQ_URL,
-        queue_name=queue_name, # 기본으로 바라볼 RabbitMQ Queue 이름 지정
-        exchange_name=EXCHANGE_NAME, # 여러 브로커가 속할 허브 이름 통일
-        routing_key=queue_name, # 정확히 해당 큐 이름으로 라우팅되도록 보장
-        exchange_type=ExchangeType.DIRECT, # Direct 타입이어야만 라우팅 키 기반 일대일 매칭이 정확히 수행됨
+        queue_name=queue_name,  # 기본으로 바라볼 RabbitMQ Queue 이름 지정
+        exchange_name=EXCHANGE_NAME,  # 여러 브로커가 속할 허브 이름 통일
+        routing_key=queue_name,  # 정확히 해당 큐 이름으로 라우팅되도록 보장
+        exchange_type=ExchangeType.DIRECT,  # Direct 타입이어야만 라우팅 키 기반 일대일 매칭이 정확히 수행됨
     ).with_result_backend(result_backend)
+
 
 # --- Domains Brokers ---
 
@@ -43,10 +45,4 @@ broker_evaluate = create_broker(QUEUE_APPLICANT_EVALUATION)
 broker_compare = create_broker(QUEUE_CANDIDATE_COMPARISON)
 
 # 모든 브로커를 모듈에서 참조하기 쉽게 묶어줌
-brokers = [
-    broker_job,
-    broker_resume,
-    broker_portfolio,
-    broker_evaluate,
-    broker_compare
-]
+brokers = [broker_job, broker_resume, broker_portfolio, broker_evaluate, broker_compare]

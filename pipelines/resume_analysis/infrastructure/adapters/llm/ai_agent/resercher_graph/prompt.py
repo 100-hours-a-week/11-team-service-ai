@@ -17,7 +17,7 @@ EXTRACT_UNKNOWN_TECH_PROMPT = ChatPromptTemplate.from_messages(
 
 # Constraints
 - 절대로 본문에 없는 내용을 추측하거나 지어내지 마라.
-- '기술 용어'의 정의: 단순 소프트웨어 이름이 아닌, 직무 수행을 위해 학습이 필요한 기술적 지식 단위를 의미함."""
+- '기술 용어'의 정의: 단순 소프트웨어 이름이 아닌, 직무 수행을 위해 학습이 필요한 기술적 지식 단위를 의미함.""",
         ),
         (
             "user",
@@ -25,8 +25,8 @@ EXTRACT_UNKNOWN_TECH_PROMPT = ChatPromptTemplate.from_messages(
 {job_info}
 
 [지원자 서류]
-{doc_text}"""
-        )
+{doc_text}""",
+        ),
     ]
 )
 
@@ -34,7 +34,7 @@ EXTRACT_TECH_FACTOR_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-"""# Role
+            """# Role
 너는 채용 공고(JD)의 비즈니스 맥락을 완벽히 이해하고, 지원자의 기술적 깊이를 측정할 수 있는 '평가 설계자'이자 '기술 리서치 전략가'야. 너의 목표는 면접 전, JD의 핵심 역량과 지원자의 스택을 대조하여 면접관이 반드시 알고 있어야 할 '기술적 표준과 검증 포인트'를 도출하는 것이다.
 
 # Analysis Priority
@@ -55,19 +55,19 @@ EXTRACT_TECH_FACTOR_PROMPT = ChatPromptTemplate.from_messages(
 # Inputs
 - [채용 공고]: 
 - [지원자 서류]: 
-- [배경지식]:"""
+- [배경지식]:""",
         ),
         (
             "user",
-"""[채용 공고 내용]
+            """[채용 공고 내용]
 {job_info}
 
 [지원자 서류]
 {doc_text}
 
 [배경지식]
-{tech_info}"""
-        )
+{tech_info}""",
+        ),
     ]
 )
 
@@ -83,7 +83,7 @@ EVALUATE_CONTEXT_PROMPT = ChatPromptTemplate.from_messages(
 1. 입력된 [조사 대상 키워드]와 [검색된 문서 컨텍스트]를 비교하세요.
 2. 문서 내용이 해당 키워드의 '기본 개념, 동작 원리, 혹은 활용 사례' 중 하나라도 최소한의 설명이나 힌트를 포함하고 있다면 유효(True)하다고 판단하세요.
 3. 문서 내용이 키워드와 단순히 이름만 겹치거나 동음이의어이거나, 관련된 기술적 설명이 전혀 없어 사실상 쓸모없는 정보라면 무효(False)로 판단하세요.
-4. 판단 결과(True/False)를 논리적인 근거 없이 단답형 불리언 값으로만 반환하세요."""
+4. 판단 결과(True/False)를 논리적인 근거 없이 단답형 불리언 값으로만 반환하세요.""",
         ),
         (
             "user",
@@ -91,7 +91,7 @@ EVALUATE_CONTEXT_PROMPT = ChatPromptTemplate.from_messages(
 {keyword}
 
 [검색된 문서 컨텍스트]
-{context}"""
-        )
+{context}""",
+        ),
     ]
 )

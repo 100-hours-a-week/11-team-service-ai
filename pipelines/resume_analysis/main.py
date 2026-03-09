@@ -68,14 +68,12 @@ async def run_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeRes
 
     # --- [Step 3] 최종 응답 포맷팅 반환 ---
     result = analyzer.format_resume_response(report, int(request.user_id))
-    
+
     if getattr(request, "evalJobId", None):
         await send_eval_job_callback(
-            eval_job_id=request.evalJobId, 
-            success=True, 
-            data=result.model_dump()
+            eval_job_id=request.evalJobId, success=True, data=result.model_dump()
         )
-        
+
     return result
 
 
@@ -112,14 +110,12 @@ async def run_portfolio_analysis(
 
     # --- [Step 3] 최종 응답 포맷팅 반환 ---
     result = analyzer.format_portfolio_response(report, int(request.user_id))
-    
+
     if getattr(request, "evalJobId", None):
         await send_eval_job_callback(
-            eval_job_id=request.evalJobId, 
-            success=True, 
-            data=result.model_dump()
+            eval_job_id=request.evalJobId, success=True, data=result.model_dump()
         )
-        
+
     return result
 
 

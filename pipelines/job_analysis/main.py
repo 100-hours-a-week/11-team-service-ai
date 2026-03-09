@@ -53,12 +53,10 @@ async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeRe
         crawler=DynamicRoutingCrawler(), extractor=extractor_impl
     )
     result = await service.extract_job_data(request.url)
-    
+
     if getattr(request, "evalJobId", None):
         await send_eval_job_callback(
-            eval_job_id=request.evalJobId, 
-            success=True, 
-            data=result.model_dump()
+            eval_job_id=request.evalJobId, success=True, data=result.model_dump()
         )
 
     return result

@@ -64,17 +64,17 @@ class Settings(BaseSettings):
     AWS_REGION: str = "ap-northeast-2"
     AWS_S3_BUCKET_NAME: str
 
-    EMBEDDING_MODEL:str
-    TAVILY_API_KEY:str
+    EMBEDDING_MODEL: str
+    TAVILY_API_KEY: str
 
     # rabbitmq
-    RABBITMQ_URL:str
+    RABBITMQ_URL: str
 
     # redis
-    REDIS_URL:str
+    REDIS_URL: str
 
     # MQ_CALLBACK_URL
-    MQ_CALLBACK_URL:str
+    MQ_CALLBACK_URL: str
 
 
 settings = Settings()  # type: ignore

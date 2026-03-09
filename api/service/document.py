@@ -11,7 +11,9 @@ from shared.pipeline_bridge import (
 
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class DocumentService:
     async def analyze_resume(
@@ -22,7 +24,7 @@ class DocumentService:
         """
         task = await call_resume_analysis.kiq(request)
         task_result = await task.wait_result()
-        
+
         if task_result.is_err:
             raise Exception(f"Worker Error: {task_result.error}")
         return task_result.return_value
@@ -35,7 +37,7 @@ class DocumentService:
         """
         task = await call_portfolio_analysis.kiq(request)
         task_result = await task.wait_result()
-        
+
         if task_result.is_err:
             raise Exception(f"Worker Error: {task_result.error}")
         return task_result.return_value

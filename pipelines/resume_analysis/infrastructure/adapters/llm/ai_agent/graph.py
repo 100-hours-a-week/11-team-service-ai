@@ -10,7 +10,12 @@ from .....domain.models.report import AnalysisReport
 # Import local modules (relative)
 from .configuration import AnalyseContext
 from .state import AnalysisState
-from .nodes import execute_analysis_node, generate_report_node, plan_analysis, execute_tech_analyze_node
+from .nodes import (
+    execute_analysis_node,
+    generate_report_node,
+    plan_analysis,
+    execute_tech_analyze_node,
+)
 
 logger = logging.getLogger(__name__)
 

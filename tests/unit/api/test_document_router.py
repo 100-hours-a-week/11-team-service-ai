@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 from fastapi.testclient import TestClient
 
@@ -19,7 +19,14 @@ def test_analyze_resume_success():
 
     # 2. Patch: api.service.document.call_resume_analysis
     with patch("api.service.document.call_resume_analysis") as mock_call:
-        mock_call.return_value = mock_response
+
+        class MockTaskResult:
+            is_err = False
+            return_value = mock_response
+
+        mock_task = AsyncMock()
+        mock_task.wait_result.return_value = MockTaskResult()
+        mock_call.kiq = AsyncMock(return_value=mock_task)
 
         payload = {"user_id": "u1", "job_posting_id": "j1"}
         response = client.post("/ai/api/v1/resume/analyze", json=payload)
@@ -28,7 +35,7 @@ def test_analyze_resume_success():
         json_data = response.json()
         assert json_data["success"] is True
         assert json_data["data"]["job_fit_score"] == "Perfect"
-        mock_call.assert_called_once()
+        mock_call.kiq.assert_called_once()
 
 
 def test_analyze_portfolio_success():
@@ -42,7 +49,14 @@ def test_analyze_portfolio_success():
 
     # 2. Patch
     with patch("api.service.document.call_portfolio_analysis") as mock_call:
-        mock_call.return_value = mock_response
+
+        class MockTaskResult:
+            is_err = False
+            return_value = mock_response
+
+        mock_task = AsyncMock()
+        mock_task.wait_result.return_value = MockTaskResult()
+        mock_call.kiq = AsyncMock(return_value=mock_task)
 
         payload = {"user_id": "u1", "job_posting_id": "j1"}
         response = client.post("/ai/api/v1/portfolio/analyze", json=payload)
@@ -51,4 +65,4 @@ def test_analyze_portfolio_success():
         json_data = response.json()
         assert json_data["success"] is True
         assert json_data["data"]["problem_solving_score"] == "Excellent"
-        mock_call.assert_called_once()
+        mock_call.kiq.assert_called_once()

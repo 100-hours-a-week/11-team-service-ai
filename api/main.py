@@ -14,7 +14,6 @@ from contextlib import asynccontextmanager
 
 from shared.pipeline_bridge.broker import brokers
 
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -23,9 +22,9 @@ async def lifespan(app: FastAPI):
     # FastAPI 서버 구동 시: 브로커 연결 (Connection 생성) 및 큐 선언 대기
     for broker in brokers:
         await broker.startup()
-    
+
     yield
-    
+
     # FastAPI 서버 종료 시: 브로커 소켓 연결 안전하게 해제 (Graceful Shutdown)
     for broker in brokers:
         await broker.shutdown()
@@ -115,13 +114,12 @@ async def receive_callback(payload: dict):
     스프링 서버가 아직 연동되지 않았을 때 로컬에서 결과를 확인하기 위해 사용합니다.
     """
     import json
-    
+
     logger.info("================== [CALLBACK RECEIVED] ==================")
     logger.info(json.dumps(payload, indent=2, ensure_ascii=False))
     logger.info("=========================================================")
-    
-    return {"status": "Callback received"}
 
+    return {"status": "Callback received"}
 
 
 # Include Routers
