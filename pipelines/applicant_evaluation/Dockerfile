@@ -43,6 +43,8 @@ COPY --chown=appuser:appgroup README.md .
 
 RUN chown -R appuser:appgroup /app/.venv
 
+ENV PYTHONPATH="/app:/app/pipelines"
+
 USER appuser
 
 CMD ["uv", "run", "taskiq", "worker", "shared.pipeline_bridge.interface:broker_evaluate", "applicant_evaluation.main"]
@@ -59,6 +61,8 @@ COPY --chown=appuser:appgroup pipelines/applicant_evaluation/ ./pipelines/applic
 COPY --chown=appuser:appgroup README.md .
 
 ENV PATH="/app/.venv/bin:$PATH"
+
+ENV PYTHONPATH="/app:/app/pipelines"
 
 USER appuser
 
