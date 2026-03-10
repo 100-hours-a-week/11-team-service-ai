@@ -26,7 +26,9 @@ def create_broker(queue_name: str) -> AioPikaBroker:
         exchange_name=EXCHANGE_NAME,  # 여러 브로커가 속할 허브 이름 통일
         routing_key=queue_name,  # 정확히 해당 큐 이름으로 라우팅되도록 보장
         exchange_type=ExchangeType.DIRECT,  # Direct 타입이어야만 라우팅 키 기반 일대일 매칭이 정확히 수행됨
-        declare_exchange_kwargs={"durable": True},  # Spring 백엔드와 설정 일치 (서버 재시작 시 exchange 유지)
+        declare_exchange_kwargs={
+            "durable": True
+        },  # Spring 백엔드와 설정 일치 (서버 재시작 시 exchange 유지)
     ).with_result_backend(result_backend)
 
 

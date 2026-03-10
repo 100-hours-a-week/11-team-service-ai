@@ -39,7 +39,9 @@ RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
     uv sync --frozen --no-install-project
 
 # 채용 공고 크롤링을 수행하는 모듈이므로 Playwright(Chromium) 브라우저를 설치
-RUN /app/.venv/bin/playwright install --with-deps chromium
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN /app/.venv/bin/playwright install --with-deps chromium \
+    && chown -R appuser:appgroup /ms-playwright
 
 COPY --chown=appuser:appgroup shared/ ./shared/
 COPY --chown=appuser:appgroup pipelines/job_analysis/ ./pipelines/job_analysis/
@@ -60,7 +62,9 @@ FROM base AS production
 
 COPY --from=deps /app/.venv /app/.venv
 
-RUN /app/.venv/bin/playwright install --with-deps chromium
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN /app/.venv/bin/playwright install --with-deps chromium \
+    && chown -R appuser:appgroup /ms-playwright
 
 COPY --chown=appuser:appgroup shared/ ./shared/
 COPY --chown=appuser:appgroup pipelines/job_analysis/ ./pipelines/job_analysis/
