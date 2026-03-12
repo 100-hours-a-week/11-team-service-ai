@@ -1,0 +1,198 @@
+name: scuad-ai
+services:
+  # ==========================================
+  # [Infrastructure Services]
+  # ==========================================
+  rabbitmq:
+    profiles: ["standalone"]
+    image: rabbitmq:4-management
+    hostname: rabbitmq
+    container_name: scuad-rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    networks:
+      - scuad-network
+
+  db:
+    profiles: ["standalone"]
+    image: mysql:8.0.44
+    container_name: scuad-mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: Qwerty123456!
+      MYSQL_DATABASE: service_db
+      MYSQL_USER: developer
+      MYSQL_PASSWORD: Qwerty123456!
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - scuad-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: scuad-redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - scuad-network
+
+  weaviate:
+    image: semitechnologies/weaviate:1.34.0
+    container_name: scuad-weaviate
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+      - "50051:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_MODULES: ''
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - scuad-network
+
+  # ==========================================
+  # [AI Application Services]
+  # ==========================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: ai_api_server
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@scuad-rabbitmq:5672/
+      - REDIS_URL=redis://scuad-redis:6379
+      - DB_HOST=scuad-mysql
+      - WEAVIATE_HOST=scuad-weaviate
+      - WEAVIATE_PORT=8081
+    volumes:
+      - ./api:/app/api
+      - ./shared:/app/shared
+    networks:
+      - scuad-network
+    restart: unless-stopped
+
+  worker_evaluate:
+    build:
+      context: .
+      dockerfile: pipelines/applicant_evaluation/Dockerfile
+      target: development
+    container_name: ai_worker_evaluate
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@scuad-rabbitmq:5672/
+      - REDIS_URL=redis://scuad-redis:6379
+      - DB_HOST=scuad-mysql
+      - WEAVIATE_HOST=scuad-weaviate
+    volumes:
+      - ./shared:/app/shared
+      - ./pipelines/applicant_evaluation:/app/pipelines/applicant_evaluation
+    networks:
+      - scuad-network
+    restart: unless-stopped
+
+  worker_job:
+    build:
+      context: .
+      dockerfile: pipelines/job_analysis/Dockerfile
+      target: development
+    container_name: ai_worker_job
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@scuad-rabbitmq:5672/
+      - REDIS_URL=redis://scuad-redis:6379
+      - DB_HOST=scuad-mysql
+      - WEAVIATE_HOST=scuad-weaviate
+    volumes:
+      - ./shared:/app/shared
+      - ./pipelines/job_analysis:/app/pipelines/job_analysis
+    networks:
+      - scuad-network
+    restart: unless-stopped
+
+  worker_resume:
+    build:
+      context: .
+      dockerfile: pipelines/resume_analysis/Dockerfile
+      target: development
+    container_name: ai_worker_resume
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@scuad-rabbitmq:5672/
+      - REDIS_URL=redis://scuad-redis:6379
+      - DB_HOST=scuad-mysql
+      - WEAVIATE_HOST=scuad-weaviate
+    volumes:
+      - ./shared:/app/shared
+      - ./pipelines/resume_analysis:/app/pipelines/resume_analysis
+    networks:
+      - scuad-network
+    restart: unless-stopped
+
+  worker_compare:
+    build:
+      context: .
+      dockerfile: pipelines/candidate_comparison/Dockerfile
+      target: development
+    container_name: ai_worker_compare
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@scuad-rabbitmq:5672/
+      - REDIS_URL=redis://scuad-redis:6379
+      - DB_HOST=scuad-mysql
+      - WEAVIATE_HOST=scuad-weaviate
+    volumes:
+      - ./shared:/app/shared
+      - ./pipelines/candidate_comparison:/app/pipelines/candidate_comparison
+    networks:
+      - scuad-network
+    restart: unless-stopped
+
+networks:
+  scuad-network:
+    external: true
+
+volumes:
+  mysql_data:
+    driver: local
+  weaviate_data:
+    driver: local
