@@ -76,5 +76,7 @@ class Settings(BaseSettings):
     # MQ_CALLBACK_URL
     MQ_CALLBACK_URL: str
 
+    RERANKER_MODEL_URL: str
+    RERANKER_MODEL: str
 
 settings = Settings()  # type: ignore

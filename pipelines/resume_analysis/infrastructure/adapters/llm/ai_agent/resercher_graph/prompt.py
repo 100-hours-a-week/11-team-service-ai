@@ -45,7 +45,6 @@ EXTRACT_TECH_FACTOR_PROMPT = ChatPromptTemplate.from_messages(
 # Output Rules
 - **가장 핵심적인 3가지 리서치 키워드**만 생성하라.
 - 쿼리는 **영어**로 작성하며, 기술 블로그와 공식 문서의 심화 사례를 찾을 수 있도록 전문 용어를 활용하라.
-- 반드시 아래 JSON 형식으로만 응답하라.
 
 # example
 - [Core Tech] production architecture in 'JD Domain' 2026
