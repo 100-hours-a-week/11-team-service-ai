@@ -54,9 +54,9 @@ async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeRe
     )
     result = await service.extract_job_data(request.url)
 
-    if getattr(request, "evalJobId", None):
+    if getattr(request, "eval_job_id", None):
         await send_eval_job_callback(
-            eval_job_id=request.evalJobId, success=True, data=result.model_dump()
+            eval_job_id=request.eval_job_id, success=True, data=result.model_dump()
         )
 
     return result

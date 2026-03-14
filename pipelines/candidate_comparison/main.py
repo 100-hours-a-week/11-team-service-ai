@@ -79,9 +79,9 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
         weaknesses=weaknesses,
     )
 
-    if getattr(request, "evalJobId", None):
+    if getattr(request, "eval_job_id", None):
         await send_eval_job_callback(
-            eval_job_id=request.evalJobId, success=True, data=result.model_dump()
+            eval_job_id=request.eval_job_id, success=True, data=result.model_dump()
         )
 
     logger.info(
