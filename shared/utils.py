@@ -8,7 +8,9 @@ import logging
 
 from langchain_core.language_models import BaseChatModel
 from shared.config import settings
+from typing import Optional, Any
 from pydantic import BaseModel, Field
+from shared.schema.common_schema import ApiResponse
 
 logger = logging.getLogger(__name__)
 
@@ -58,3 +60,32 @@ def load_chat_model(model_name: str, model_provider: str) -> BaseChatModel:
                 SecretStr(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
             ),
         )
+
+
+async def send_eval_job_callback(
+    eval_job_id: Optional[str],
+    success: bool = True,
+    data: Optional[dict[str, Any]] = None,
+) -> None:
+    """eval_job_id가 존재할 경우 스프링 서버(콜백 API)로 결과를 전송합니다."""
+    if not eval_job_id:
+        return
+
+    import httpx
+
+    url = settings.MQ_CALLBACK_URL
+    if not url:
+        logger.warning("MQ_CALLBACK_URL is not set in environment variables.")
+        return
+
+    api_response = ApiResponse(eval_job_id=eval_job_id, success=success, data=data)
+
+    payload = api_response.model_dump(mode="json", exclude_none=True)
+
+    try:
+        async with httpx.AsyncClient(verify=False) as client:
+            response = await client.post(url, json=payload, timeout=10.0)
+            response.raise_for_status()
+            logger.info(f"✅ Callback sent successfully for eval_job_id: {eval_job_id}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send callback for eval_job_id {eval_job_id}: {e}")

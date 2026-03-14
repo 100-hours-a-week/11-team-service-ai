@@ -1,10 +1,11 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
 
 # 3.2 지원자 평가
 class EvaluateRequest(BaseModel):
+    eval_job_id: Optional[str] = Field(default=None, description="평가 작업 ID")
     user_id: str = Field(..., description="평가할 사용자 ID")
     job_posting_id: str = Field(..., description="지원할 채용 공고 ID")
 
@@ -26,6 +27,7 @@ class EvaluateResponse(BaseModel):
 
 # 3.3 지원자 비교
 class CompareRequest(BaseModel):
+    eval_job_id: Optional[str] = Field(default=None, description="평가 작업 ID")
     job_posting_id: str = Field(..., description="비교 기준이 되는 채용 공고 ID")
     user_id: str = Field(..., description="본인(사용자) ID")
     competitor: str = Field(..., description="비교 대상(경쟁자) ID")

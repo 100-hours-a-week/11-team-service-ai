@@ -144,14 +144,21 @@ PORTFOLIO_TECHNICAL_DEPTH_PROMPT = ChatPromptTemplate.from_template("""
     - 자격 요건: {qualifications}
     - 우대 사항: {preferred_points}
 
+    [사전 조사된 특화 기술 정보 및 평가 기준]
+    - 주요 기술 문맥:
+    {tech_contexts}
+    - 기술 역량 평가 기준:
+    {evaluation_factors}
+
     [내 포트폴리오 내용]
     {doc_text}
 
     ---
     [분석 기준: Technical Depth (기술 활용 깊이)]
     1. 기술 적합성: {tech_stacks}을 활용한 프로젝트 경험이 충분히 드러나는가?
-    2. 심화 활용: {preferred_points}에 언급된 기술이나 고급 개념을 활용한 부분을 강조하고 있는가?
-    3. 코드/아키텍처: 확장성, 유지보수성, 성능 최적화 등에 대한 고민이 보이는가?
+    2. 사전 조사 내용 반영: AI가 찾아낸 특화 평가 기준({evaluation_factors})과 주요 기술 문맥({tech_contexts})에 비추어 볼 때, 지원자의 경험 서술이 깊이를 갖췄는가?
+    3. 심화 활용: {preferred_points}에 언급된 기술이나 고급 개념을 활용한 부분을 명확하게 설명하고 있는가?
+    4. 코드/아키텍처: 확장성, 유지보수성, 성능 최적화 등에 대한 고민 과정이 보이는가?
 
     [출력 형식]
     - 한국어로 작성하세요.

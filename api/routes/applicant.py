@@ -15,24 +15,24 @@ router = APIRouter(prefix="/ai/api/v1/applicant", tags=["Applicant"])
 @router.post(
     "/evaluate",
     response_model=ApiResponse[EvaluateResponse],
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     summary="지원자 평가",
 )
 async def evaluate_applicant(request: EvaluateRequest):
     service = ApplicantService()
-    result = await service.evaluate_applicant(request.user_id, request.job_posting_id)
+    result = await service.evaluate_applicant(request)
     return ApiResponse(success=True, data=result)
 
 
 @router.post(
     "/compare",
     response_model=ApiResponse[CompareResponse],
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     summary="지원자 비교",
 )
 async def compare_applicants(request: CompareRequest):
     service = ApplicantService()
-    result = await service.compare_applicants(
-        request.user_id, request.job_posting_id, request.competitor
-    )
+    result = await service.compare_applicants(request)
     return ApiResponse(success=True, data=result)

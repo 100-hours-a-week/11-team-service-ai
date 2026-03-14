@@ -1,6 +1,7 @@
 import logging
 from shared.db.connection import get_db
 from shared.config import settings
+from shared.utils import send_eval_job_callback
 from shared.schema.applicant import CompareRequest, CompareResponse
 
 # Domain Interface
@@ -19,9 +20,13 @@ from .infrastructure.persistence.job_repository import SqlAlchemyJobRepository
 from .infrastructure.adapters.llm.mock_agent import MockComparisonAnalyzer
 from .infrastructure.adapters.llm.ai_agent.graph import LLMAnalyst
 
+from shared.pipeline_bridge.broker import broker_compare
+from shared.pipeline_bridge.constants import TASK_CANDIDATE_COMPARE
+
 logger = logging.getLogger(__name__)
 
 
+@broker_compare.task(task_name=TASK_CANDIDATE_COMPARE)
 async def run_pipeline(request: CompareRequest) -> CompareResponse:
     """
     지원자 비교 파이프라인의 메인 진입점 (Async Entrypoint)
@@ -73,6 +78,11 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
         strengths=strengths,
         weaknesses=weaknesses,
     )
+
+    if getattr(request, "eval_job_id", None):
+        await send_eval_job_callback(
+            eval_job_id=request.eval_job_id, success=True, data=result.model_dump()
+        )
 
     logger.info(
         f"✨ [Pipeline Complete] Comparison finished for user {request.user_id}"

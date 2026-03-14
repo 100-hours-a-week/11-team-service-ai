@@ -1,9 +1,11 @@
+from shared.pipeline_bridge.broker import broker_portfolio
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared.db.connection import get_db
 
 
 from shared.config import settings
+from shared.utils import send_eval_job_callback
 from shared.schema.document import (
     ResumeAnalyzeRequest,
     ResumeAnalyzeResponse,
@@ -27,9 +29,13 @@ from .infrastructure.adapters.parser.pdf_extractor import PyPdfExtractor
 from .infrastructure.adapters.llm.ai_agent.graph import LLMAnalyst
 from .infrastructure.adapters.llm.mock_agent import MockAnalyst
 
+from shared.pipeline_bridge.broker import broker_resume
+from shared.pipeline_bridge.constants import TASK_RESUME_ANALYZE, TASK_PORTFOLIO_ANALYZE
+
 logger = logging.getLogger(__name__)
 
 
+@broker_resume.task(task_name=TASK_RESUME_ANALYZE)
 async def run_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeResponse:
     """
     이력서 분석 파이프라인 실행
@@ -61,9 +67,17 @@ async def run_resume_analysis(request: ResumeAnalyzeRequest) -> ResumeAnalyzeRes
     )
 
     # --- [Step 3] 최종 응답 포맷팅 반환 ---
-    return analyzer.format_resume_response(report, int(request.user_id))
+    result = analyzer.format_resume_response(report, int(request.user_id))
+
+    if getattr(request, "eval_job_id", None):
+        await send_eval_job_callback(
+            eval_job_id=request.eval_job_id, success=True, data=result.model_dump()
+        )
+
+    return result
 
 
+@broker_portfolio.task(task_name=TASK_PORTFOLIO_ANALYZE)
 async def run_portfolio_analysis(
     request: PortfolioAnalyzeRequest,
 ) -> PortfolioAnalyzeResponse:
@@ -95,7 +109,14 @@ async def run_portfolio_analysis(
     )
 
     # --- [Step 3] 최종 응답 포맷팅 반환 ---
-    return analyzer.format_portfolio_response(report, int(request.user_id))
+    result = analyzer.format_portfolio_response(report, int(request.user_id))
+
+    if getattr(request, "eval_job_id", None):
+        await send_eval_job_callback(
+            eval_job_id=request.eval_job_id, success=True, data=result.model_dump()
+        )
+
+    return result
 
 
 async def _create_analyzer(session: AsyncSession) -> ApplicationAnalyzer:

@@ -15,19 +15,43 @@ permissions:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
-  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
 
 jobs:
-  deploy:
-    name: Build, Push & Deploy
+  # ----------------------------
+  # 1. Build & Push (Matrix x5)
+  # ----------------------------
+  build-push:
+    name: Build & Push (${{ matrix.service }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api_server
+            ecr_repo: scuad-ai-api
+            dockerfile: ./Dockerfile
+            target: runtime
+          - service: worker_resume
+            ecr_repo: scuad-ai-worker-resume
+            dockerfile: ./pipelines/resume_analysis/Dockerfile
+            target: production
+          - service: worker_job
+            ecr_repo: scuad-ai-worker-job
+            dockerfile: ./pipelines/job_analysis/Dockerfile
+            target: production
+          - service: worker_evaluate
+            ecr_repo: scuad-ai-worker-evaluate
+            dockerfile: ./pipelines/applicant_evaluation/Dockerfile
+            target: production
+          - service: worker_compare
+            ecr_repo: scuad-ai-worker-compare
+            dockerfile: ./pipelines/candidate_comparison/Dockerfile
+            target: production
 
     steps:
       - uses: actions/checkout@v4
 
-      # ----------------------------
-      # 1. AWS 인증 + ECR 로그인
-      # ----------------------------
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -38,9 +62,59 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # ----------------------------
-      # 2. 브랜치별 태그 + 환경 결정
-      # ----------------------------
+      - name: Set deploy config
+        id: config
+        run: |
+          SHA_SHORT="${GITHUB_SHA::7}"
+          BRANCH="${GITHUB_REF_NAME}"
+
+          if [[ "$BRANCH" == release/* ]]; then
+            echo "tag_latest=staging-latest" >> $GITHUB_OUTPUT
+            echo "tag_sha=staging-${SHA_SHORT}" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH" == "main" ]; then
+            echo "tag_latest=main-latest" >> $GITHUB_OUTPUT
+            echo "tag_sha=main-${SHA_SHORT}" >> $GITHUB_OUTPUT
+          else
+            echo "tag_latest=develop-latest" >> $GITHUB_OUTPUT
+            echo "tag_sha=develop-${SHA_SHORT}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ matrix.ecr_repo }}:${{ steps.config.outputs.tag_latest }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ matrix.ecr_repo }}:${{ steps.config.outputs.tag_sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  # ----------------------------
+  # 2. Deploy via SSM Run Command
+  # ----------------------------
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [build-push]
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Set deploy config
         id: config
         run: |
@@ -67,52 +141,46 @@ jobs:
             echo "env_label=DEV" >> $GITHUB_OUTPUT
           fi
 
-      # ----------------------------
-      # 3. Docker Build & Push
-      # ----------------------------
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          target: runtime
-          push: true
-          platforms: linux/amd64
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.config.outputs.tag_latest }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.config.outputs.tag_sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # ----------------------------
-      # 4. SSM Run Command로 인스턴스 일괄 배포
-      # ----------------------------
       - name: Deploy via SSM Run Command
         id: ssm_deploy
         run: |
-          IMAGE="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.config.outputs.tag_latest }}"
           REGION="${{ env.AWS_REGION }}"
           REGISTRY="${{ steps.login-ecr.outputs.registry }}"
           SSM_PATH="${{ steps.config.outputs.ssm_env_path }}"
+          TAG="${{ steps.config.outputs.tag_latest }}"
           TARGET_ENV="${{ steps.config.outputs.target_env }}"
 
           PARAMS=$(jq -n \
             --arg region "$REGION" \
             --arg registry "$REGISTRY" \
-            --arg image "$IMAGE" \
             --arg ssm_path "$SSM_PATH" \
+            --arg tag "$TAG" \
             '{commands: [
               "set -eux",
+
               "aws ecr get-login-password --region \($region) | docker login --username AWS --password-stdin \($registry)",
-              "docker pull \($image)",
+
               "mkdir -p /opt/scuad",
               "aws ssm get-parameter --name \($ssm_path) --with-decryption --query Parameter.Value --output text --region \($region) > /opt/scuad/.env",
               "chmod 600 /opt/scuad/.env",
+
               "docker rm -f scuad-ai || true",
-              "docker run -d --restart unless-stopped --name scuad-ai --env-file /opt/scuad/.env -p 8000:8000 \($image)"
+
+              "docker pull \($registry)/scuad-ai-api:\($tag)",
+              "docker pull \($registry)/scuad-ai-worker-resume:\($tag)",
+              "docker pull \($registry)/scuad-ai-worker-job:\($tag)",
+              "docker pull \($registry)/scuad-ai-worker-evaluate:\($tag)",
+              "docker pull \($registry)/scuad-ai-worker-compare:\($tag)",
+
+              "docker rm -f scuad-ai-api scuad-ai-worker-resume scuad-ai-worker-job scuad-ai-worker-evaluate scuad-ai-worker-compare || true",
+
+              "docker run -d --restart unless-stopped --name scuad-ai-api --env-file /opt/scuad/.env -p 8000:8000 \($registry)/scuad-ai-api:\($tag)",
+              "docker run -d --restart unless-stopped --name scuad-ai-worker-resume --env-file /opt/scuad/.env \($registry)/scuad-ai-worker-resume:\($tag)",
+              "docker run -d --restart unless-stopped --name scuad-ai-worker-job --env-file /opt/scuad/.env \($registry)/scuad-ai-worker-job:\($tag)",
+              "docker run -d --restart unless-stopped --name scuad-ai-worker-evaluate --env-file /opt/scuad/.env \($registry)/scuad-ai-worker-evaluate:\($tag)",
+              "docker run -d --restart unless-stopped --name scuad-ai-worker-compare --env-file /opt/scuad/.env \($registry)/scuad-ai-worker-compare:\($tag)",
+
+              "docker image prune -f"
             ]}')
 
           TARGETS=$(jq -n --arg env "$TARGET_ENV" \
@@ -122,8 +190,8 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "$TARGETS" \
             --parameters "$PARAMS" \
-            --timeout-seconds 300 \
-            --comment "Deploy AI ${{ steps.config.outputs.tag_sha }}" \
+            --timeout-seconds 600 \
+            --comment "Deploy AI MSA ${{ steps.config.outputs.tag_sha }}" \
             --query 'Command.CommandId' \
             --output text)
 
@@ -131,7 +199,7 @@ jobs:
           echo "SSM Command sent: $COMMAND_ID"
 
       # ----------------------------
-      # 5. SSM 명령 완료 대기
+      # 3. SSM 명령 완료 대기
       # ----------------------------
       - name: Wait for SSM Command
         run: |
@@ -139,13 +207,13 @@ jobs:
 
           sleep 10
 
-          for i in $(seq 1 20); do
+          for i in $(seq 1 30); do
             RESULT=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
               --query 'CommandInvocations[*].[InstanceId,Status]' \
               --output text)
 
-            echo "[$i/20] $RESULT"
+            echo "[$i/30] $RESULT"
 
             TOTAL=$(echo "$RESULT" | wc -l | tr -d ' ')
             PENDING=$(echo "$RESULT" | grep -c -E 'Pending|InProgress|Delayed' || true)
@@ -213,7 +281,7 @@ jobs:
       #     exit 1
 
       # ----------------------------
-      # 6. Discord 알림
+      # 4. Discord 알림
       # ----------------------------
       - name: Notify Discord - Success
         if: success()
@@ -221,9 +289,10 @@ jobs:
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           status: success
-          title: "[${{ steps.config.outputs.env_label }}] AI 배포 성공"
+          title: "[${{ steps.config.outputs.env_label }}] AI MSA 배포 성공"
           description: |
-            Image: `${{ env.ECR_REPOSITORY }}:${{ steps.config.outputs.tag_sha }}`
+            Tag: `${{ steps.config.outputs.tag_sha }}`
+            Services: api, worker_resume, worker_job, worker_evaluate, worker_compare
             SSM Command: `${{ steps.ssm_deploy.outputs.command_id }}`
 
       - name: Notify Discord - Failure
@@ -232,7 +301,7 @@ jobs:
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           status: failure
-          title: "[${{ steps.config.outputs.env_label }}] AI 배포 실패"
+          title: "[${{ steps.config.outputs.env_label }}] AI MSA 배포 실패"
           description: |
-            Image: `${{ env.ECR_REPOSITORY }}:${{ steps.config.outputs.tag_sha }}`
+            Tag: `${{ steps.config.outputs.tag_sha }}`
             SSM Command: `${{ steps.ssm_deploy.outputs.command_id }}`
