@@ -54,10 +54,10 @@ async def run_pipeline(request: EvaluateRequest) -> EvaluateResponse:
     # DB 세션 없이 반환 수행
     result = analyzer.format_response(report=report, user_id=user_id, job_id=job_id)
 
-    if getattr(request, "evalJobId", None):
+    if getattr(request, "eval_job_id", None):
         # 콜백 전송 (백그라운드 처리 권장되나 워커이므로 await)
         await send_eval_job_callback(
-            eval_job_id=request.evalJobId, success=True, data=result.model_dump()
+            eval_job_id=request.eval_job_id, success=True, data=result.model_dump()
         )
 
     return result

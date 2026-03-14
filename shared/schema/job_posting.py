@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class JobPostingAnalyzeRequest(BaseModel):
-    evalJobId: Optional[str] = Field(default=None, description="평가 작업 ID")
+    eval_job_id: Optional[str] = Field(default=None, description="평가 작업 ID")
     url: str = Field(..., description="분석할 채용 공고의 URL")
 
 

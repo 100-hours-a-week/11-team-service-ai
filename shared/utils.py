@@ -67,7 +67,7 @@ async def send_eval_job_callback(
     success: bool = True,
     data: Optional[dict[str, Any]] = None,
 ) -> None:
-    """evalJobId가 존재할 경우 스프링 서버(콜백 API)로 결과를 전송합니다."""
+    """eval_job_id가 존재할 경우 스프링 서버(콜백 API)로 결과를 전송합니다."""
     if not eval_job_id:
         return
 
@@ -78,7 +78,7 @@ async def send_eval_job_callback(
         logger.warning("MQ_CALLBACK_URL is not set in environment variables.")
         return
 
-    api_response = ApiResponse(evalJobId=eval_job_id, success=success, data=data)
+    api_response = ApiResponse(eval_job_id=eval_job_id, success=success, data=data)
 
     payload = api_response.model_dump(mode="json", exclude_none=True)
 
@@ -86,6 +86,6 @@ async def send_eval_job_callback(
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(url, json=payload, timeout=10.0)
             response.raise_for_status()
-            logger.info(f"✅ Callback sent successfully for evalJobId: {eval_job_id}")
+            logger.info(f"✅ Callback sent successfully for eval_job_id: {eval_job_id}")
     except Exception as e:
-        logger.error(f"❌ Failed to send callback for evalJobId {eval_job_id}: {e}")
+        logger.error(f"❌ Failed to send callback for eval_job_id {eval_job_id}: {e}")

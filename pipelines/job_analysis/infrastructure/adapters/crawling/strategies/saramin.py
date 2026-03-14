@@ -23,7 +23,7 @@ class SaraminCrawler(BasePlaywrightCrawler):
     def _parse_page(self, page: Page) -> str:
         # 루트 컨테이너가 렌더링될 때까지 대기 (최초 진입점)
         try:
-            page.wait_for_selector(self._ROOT, timeout=5000)
+            page.wait_for_selector(self._ROOT, timeout=30000)
         except Exception:
             logger.warning(
                 f"⚠️ Failed to load page content from {page.url} (Title: {page.title()})"
