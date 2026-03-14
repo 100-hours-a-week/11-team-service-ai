@@ -16,6 +16,7 @@ from .constants import (
     TASK_APPLICANT_EVALUATE,
     TASK_CANDIDATE_COMPARE,
 )
+from typing import Optional
 
 from .formatter import RawJsonFormatter
 
@@ -26,7 +27,9 @@ result_backend: RedisAsyncResultBackend = RedisAsyncResultBackend(
 
 
 # 브로커 팩토리 함수: 파이프라인(도메인)별로 독립된 큐를 가진 브로커를 생성
-def create_broker(queue_name: str, default_task_name: str = None) -> AioPikaBroker:
+def create_broker(
+    queue_name: str, default_task_name: Optional[str] = None
+) -> AioPikaBroker:
     broker = AioPikaBroker(
         url=settings.RABBITMQ_URL,
         queue_name=queue_name,  # 기본으로 바라볼 RabbitMQ Queue 이름 지정

@@ -4,11 +4,13 @@ import uuid
 from taskiq import TaskiqMessage
 from taskiq.abc.formatter import TaskiqFormatter, BrokerMessage
 
+
 class RawJsonFormatter(TaskiqFormatter):
     """
     Spring Boot 서버 등 외부에서 전송한 평문 JSON(Raw JSON)을
     Taskiq가 이해할 수 있는 TaskiqMessage 규격으로 래핑해주는 커스텀 포맷터.
     """
+
     def __init__(self, default_task_name: str):
         self.default_task_name = default_task_name
 
@@ -17,7 +19,7 @@ class RawJsonFormatter(TaskiqFormatter):
             task_id=message.task_id,
             task_name=message.task_name,
             labels=message.labels,
-            message=message.model_dump_json().encode("utf-8")
+            message=message.model_dump_json().encode("utf-8"),
         )
 
     def loads(self, message: bytes) -> TaskiqMessage:
@@ -37,5 +39,5 @@ class RawJsonFormatter(TaskiqFormatter):
             task_name=self.default_task_name,
             labels={},
             args=[],
-            kwargs={"request": raw_data}
+            kwargs={"request": raw_data},
         )

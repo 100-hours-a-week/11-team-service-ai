@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 import datetime
 
 from ...domain.interface.repository_interfaces import DocRepository
@@ -100,14 +101,7 @@ class SqlAlchemyDocRepository(DocRepository):
                 f"Document record not found for user={user_id}, job={job_id}, type={document.doc_type}"
             )
 
-        # 2. 파싱 데이터 저장 (Upsert Logic)
-        parse_stmt = select(ApplicationDocumentParsed).where(
-            ApplicationDocumentParsed.application_document_id
-            == target_doc.application_document_id
-        )
-        parse_result = await self.session.execute(parse_stmt)
-        existing_parsed = parse_result.scalars().first()
-
+        # 2. 파싱 데이터 저장 (MySQL Upsert Logic)
         now = datetime.datetime.now()
 
         # 모델의 status 제거 -> 추출 텍스트 존재 여부로 판단
@@ -116,20 +110,20 @@ class SqlAlchemyDocRepository(DocRepository):
             "COMPLETED" if target_text and len(target_text) > 0 else "FAILED"
         )
 
-        if existing_parsed:
-            # Update
-            existing_parsed.raw_text = target_text  # type: ignore
-            existing_parsed.parsing_status = computed_status  # type: ignore
-            existing_parsed.updated_at = now  # type: ignore
-        else:
-            # Insert
-            new_parsed = ApplicationDocumentParsed(
-                application_document_id=target_doc.application_document_id,
-                raw_text=target_text,
-                parsing_status=computed_status,
-                created_at=now,
-                updated_at=now,
-            )
-            self.session.add(new_parsed)
+        insert_stmt = mysql_insert(ApplicationDocumentParsed).values(
+            application_document_id=target_doc.application_document_id,
+            raw_text=target_text,
+            parsing_status=computed_status,
+            created_at=now,
+            updated_at=now,
+        )
+
+        insert_stmt = insert_stmt.on_duplicate_key_update(
+            raw_text=insert_stmt.inserted.raw_text,
+            parsing_status=insert_stmt.inserted.parsing_status,
+            updated_at=insert_stmt.inserted.updated_at,
+        )
+
+        await self.session.execute(insert_stmt)
 
         await self.session.flush()
