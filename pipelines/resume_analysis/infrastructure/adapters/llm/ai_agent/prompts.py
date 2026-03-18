@@ -87,6 +87,11 @@ RESUME_READABILITY_PROMPT = ChatPromptTemplate.from_template("""
 
 
 # --- Portfolio Analysis Prompts ---
+# TODO : 아래 내용들을 모두 포폴 분석 컨텍스트에 모두 추가해야 함
+#    - 주요 기술 문맥:
+#     {tech_contexts}
+#     - 기술 역량 평가 기준:
+#     {evaluation_factors}
 
 PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
@@ -96,6 +101,12 @@ PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template("""
     - 직무: {job_title}
     - 주요 기술: {tech_stacks}
 
+    [사전 조사된 특화 기술 정보 및 평가 기준]
+    - 주요 기술 문맥:
+    {tech_contexts}
+    - 기술 역량 평가 기준:
+    {evaluation_factors}
+
     [내 포트폴리오 내용]
     {doc_text}
 
@@ -104,6 +115,7 @@ PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template("""
     1. 문제 정의: 해결하고자 하는 문제가 명확히 정의되었는가?
     2. 기술적 깊이: {tech_stacks} 관련 기술적 난제를 해결한 경험이 드러나는가?
     3. 트러블슈팅: 개발 중 마주친 어려움과 해결 과정이 논리적으로 서술되었는가?
+    4. 기술적 문맥 반영: {tech_contexts}를 고려할 때, 지원자가 사용한 해결 방식이 적절하며 깊이가 있는가?
 
     [출력 형식]
     - 한국어로 작성하세요.
@@ -119,6 +131,12 @@ PORTFOLIO_CONTRIBUTION_CLARITY_PROMPT = ChatPromptTemplate.from_template("""
     [지원하려는 직무의 주요 업무]
     {main_tasks}
 
+    [사전 조사된 특화 기술 정보 및 평가 기준]
+    - 주요 기술 문맥:
+    {tech_contexts}
+    - 기술 역량 평가 기준:
+    {evaluation_factors}
+
     [내 포트폴리오 내용]
     {doc_text}
 
@@ -127,6 +145,7 @@ PORTFOLIO_CONTRIBUTION_CLARITY_PROMPT = ChatPromptTemplate.from_template("""
     1. 주도적 역할: {main_tasks}와 관련된 핵심 기능을 주도적으로 개발한 부분이 명확한가?
     2. 협업 방식: 팀 프로젝트에서 본인의 역할이 명확히 구분되어 있는가?
     3. 기여 수준: 단순 참여가 아닌, 실질적인 기여(코드 작성, 아키텍처 설계 등)가 잘 드러나는가?
+    4. 전문성 평가: {evaluation_factors}에 비추어 볼 때, 지원자의 기여 활동이 전문적으로 서술되었는가?
 
     [출력 형식]
     - 한국어로 작성하세요.

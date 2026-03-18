@@ -11,10 +11,11 @@ from .....domain.models.report import AnalysisReport
 from .configuration import AnalyseContext
 from .state import AnalysisState
 from .nodes import (
-    execute_analysis_node,
+    execute_resume_analysis_node,
+    execute_portfolio_analysis_node,
     generate_report_node,
     plan_analysis,
-    execute_tech_analyze_node,
+    extracted_tech_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,13 +42,14 @@ class LLMAnalyst(AnalystAgent):
 
         builder = StateGraph(state_schema=AnalysisState, context_schema=AnalyseContext)
         builder.add_node("plan_analysis", plan_analysis)  # type: ignore[call-overload]
-        builder.add_node("execute_analysis_node", execute_analysis_node)  # type: ignore[call-overload]
-        builder.add_node("execute_tech_analyze_node", execute_tech_analyze_node)  # type: ignore[call-overload]
+        builder.add_node("execute_resume_analysis_node", execute_resume_analysis_node)  # type: ignore[call-overload]
+        builder.add_node("extracted_tech_document", extracted_tech_document)  # type: ignore[call-overload]
+        builder.add_node("execute_portfolio_analysis_node", execute_portfolio_analysis_node)  # type: ignore[call-overload]
         builder.add_node("generate_report_node", generate_report_node)  # type: ignore[call-overload]
 
         builder.add_edge(START, "plan_analysis")
-        builder.add_edge("execute_analysis_node", "generate_report_node")
-        builder.add_edge("execute_tech_analyze_node", "generate_report_node")
+        builder.add_edge("execute_resume_analysis_node", "generate_report_node")
+        builder.add_edge("execute_portfolio_analysis_node", "generate_report_node")
 
         builder.add_edge("generate_report_node", END)
 
