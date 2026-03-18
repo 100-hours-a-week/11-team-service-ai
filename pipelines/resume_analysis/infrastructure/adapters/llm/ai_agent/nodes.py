@@ -168,7 +168,7 @@ async def _analyze_tech_section(
         factors_str = "특화 평가 기준 없음"
 
     prompt = PORTFOLIO_TECHNICAL_DEPTH_PROMPT
-    chain = prompt | llm.with_structured_output(AiResponse)
+    chain = prompt | llm.with_structured_output(AiResponse, method="json_mode")
 
     job_info = rtx.job_info
     job_title = (
@@ -223,7 +223,7 @@ async def _analyze_single_section(
 
     # 프롬프트 가져오기
     prompt = get_analysis_prompt(analysis_type)
-    chain = prompt | llm.with_structured_output(AiResponse)
+    chain = prompt | llm.with_structured_output(AiResponse, method="json_mode")
 
     # Job Title Fallback Logic
     job_info = rtx.job_info
@@ -280,7 +280,7 @@ async def generate_report_node(
 
     # 2. LLM 로드
     llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(
-        AiResponse
+        AiResponse, method="json_mode"
     )
 
     # 3. 문서 타입에 따른 프롬프트 선택
