@@ -26,7 +26,6 @@ def test_crawlers():
     print("=" * 60 + "\n")
 
     for url in test_urls:
-
         print(f"🎯 Testing [{url}]")
 
         try:

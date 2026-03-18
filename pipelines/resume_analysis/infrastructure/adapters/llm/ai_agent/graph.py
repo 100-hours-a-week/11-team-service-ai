@@ -44,7 +44,9 @@ class LLMAnalyst(AnalystAgent):
         builder.add_node("plan_analysis", plan_analysis)  # type: ignore[call-overload]
         builder.add_node("execute_resume_analysis_node", execute_resume_analysis_node)  # type: ignore[call-overload]
         builder.add_node("extracted_tech_document", extracted_tech_document)  # type: ignore[call-overload]
-        builder.add_node("execute_portfolio_analysis_node", execute_portfolio_analysis_node)  # type: ignore[call-overload]
+        builder.add_node(
+            "execute_portfolio_analysis_node", execute_portfolio_analysis_node
+        )  # type: ignore[call-overload]
         builder.add_node("generate_report_node", generate_report_node)  # type: ignore[call-overload]
 
         builder.add_edge(START, "plan_analysis")

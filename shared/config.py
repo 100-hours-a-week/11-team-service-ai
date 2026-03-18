@@ -5,7 +5,9 @@ load_dotenv(override=True)
 
 # SSL 소켓 미종료 관련 ResourceWarning 무시 (LLM 클라이언트 등에서 발생)
 # 특정 라이브러리(httpx, sqlalchemy 등) 내부에서 간헐적으로 나타나는 경고를 전역적으로 차단
-warnings.filterwarnings("ignore", category=ResourceWarning, message=r"unclosed <ssl\.SSLSocket")
+warnings.filterwarnings(
+    "ignore", category=ResourceWarning, message=r"unclosed <ssl\.SSLSocket"
+)
 
 from pydantic_settings import BaseSettings, SettingsConfigDict  # noqa: E402
 
@@ -83,5 +85,6 @@ class Settings(BaseSettings):
 
     RERANKER_MODEL_URL: str
     RERANKER_MODEL: str
+
 
 settings = Settings()  # type: ignore

@@ -31,7 +31,6 @@ def make_weaviate_store() -> Iterator[WeaviateVectorStore]:
         grpc_port=WEAVIATE_GRPC_PORT,
         skip_init_checks=True,
     ) as weaviate_client:
-
         store = WeaviateVectorStore(
             client=weaviate_client,
             index_name="TECH_DOCUMENT",

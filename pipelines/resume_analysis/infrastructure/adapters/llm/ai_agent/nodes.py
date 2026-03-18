@@ -1,6 +1,6 @@
 from langchain_core.language_models.chat_models import BaseChatModel
 import logging
-from typing import List, Union
+from typing import List, Union, Optional
 
 from langchain_core.runnables import RunnableConfig
 
@@ -42,7 +42,10 @@ def plan_analysis(state: AnalysisState, runtime: Runtime[AnalyseContext]):
         # 기술문서 추출 노드로 이동 (Fan-out 전 전처리)
         return Command(goto="extracted_tech_document")
 
-async def extracted_tech_document(state: AnalysisState, config: RunnableConfig, runtime: Runtime[AnalyseContext]):
+
+async def extracted_tech_document(
+    state: AnalysisState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
+):
     rtx = runtime.context
     try:
         # 1. 서브 그래프를 생성하여 tech_info 정보를 가져옴
@@ -52,10 +55,10 @@ async def extracted_tech_document(state: AnalysisState, config: RunnableConfig, 
         # 2. 다음 단계(Fan-out)를 위한 Send 리스트 생성
         # 추출된 research_state를 각 노드에 전달함
         sends = [
-            Send("execute_portfolio_analysis_node", {
-                "analyse_type": type.value, 
-                "researcher_state": research_state
-            })
+            Send(
+                "execute_portfolio_analysis_node",
+                {"analyse_type": type.value, "researcher_state": research_state},
+            )
             for type in PortfolioAnalysisType
         ]
 
@@ -78,8 +81,6 @@ async def execute_portfolio_analysis_node(
 ):
     """포트폴리오 각 항목에 대한 분석을 수행하는 노드 (Parallel Worker)"""
     analysis_type = input_state.get("analyse_type")
-    research_state = input_state.get("researcher_state")
-    
     cfg = Configuration.from_runnable_config(config)
     rtx = runtime.context
     llm = load_chat_model(cfg.model_name, cfg.model_provider)
@@ -88,7 +89,15 @@ async def execute_portfolio_analysis_node(
 
     try:
         # 포트폴리오 전용 분석 헬퍼 호출
-        result = await _analyze_portfolio_section(rtx, str(analysis_type), llm, research_state)
+        # researcher_state가 ResearcherState 타입임을 명시
+        requested_research_state = input_state.get("researcher_state")
+        if not isinstance(
+            requested_research_state, (dict, type(None))
+        ):  # ResearcherState는 TypedDict(dict)임
+            requested_research_state = None
+        result = await _analyze_portfolio_section(
+            rtx, str(analysis_type), llm, requested_research_state  # type: ignore
+        )
         return {"section_analyses": [result]}
     except Exception as e:
         logger.error(f"Portfolio Analysis Failed for {analysis_type}: {e}")
@@ -102,7 +111,7 @@ async def execute_resume_analysis_node(
 ):
     """이력서 각 항목에 대한 분석을 수행하는 노드 (Parallel Worker)"""
     analysis_type = input_state.get("analyse_type")
-    
+
     cfg = Configuration.from_runnable_config(config)
     rtx = runtime.context
     llm = load_chat_model(cfg.model_name, cfg.model_provider)
@@ -122,11 +131,11 @@ async def _analyze_portfolio_section(
     rtx: AnalyseContext,
     analysis_type: str,
     llm: BaseChatModel,
-    research_state: ResearcherState = None,
+    research_state: Optional[ResearcherState] = None,
 ) -> SectionAnalysis:
     """포트폴리오 분석 로직 (기술 문맥 통합)"""
     typed_type = PortfolioAnalysisType(analysis_type)
-    
+
     # 1. 기술 문맥 문자열 생성
     tech_contexts_str = "분석 정보 없음"
     factors_str = "분석 정보 없음"
@@ -134,9 +143,13 @@ async def _analyze_portfolio_section(
         tech_info = research_state.get("tech_info", [])
         factors = research_state.get("tech_competency_factors", [])
         if tech_info:
-            tech_contexts_str = "\n".join([f"- [{i.subject}]: {i.content}" for i in tech_info])
+            tech_contexts_str = "\n".join(
+                [f"- [{i.subject}]: {i.content}" for i in tech_info]
+            )
         if factors:
-            factors_str = "\n".join([f"- {f.factor_name}: {f.content}" for f in factors])
+            factors_str = "\n".join(
+                [f"- {f.factor_name}: {f.content}" for f in factors]
+            )
 
     # 2. 프롬프트 선택 (Technical Depth는 전용 프롬프트 유지)
     if typed_type == PortfolioAnalysisType.TECHNICAL_DEPTH:
@@ -146,21 +159,31 @@ async def _analyze_portfolio_section(
 
     chain = prompt | llm.with_structured_output(AiResponse, method="json_mode")
     job_info = rtx.job_info
-    job_title = job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
+    job_title = (
+        job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
+    )
 
     # 3. LLM 호출
-    result = await chain.ainvoke({
-        "job_title": job_title,
-        "summary": job_info.summary or "내용 없음",
-        "tech_stacks": ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음",
-        "main_tasks": ", ".join(job_info.main_tasks) if job_info.main_tasks else "정보 없음",
-        "qualifications": ", ".join(getattr(job_info, "qualifications", [])) or "정보 없음",
-        "preferred_points": ", ".join(getattr(job_info, "preferred_points", [])) or "정보 없음",
-        "doc_text": rtx.doc_text,
-        "analysis_type": analysis_type,
-        "tech_contexts": tech_contexts_str,
-        "evaluation_factors": factors_str,
-    })
+    result = await chain.ainvoke(
+        {
+            "job_title": job_title,
+            "summary": job_info.summary or "내용 없음",
+            "tech_stacks": (
+                ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음"
+            ),
+            "main_tasks": (
+                ", ".join(job_info.main_tasks) if job_info.main_tasks else "정보 없음"
+            ),
+            "qualifications": ", ".join(getattr(job_info, "qualifications", []))
+            or "정보 없음",
+            "preferred_points": ", ".join(getattr(job_info, "preferred_points", []))
+            or "정보 없음",
+            "doc_text": rtx.doc_text,
+            "analysis_type": analysis_type,
+            "tech_contexts": tech_contexts_str,
+            "evaluation_factors": factors_str,
+        }
+    )
 
     if not isinstance(result, AiResponse):
         raise TypeError(f"Expected AiResponse but got {type(result)}")
@@ -177,20 +200,30 @@ async def _analyze_resume_section(
     typed_type = ResumeAnalysisType(analysis_type)
     prompt = get_analysis_prompt(analysis_type)
     chain = prompt | llm.with_structured_output(AiResponse, method="json_mode")
-    
-    job_info = rtx.job_info
-    job_title = job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
 
-    result = await chain.ainvoke({
-        "job_title": job_title,
-        "summary": job_info.summary or "내용 없음",
-        "tech_stacks": ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음",
-        "main_tasks": ", ".join(job_info.main_tasks) if job_info.main_tasks else "정보 없음",
-        "qualifications": ", ".join(getattr(job_info, "qualifications", [])) or "정보 없음",
-        "preferred_points": ", ".join(getattr(job_info, "preferred_points", [])) or "정보 없음",
-        "doc_text": rtx.doc_text,
-        "analysis_type": analysis_type,
-    })
+    job_info = rtx.job_info
+    job_title = (
+        job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
+    )
+
+    result = await chain.ainvoke(
+        {
+            "job_title": job_title,
+            "summary": job_info.summary or "내용 없음",
+            "tech_stacks": (
+                ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음"
+            ),
+            "main_tasks": (
+                ", ".join(job_info.main_tasks) if job_info.main_tasks else "정보 없음"
+            ),
+            "qualifications": ", ".join(getattr(job_info, "qualifications", []))
+            or "정보 없음",
+            "preferred_points": ", ".join(getattr(job_info, "preferred_points", []))
+            or "정보 없음",
+            "doc_text": rtx.doc_text,
+            "analysis_type": analysis_type,
+        }
+    )
 
     if not isinstance(result, AiResponse):
         raise TypeError(f"Expected AiResponse but got {type(result)}")

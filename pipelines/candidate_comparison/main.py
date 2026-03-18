@@ -51,12 +51,14 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
     # --- [Step 1] 데이터 준비 (세션 1) ---
     async for db_session in get_db():
         use_case = _create_use_case(db_session)
-        my_candidate, competitor_candidate, job_info = (
-            await use_case.prepare_comparison_data(
-                my_candidate_id=str(request.user_id),
-                competitor_candidate_id=str(request.competitor),
-                job_posting_id=str(request.job_posting_id),
-            )
+        (
+            my_candidate,
+            competitor_candidate,
+            job_info,
+        ) = await use_case.prepare_comparison_data(
+            my_candidate_id=str(request.user_id),
+            competitor_candidate_id=str(request.competitor),
+            job_posting_id=str(request.job_posting_id),
         )
         await db_session.commit()
         break

@@ -20,6 +20,12 @@ from .prompt import (
 )
 from shared.utils import load_chat_model
 
+from infinity_client import Client
+from langchain_classic.retrievers.contextual_compression import (
+    ContextualCompressionRetriever,
+)
+from langchain_community.document_compressors.infinity_rerank import InfinityRerank
+
 logger = logging.getLogger(__name__)
 
 
@@ -151,10 +157,6 @@ async def research_factor_node(
 
 
 # 벡터DB 검색 노드
-from infinity_client import Client
-from langchain_classic.retrievers.contextual_compression import ContextualCompressionRetriever
-from langchain_community.document_compressors.infinity_rerank import InfinityRerank
-
 async def vector_db_search_node(
     state: SubResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
@@ -169,7 +171,7 @@ async def vector_db_search_node(
         client = Client(base_url=settings.RERANKER_MODEL_URL)
 
         compressor = InfinityRerank(client=client, model=settings.RERANKER_MODEL)
-        
+
         compression_retriever = ContextualCompressionRetriever(
             base_compressor=compressor, base_retriever=retriever
         )
@@ -197,7 +199,6 @@ async def vector_db_search_node(
 def evaluate_threshold_router(
     state: SubResearcherState,
 ) -> Literal["__end__", "ai_judge_node", "tavily_search_node"]:
-
     score = state.get("search_score", 0.0)
 
     # score 기반 분기 (실제 운영 시에는 이 값을 config 등으로 조절 가능)
