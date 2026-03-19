@@ -9,7 +9,6 @@ from enum import Enum
 # 에러코드는 최대한 공통적으로 관리
 # 에러메시지는 raise Error를 던지면서 추가
 class ErrorCode(str, Enum):
-
     # 500 서버 내부에러
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
 

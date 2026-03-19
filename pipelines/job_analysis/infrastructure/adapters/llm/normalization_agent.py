@@ -150,14 +150,14 @@ class AIAgent:
         prompt = f"""다음 두 채용 공고가 같은 공고인지 판단하세요.
 
 [공고 A]
-- 회사: {new_data.get('company', 'N/A')}
-- 직무: {new_data.get('job_title', 'N/A')}
-- 주요 업무: {new_data.get('main_tasks', 'N/A')}
+- 회사: {new_data.get("company", "N/A")}
+- 직무: {new_data.get("job_title", "N/A")}
+- 주요 업무: {new_data.get("main_tasks", "N/A")}
 
 [공고 B]
-- 회사: {existing_data.get('company', 'N/A')}
-- 직무: {existing_data.get('job_title', 'N/A')}
-- 주요 업무: {existing_data.get('main_tasks', 'N/A')}
+- 회사: {existing_data.get("company", "N/A")}
+- 직무: {existing_data.get("job_title", "N/A")}
+- 주요 업무: {existing_data.get("main_tasks", "N/A")}
 
 같은 채용 공고라면 "YES", 다른 채용 공고라면 "NO"로만 답변하세요.
 같은 회사의 같은 포지션이지만 표현이 약간 다른 경우 같은 공고로 간주합니다.

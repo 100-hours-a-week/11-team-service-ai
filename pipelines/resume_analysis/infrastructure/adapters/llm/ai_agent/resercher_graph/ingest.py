@@ -45,7 +45,6 @@ def custom_uuid_encoder(doc: Document) -> str:
 
 
 def ingest_docs(tavilly_response: dict[str, Any]):
-
     # 1. 문서로드
     results = tavilly_response.get("results", [])
     query = tavilly_response.get("query")

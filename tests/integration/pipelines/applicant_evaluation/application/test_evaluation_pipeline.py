@@ -97,7 +97,6 @@ async def test_run_pipeline_end_to_end(db_session, pipeline_data):
                 "pipelines.applicant_evaluation.main.PyPdfExtractor"
             ) as MockExtractor,
         ):
-
             # Setup Mock Adapter Behaviors
             storage_instance = MockStorage.return_value
             storage_instance.download_file.return_value = b"Dummy PDF Content"

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class AiResponse(BaseModel):
-    """응답결과 정형화"""
+    """응답결과"""
 
     response: str = Field(description="응답결과")
 

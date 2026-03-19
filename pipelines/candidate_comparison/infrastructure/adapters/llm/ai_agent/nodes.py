@@ -183,10 +183,10 @@ async def finalize_evaluation(
 def _format_job_info(job: JobInfo) -> str:
     return f"""
     - 직무: {job.job_title}
-    - 주요 업무: {', '.join(job.main_tasks)}
-    - 기술 스택: {', '.join(job.tech_stacks)}
-    - 자격 요건: {', '.join(getattr(job, 'qualifications', []))}
-    - 우대 사항: {', '.join(getattr(job, 'preferred_points', []))}
+    - 주요 업무: {", ".join(job.main_tasks)}
+    - 기술 스택: {", ".join(job.tech_stacks)}
+    - 자격 요건: {", ".join(getattr(job, "qualifications", []))}
+    - 우대 사항: {", ".join(getattr(job, "preferred_points", []))}
     """
 
 
