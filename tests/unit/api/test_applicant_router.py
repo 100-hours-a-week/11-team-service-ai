@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 from fastapi.testclient import TestClient
 
@@ -27,7 +27,14 @@ def test_evaluate_applicant_success():
 
     # 2. Patch
     with patch("api.service.applicant.call_applicant_evaluation") as mock_call:
-        mock_call.return_value = mock_response
+
+        class MockTaskResult:
+            is_err = False
+            return_value = mock_response
+
+        mock_task = AsyncMock()
+        mock_task.wait_result.return_value = MockTaskResult()
+        mock_call.kiq = AsyncMock(return_value=mock_task)
 
         # 3. Request
         payload = {"user_id": "user_123", "job_posting_id": "job_456"}
@@ -39,7 +46,7 @@ def test_evaluate_applicant_success():
         assert json_data["success"] is True
         assert json_data["data"]["overall_score"] == 88.5
         assert len(json_data["data"]["competency_scores"]) == 2
-        mock_call.assert_called_once()
+        mock_call.kiq.assert_called_once()
 
 
 def test_compare_applicants_success():
@@ -54,7 +61,14 @@ def test_compare_applicants_success():
 
     # 2. Patch
     with patch("api.service.applicant.call_candidate_comparison") as mock_call:
-        mock_call.return_value = mock_response
+
+        class MockTaskResult:
+            is_err = False
+            return_value = mock_response
+
+        mock_task = AsyncMock()
+        mock_task.wait_result.return_value = MockTaskResult()
+        mock_call.kiq = AsyncMock(return_value=mock_task)
 
         # 3. Request
         payload = {
@@ -70,4 +84,4 @@ def test_compare_applicants_success():
         assert json_data["success"] is True
         assert json_data["data"]["strengths_report"] == "Better skills"
         assert json_data["data"]["comparison_metrics"][0]["name"] == "Skill"
-        mock_call.assert_called_once()
+        mock_call.kiq.assert_called_once()

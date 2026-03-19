@@ -10,17 +10,21 @@ from .infrastructure.adapters.crawling.router import DynamicRoutingCrawler
 from .infrastructure.adapters.llm.job_extractor import LLMJobExtractor
 
 from shared.config import settings
-from shared.utils import load_chat_model
+from shared.utils import load_chat_model, send_eval_job_callback
 
 from .infrastructure.adapters.llm.mock_extractor import MockJobExtractor
 
 from langchain_core.language_models import BaseChatModel
 from .domain.interface.extractor import JobDataExtractor
 
+from shared.pipeline_bridge.broker import broker_job
+from shared.pipeline_bridge.constants import TASK_JOB_ANALYZE, TASK_JOB_DELETE
+
 logger = logging.getLogger(__name__)
 
 
 # TODO: 공고분석 파이프라인 구현, 벡터db에만 공고 저장
+@broker_job.task(task_name=TASK_JOB_ANALYZE)
 async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeResponse:
     """
     크롤링 및 추출 파이프라인
@@ -48,10 +52,18 @@ async def run_pipeline(request: JobPostingAnalyzeRequest) -> JobPostingAnalyzeRe
     service = JobExtractionService(
         crawler=DynamicRoutingCrawler(), extractor=extractor_impl
     )
-    return await service.extract_job_data(request.url)
+    result = await service.extract_job_data(request.url)
+
+    if getattr(request, "eval_job_id", None):
+        await send_eval_job_callback(
+            eval_job_id=request.eval_job_id, success=True, data=result.model_dump()
+        )
+
+    return result
 
 
 # TODO: 삭제 파이프라인 구현, 벡터db에 저장된 내용만 삭제
+@broker_job.task(task_name=TASK_JOB_DELETE)
 async def delete_pipeline(job_posting_id: int) -> JobPostingDeleteResponse:
     """
     Job Posting Deletion Pipeline Entrypoint

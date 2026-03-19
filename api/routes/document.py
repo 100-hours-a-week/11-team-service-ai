@@ -19,22 +19,24 @@ router = APIRouter(prefix="/ai/api/v1", tags=["Document Analysis"])
 @router.post(
     "/resume/analyze",
     response_model=ApiResponse[ResumeAnalyzeResponse],
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     summary="이력서 분석",
 )
 async def analyze_resume(request: ResumeAnalyzeRequest):
     service = DocumentService()
-    result = await service.analyze_resume(request.user_id, request.job_posting_id)
+    result = await service.analyze_resume(request)
     return ApiResponse(success=True, data=result)
 
 
 @router.post(
     "/portfolio/analyze",
     response_model=ApiResponse[PortfolioAnalyzeResponse],
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     summary="포트폴리오 분석",
 )
 async def analyze_portfolio(request: PortfolioAnalyzeRequest):
     service = DocumentService()
-    result = await service.analyze_portfolio(request.user_id, request.job_posting_id)
+    result = await service.analyze_portfolio(request)
     return ApiResponse(success=True, data=result)

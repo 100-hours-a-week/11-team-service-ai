@@ -13,8 +13,14 @@ from langgraph.types import Send, Command
 
 
 from .configuration import AnalyseContext, Configuration
-from .prompts import get_analysis_prompt, get_final_report_prompt
+from .prompts import (
+    get_analysis_prompt,
+    get_final_report_prompt,
+    PORTFOLIO_TECHNICAL_DEPTH_PROMPT,
+)
 from shared.utils import load_chat_model, AiResponse
+from .resercher_graph.graph import TechResearcher
+from .resercher_graph.state import ResearcherState
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +40,62 @@ def plan_analysis(state: AnalysisState, runtime: Runtime[AnalyseContext]):
         return Command(goto=sends)
     elif target_doc_type == DocumentType.PORTFOLIO:
         sends = [
-            Send("execute_analysis_node", {"analyse_type": type.value})
+            (
+                Send("execute_tech_analyze_node", {"analyse_type": type.value})
+                if type == PortfolioAnalysisType.TECHNICAL_DEPTH
+                else Send("execute_analysis_node", {"analyse_type": type.value})
+            )
             for type in PortfolioAnalysisType
         ]
+
         return Command(goto=sends)
+
+
+async def execute_tech_analyze_node(
+    input_state: dict[str, str],
+    config: RunnableConfig,
+    runtime: Runtime[AnalyseContext],
+):
+    """
+    기술역량에 대한 분석을 수행하는 노드 (Parallel Worker)
+
+    Args:
+        input_state: SectionAnalysisState (Send API로 전달됨)
+        config: RunnableConfig
+    """
+    # 1. 입력 검증
+    analysis_type = input_state.get("analyse_type")
+    if not analysis_type:
+        raise ValueError("analysis_type is missing in execute_analysis_node input")
+
+    logger.info(f"Analyzing Tach {analysis_type}")
+
+    # 2. Config & Context 로드
+    cfg = Configuration.from_runnable_config(config)
+    rtx = runtime.context
+
+    # 3. LLM 로드
+    llm = load_chat_model(cfg.model_name, cfg.model_provider)
+
+    logger.info(f"[{cfg.model_name}] Analyzing Section: {analysis_type} ...")
+
+    try:
+
+        # 서브 그래프를 생성하여 tech_info정보를 가져와야 함
+        researcher = TechResearcher()
+        research_state = await researcher.start_researcher(config=config, runtime=rtx)
+
+        # 4. 분석 수행
+        result = await _analyze_tech_section(rtx, analysis_type, llm, research_state)
+
+        # 5. 결과 반환 (Main State에 병합될 구조)
+        return {"section_analyses": [result]}
+
+    except Exception as e:
+        logger.info(f"Analysis Failed for {analysis_type}: {e}")
+        return {
+            "section_analyses": []
+        }  # 실패 시 빈 리스트 반환 (전체 프로세스는 계속됨)
 
 
 async def execute_analysis_node(
@@ -46,7 +104,7 @@ async def execute_analysis_node(
     runtime: Runtime[AnalyseContext],
 ):
     """
-    단일 항목에 대한 분석을 수행하는 노드 (Parallel Worker)
+    단일 항목에 대한 분석을 수행하는 공통노드 (Parallel Worker)
 
     Args:
         input_state: SectionAnalysisState (Send API로 전달됨)
@@ -80,6 +138,70 @@ async def execute_analysis_node(
         return {
             "section_analyses": []
         }  # 실패 시 빈 리스트 반환 (전체 프로세스는 계속됨)
+
+
+async def _analyze_tech_section(
+    rtx: AnalyseContext,
+    analysis_type: str,
+    llm: BaseChatModel,
+    research_state: ResearcherState,
+) -> SectionAnalysis:
+    """기술 역량에 특화된 분석 로직 (서브그래프 결과 연동)"""
+
+    typed_analysis_type = PortfolioAnalysisType(analysis_type)
+
+    # 서브그래프에서 획득한 평가 요소와 기술 정보를 언래핑
+    tech_info_list = research_state.get("tech_info", [])
+    factors_list = research_state.get("tech_competency_factors", [])
+
+    tech_contexts_str = "\n".join(
+        [f"- [{info.subject}]: {info.content}" for info in tech_info_list]
+    )
+    factors_str = "\n".join(
+        [f"- {factor.factor_name}: {factor.content}" for factor in factors_list]
+    )
+
+    # 두 정보가 없을 경우 대비 기본값 처리
+    if not tech_contexts_str.strip():
+        tech_contexts_str = "추가 조사된 특화 기술 문맥 없음"
+    if not factors_str.strip():
+        factors_str = "특화 평가 기준 없음"
+
+    prompt = PORTFOLIO_TECHNICAL_DEPTH_PROMPT
+    chain = prompt | llm.with_structured_output(AiResponse)
+
+    job_info = rtx.job_info
+    job_title = (
+        job_info.summary.splitlines()[0] if job_info.summary else job_info.company_name
+    )
+
+    # LLM 실행: 프롬프트 변수 주입
+    result = await chain.ainvoke(
+        {
+            "job_title": job_title,
+            "tech_stacks": (
+                ", ".join(job_info.tech_stacks) if job_info.tech_stacks else "정보 없음"
+            ),
+            "qualifications": (
+                ", ".join(getattr(job_info, "qualifications", []))
+                if getattr(job_info, "qualifications", None)
+                else "정보 없음"
+            ),
+            "preferred_points": (
+                ", ".join(getattr(job_info, "preferred_points", []))
+                if getattr(job_info, "preferred_points", None)
+                else "정보 없음"
+            ),
+            "doc_text": rtx.doc_text,
+            "tech_contexts": tech_contexts_str,
+            "evaluation_factors": factors_str,
+        }
+    )
+
+    if not isinstance(result, AiResponse):
+        raise TypeError(f"Expected AiResponse but got {type(result)}")
+
+    return SectionAnalysis(type=typed_analysis_type, analyse_result=result.response)
 
 
 async def _analyze_single_section(

@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 from fastapi.testclient import TestClient
 
@@ -25,7 +25,14 @@ def test_analyze_job_posting_success():
     # 2. Patch: 내부 Bridge 함수를 Mocking
     # Service 코드는 실제 실행되므로, Service가 Bridge를 잘 호출하는지도 검증됨
     with patch("api.service.job_posting.call_job_analysis") as mock_bridge_call:
-        mock_bridge_call.return_value = mock_response_data
+
+        class MockTaskResult:
+            is_err = False
+            return_value = mock_response_data
+
+        mock_task = AsyncMock()
+        mock_task.wait_result.return_value = MockTaskResult()
+        mock_bridge_call.kiq = AsyncMock(return_value=mock_task)
 
         # 3. 요청 실행
         payload = {"url": "http://example.com/job/123"}
@@ -39,10 +46,10 @@ def test_analyze_job_posting_success():
         assert json_data["data"]["job_posting_id"] == 999
 
         # Bridge 함수가 서비스에 의해 호출되었는지 확인
-        mock_bridge_call.assert_called_once()
+        mock_bridge_call.kiq.assert_called_once()
 
         # 호출 인자 검증 (Service가 Request 객체를 잘 만들어서 넘겼는지)
-        args = mock_bridge_call.call_args[0]
+        args = mock_bridge_call.kiq.call_args[0]
         assert args[0].url == "http://example.com/job/123"
 
 
