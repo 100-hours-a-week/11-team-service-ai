@@ -47,6 +47,7 @@ ENV PYTHONPATH="/app:/app/pipelines"
 
 USER appuser
 
+RUN uv run python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
 CMD ["bash", "-c", "uv run taskiq worker shared.pipeline_bridge.interface:broker_resume resume_analysis.main & uv run taskiq worker shared.pipeline_bridge.interface:broker_portfolio resume_analysis.main & wait -n"]
 
 #================================
@@ -66,4 +67,5 @@ ENV PYTHONPATH="/app:/app/pipelines"
 
 USER appuser
 
+RUN uv run python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
 CMD ["bash", "-c", "taskiq worker shared.pipeline_bridge.interface:broker_resume resume_analysis.main & taskiq worker shared.pipeline_bridge.interface:broker_portfolio resume_analysis.main & wait -n"]
