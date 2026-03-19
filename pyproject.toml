@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = "==3.11.*"
+
 dependencies = [
     "aiokafka>=0.12.0",
     "asyncmy>=0.2.11",
@@ -36,6 +37,9 @@ dependencies = [
     "weaviate-client>=4.9.3",
     "infinity-client>=0.0.77",
 ]
+
+[tool.uv]
+package = false
 
 [build-system]
 requires = ["hatchling"]
