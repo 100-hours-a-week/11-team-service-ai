@@ -106,21 +106,33 @@ jobs:
     if: needs.build-push.result == 'success'
 
     steps:
-      - name: Set tag
+      - name: Set config
         id: config
         run: |
-          echo "tag_sha=develop-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          SHA_SHORT="${GITHUB_SHA::7}"
+          BRANCH="${GITHUB_REF_NAME}"
+
+          if [[ "$BRANCH" == release/* ]]; then
+            echo "tag_sha=staging-${SHA_SHORT}" >> $GITHUB_OUTPUT
+            echo "overlay=staging" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH" == "main" ]; then
+            echo "tag_sha=main-${SHA_SHORT}" >> $GITHUB_OUTPUT
+            echo "overlay=prod" >> $GITHUB_OUTPUT
+          else
+            echo "tag_sha=develop-${SHA_SHORT}" >> $GITHUB_OUTPUT
+            echo "overlay=dev" >> $GITHUB_OUTPUT
+          fi
 
       - name: Update cloud repo
         run: |
           git clone https://x-access-token:${{ secrets.CLOUD_REPO_PAT }}@github.com/100-hours-a-week/11-team-service-cloud.git /tmp/cloud-repo
           cd /tmp/cloud-repo
           git checkout develop
-          sed -i "s|newTag: .*|newTag: ${{ steps.config.outputs.tag_sha }}|g" k8s/apps/ai/overlays/dev/kustomization.yaml
+          sed -i "s|newTag: .*|newTag: ${{ steps.config.outputs.tag_sha }}|g" "k8s/apps/ai/overlays/${{ steps.config.outputs.overlay }}/kustomization.yaml"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "chore: update ai images to ${{ steps.config.outputs.tag_sha }}"
+          git commit -m "chore: update ai ${{ steps.config.outputs.overlay }} images to ${{ steps.config.outputs.tag_sha }}"
           git push origin develop
 
   # ----------------------------
