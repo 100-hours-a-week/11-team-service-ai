@@ -1,4 +1,8 @@
 import logging
+from shared.config import settings
+from langfuse.langchain import CallbackHandler
+from typing import Any
+
 
 from langgraph.graph import StateGraph, START, END
 
@@ -58,12 +62,24 @@ class LLMAnalyst(AnalystAgent):
         graph = builder.compile()
 
         # 실행 설정 (모델 변경 등)
-        config = {
+        config: dict[str, Any] = {
             "configurable": {
                 "model_provider": self.model_provider,
                 "model_name": self.model_name,
             }
         }
+
+        # Langfuse Callback 설정 (Key가 존재할 때만 활성화)
+        callbacks = []
+        if settings.LANGFUSE_PUBLIC_KEY and settings.LANGFUSE_SECRET_KEY:
+            # SDK v4는 환경변수(LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST)를 자동으로 참조합니다.
+            langfuse_handler = CallbackHandler()
+            callbacks.append(langfuse_handler)
+            logger.info("📡 Langfuse monitoring enabled.")
+
+        # config에 callbacks 추가
+        if callbacks:
+            config["callbacks"] = callbacks  # type: ignore[typeddict-item]
 
         context_data = AnalyseContext(
             job_info=job_info, doc_type=doc_type, doc_text=document_text

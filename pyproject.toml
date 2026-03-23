@@ -36,6 +36,7 @@ dependencies = [
     "uvicorn>=0.34.0",
     "weaviate-client>=4.9.3",
     "infinity-client>=0.0.77",
+    "langfuse>=2.64.0",
 ]
 
 [tool.uv]

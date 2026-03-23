@@ -86,5 +86,10 @@ class Settings(BaseSettings):
     RERANKER_MODEL_URL: str
     RERANKER_MODEL: str
 
+    # Langfuse
+    LANGFUSE_PUBLIC_KEY: str | None = None
+    LANGFUSE_SECRET_KEY: str | None = None
+    LANGFUSE_BASE_URL: str = "https://cloud.langfuse.com"
+
 
 settings = Settings()  # type: ignore
