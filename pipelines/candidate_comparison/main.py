@@ -102,13 +102,15 @@ def _create_use_case(db_session) -> ComparisonUseCase:
         logger.info("🤖 Using Mock Comparison Analyzer")
         analyzer = MockComparisonAnalyzer()
     else:
-        llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
-        if llm_provider == "gemini":
-            model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
-        elif llm_provider == "vllm":
-            model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
-        else:
-            model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+        llm_provider = "gemini"
+        model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+
+        # if llm_provider == "gemini":
+        #     model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+        # elif llm_provider == "vllm":
+        #     model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
+        # else:
+        #     model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
 
         analyzer = LLMAnalyst(model_name=model_name, model_provider=llm_provider)
 
