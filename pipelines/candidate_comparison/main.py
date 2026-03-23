@@ -98,6 +98,7 @@ def _create_use_case(db_session) -> ComparisonUseCase:
 
     analyzer: ComparisonAnalyzer
 
+    # 제미나이 호출 고정
     if getattr(settings, "use_mock", False):
         logger.info("🤖 Using Mock Comparison Analyzer")
         analyzer = MockComparisonAnalyzer()
