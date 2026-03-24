@@ -46,7 +46,7 @@ def load_chat_model(model_name: str, model_provider: str) -> BaseChatModel:
             ),  # vLLM은 기본적으로 api key를 요구하지 않으므로 더미값을 사용합니다.
             base_url=settings.VLLM_BASE_URL,
             temperature=0,
-            max_tokens=16384,  # type: ignore[call-arg]
+            max_tokens=10000,  # type: ignore[call-arg]
         )
     else:  # openai or default
         from langchain_openai import ChatOpenAI
