@@ -20,6 +20,12 @@ from .prompt import (
 )
 from shared.utils import load_chat_model
 
+from infinity_client import Client
+from langchain_classic.retrievers.contextual_compression import (
+    ContextualCompressionRetriever,
+)
+from langchain_community.document_compressors.infinity_rerank import InfinityRerank
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +78,7 @@ async def extract_tech_factor_node(
 ):
     class TechFactorsList(BaseModel):
         tech_factors: list[str] = Field(
-            description="추출된 모르는 기술 스택 또는 키워드 목록"
+            description="가장 핵심적인 3가지 리서치 및 기술 평가 키워드 (영어)"
         )
 
     cfg = Configuration.from_runnable_config(config)
@@ -151,7 +157,6 @@ async def research_factor_node(
 
 
 # 벡터DB 검색 노드
-# TODO 검색로직 수정 필요(ex : 리랭킹)
 async def vector_db_search_node(
     state: SubResearcherState, config: RunnableConfig, runtime: Runtime[AnalyseContext]
 ):
@@ -161,10 +166,20 @@ async def vector_db_search_node(
     # 1. DB에서 검색 수행
     with make_weaviate_store() as store:
         # 비동기 상황이므로 ainvoke를 사용하여 문서 검색
-        docs_with_scores = await store.asimilarity_search_with_score(keyword, k=1)
+        retriever = store.as_retriever(search_kwargs={"k": 5})
+
+        client = Client(base_url=settings.RERANKER_MODEL_URL)
+
+        compressor = InfinityRerank(client=client, model=settings.RERANKER_MODEL)
+
+        compression_retriever = ContextualCompressionRetriever(
+            base_compressor=compressor, base_retriever=retriever
+        )
+
+        compressed_docs = await compression_retriever.ainvoke(keyword)
 
     # 2. 검색 결과가 아예 없는 경우
-    if not docs_with_scores:
+    if not compressed_docs:
         logger.info(f"[{keyword}] 벡터 DB 검색 결과 없음.")
         return {
             "result": "",
@@ -172,7 +187,8 @@ async def vector_db_search_node(
         }
 
     # 3. 검색된 문서 내용 병합
-    top_doc, top_score = docs_with_scores[0]
+    top_doc = compressed_docs[0]
+    top_score = top_doc.metadata.get("relevance_score", 0.0)
 
     logger.info(f"[{keyword}] 검색 성공! (점수: {top_score})")
 
@@ -183,7 +199,6 @@ async def vector_db_search_node(
 def evaluate_threshold_router(
     state: SubResearcherState,
 ) -> Literal["__end__", "ai_judge_node", "tavily_search_node"]:
-
     score = state.get("search_score", 0.0)
 
     # score 기반 분기 (실제 운영 시에는 이 값을 config 등으로 조절 가능)

@@ -44,6 +44,7 @@ COPY --chown=appuser:appgroup README.md .
 RUN chown -R appuser:appgroup /app/.venv
 
 ENV PYTHONPATH="/app:/app/pipelines"
+ENV TIKTOKEN_CACHE_DIR=/app/pipelines/resume_analysis/utils/tiktoken_cache
 
 USER appuser
 
@@ -63,6 +64,7 @@ COPY --chown=appuser:appgroup README.md .
 ENV PATH="/app/.venv/bin:$PATH"
 
 ENV PYTHONPATH="/app:/app/pipelines"
+ENV TIKTOKEN_CACHE_DIR=/app/pipelines/resume_analysis/utils/tiktoken_cache
 
 USER appuser
 

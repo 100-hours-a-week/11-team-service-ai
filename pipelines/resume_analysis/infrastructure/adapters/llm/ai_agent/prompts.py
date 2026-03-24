@@ -31,6 +31,10 @@ RESUME_JOB_FIT_PROMPT = ChatPromptTemplate.from_template("""
     3. 자격 요건 충족: {qualifications}을 충족하는 부분과 부족한 부분은 무엇인가?
 
     [출력 형식]
+    - 반드시 아래의 JSON 형식을 지키세요. 다른 키를 생성하지 마세요.
+    {{
+      "response": "이력서 분석 및 피드백 내용 (한국어)"
+    }}
     - 반드시 한국어로 작성하세요.
     - 지원자에게 직접 말하는 톤(예: "귀하의 이력서에는...", "이 부분을 강조하면...")으로 작성하세요.
     - 정량적인 점수보다는, 구체적인 근거(이력서 내 문구)를 들어 정성적인 분석 내용을 작성하세요.
@@ -56,6 +60,10 @@ RESUME_EXPERIENCE_CLARITY_PROMPT = ChatPromptTemplate.from_template("""
     3. 직무 연관성: 작성된 경험이 {main_tasks}와 밀접하게 관련되어 있는가?
 
     [출력 형식]
+    - 반드시 아래의 JSON 형식을 지키세요. 다른 키를 생성하지 마세요.
+    {{
+      "response": "경험 명확성 분석 및 피드백 내용 (한국어)"
+    }}
     - 한국어로 작성하세요.
     - 지원자에게 직접 조언하는 톤(예: "이 부분은 잘 작성되었습니다", "~를 추가하면 더 효과적입니다")으로 작성하세요.
     - 모호한 표현을 지적하고, 구체적인 개선 예시를 함께 제공하세요.
@@ -79,6 +87,10 @@ RESUME_READABILITY_PROMPT = ChatPromptTemplate.from_template("""
     3. 전문성: 개발직군({job_title})에 적합한 용어와 톤앤매너를 사용하고 있는가?
 
     [출력 형식]
+    - 반드시 아래의 JSON 형식을 지키세요. 다른 키를 생성하지 마세요.
+    {{
+      "response": "가독성 및 전문성 분석 결과 (한국어)"
+    }}
     - 한국어로 작성하세요.
     - 지원자에게 직접 조언하는 톤(예: "전반적으로 잘 작성되었습니다", "이 부분을 수정하면 더 좋습니다")으로 작성하세요.
     - 전체적인 인상을 요약하고, 가독성을 해치는 요소가 있다면 구체적인 개선 방법을 제시해주세요.
@@ -87,6 +99,10 @@ RESUME_READABILITY_PROMPT = ChatPromptTemplate.from_template("""
 
 
 # --- Portfolio Analysis Prompts ---
+#    - 주요 기술 문맥:
+#     {tech_contexts}
+#     - 기술 역량 평가 기준:
+#     {evaluation_factors}
 
 PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template("""
     당신은 전문 커리어 코치입니다.
@@ -96,6 +112,12 @@ PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template("""
     - 직무: {job_title}
     - 주요 기술: {tech_stacks}
 
+    [사전 조사된 특화 기술 정보 및 평가 기준]
+    - 주요 기술 문맥:
+    {tech_contexts}
+    - 기술 역량 평가 기준:
+    {evaluation_factors}
+
     [내 포트폴리오 내용]
     {doc_text}
 
@@ -104,8 +126,13 @@ PORTFOLIO_PROBLEM_SOLVING_PROMPT = ChatPromptTemplate.from_template("""
     1. 문제 정의: 해결하고자 하는 문제가 명확히 정의되었는가?
     2. 기술적 깊이: {tech_stacks} 관련 기술적 난제를 해결한 경험이 드러나는가?
     3. 트러블슈팅: 개발 중 마주친 어려움과 해결 과정이 논리적으로 서술되었는가?
+    4. 기술적 문맥 반영: {tech_contexts}를 고려할 때, 지원자가 사용한 해결 방식이 적절하며 깊이가 있는가?
 
     [출력 형식]
+    - 반드시 아래의 JSON 형식을 지키세요. 다른 키를 생성하지 마세요.
+    {{
+      "response": "문제 해결력 분석 및 개선 조언 (한국어)"
+    }}
     - 한국어로 작성하세요.
     - 지원자에게 직접 조언하는 톤(예: "이 프로젝트는...", "~를 추가로 설명하면 더 좋습니다")으로 작성하세요.
     - 단순 기능 구현보다는 '왜'와 '어떻게'를 강조할 수 있는 방법을 제시하세요.
@@ -119,6 +146,12 @@ PORTFOLIO_CONTRIBUTION_CLARITY_PROMPT = ChatPromptTemplate.from_template("""
     [지원하려는 직무의 주요 업무]
     {main_tasks}
 
+    [사전 조사된 특화 기술 정보 및 평가 기준]
+    - 주요 기술 문맥:
+    {tech_contexts}
+    - 기술 역량 평가 기준:
+    {evaluation_factors}
+
     [내 포트폴리오 내용]
     {doc_text}
 
@@ -127,8 +160,13 @@ PORTFOLIO_CONTRIBUTION_CLARITY_PROMPT = ChatPromptTemplate.from_template("""
     1. 주도적 역할: {main_tasks}와 관련된 핵심 기능을 주도적으로 개발한 부분이 명확한가?
     2. 협업 방식: 팀 프로젝트에서 본인의 역할이 명확히 구분되어 있는가?
     3. 기여 수준: 단순 참여가 아닌, 실질적인 기여(코드 작성, 아키텍처 설계 등)가 잘 드러나는가?
+    4. 전문성 평가: {evaluation_factors}에 비추어 볼 때, 지원자의 기여 활동이 전문적으로 서술되었는가?
 
     [출력 형식]
+    - 반드시 아래의 JSON 형식을 지키세요. 다른 키를 생성하지 마세요.
+    {{
+      "response": "개인 기여도 분석 및 효과적인 표현 방법 (한국어)"
+    }}
     - 한국어로 작성하세요.
     - 지원자에게 직접 조언하는 톤(예: "귀하의 역할이...", "~를 명시하면 더 명확합니다")으로 작성하세요.
     - 모호한 기여도 서술이 있다면 지적하고, 구체적인 표현 방법을 제안해주세요.
@@ -161,6 +199,10 @@ PORTFOLIO_TECHNICAL_DEPTH_PROMPT = ChatPromptTemplate.from_template("""
     4. 코드/아키텍처: 확장성, 유지보수성, 성능 최적화 등에 대한 고민 과정이 보이는가?
 
     [출력 형식]
+    - 반드시 아래의 JSON 형식을 지키세요. 다른 키를 생성하지 마세요.
+    {{
+      "response": "기술적 깊이 분석 및 요구사항 기반 개선 방향 (한국어)"
+    }}
     - 한국어로 작성하세요.
     - 지원자에게 직접 조언하는 톤(예: "이 프로젝트에서...", "~를 더 부각하면 좋습니다")으로 작성하세요.
     - 기술을 단순히 사용한 것인지, 깊이 있게 이해한 것인지 판단하고 개선 방향을 제시하세요.
@@ -205,6 +247,10 @@ RESUME_FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template("""
     4. 구체적인 수정 제안과 함께 면접 준비 시 강조하면 좋을 포인트가 있다면 제안하세요.
 
     [출력 형식]
+    - 반드시 아래의 JSON 형식을 지키세요. 다른 키를 생성하지 마세요.
+    {{
+      "response": "종합 피드백 및 최종 리포트 내용 (한국어)"
+    }}
     - 반드시 한국어로 작성하세요.
     - 지원자에게 직접 조언하는 톤(예: "귀하의 이력서는...", "이 부분을 개선하면...")으로 작성하세요.
     - 전문적이면서도 격려하는 톤을 유지하세요.
@@ -234,6 +280,10 @@ PORTFOLIO_FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template("""
     4. 포트폴리오 보완 제안과 함께 기술 면접 준비 시 강조하면 좋을 포인트가 있다면 제안하세요.
 
     [출력 형식]
+    - 반드시 아래의 JSON 형식을 지키세요. 다른 키를 생성하지 마세요.
+    {{
+      "response": "포트폴리오 종합 피드백 및 보완 제안 (한국어)"
+    }}
     - 반드시 한국어로 작성하세요.
     - 지원자에게 직접 조언하는 톤(예: "귀하의 포트폴리오는...", "이 부분을 추가하면...")으로 작성하세요.
     - 전문적이면서도 격려하는 톤을 유지하세요.

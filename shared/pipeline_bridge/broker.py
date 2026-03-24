@@ -39,6 +39,10 @@ def create_broker(
         declare_exchange_kwargs={
             "durable": True
         },  # Spring 백엔드와 설정 일치 (서버 재시작 시 exchange 유지)
+        declare_queues_kwargs={
+            "durable": True,
+            "arguments": {"x-message-ttl": 300000},
+        },  # Spring 백엔드와 설정 일치 (서버 재시작 시 queue 유지)
     ).with_result_backend(result_backend)
 
     if default_task_name:

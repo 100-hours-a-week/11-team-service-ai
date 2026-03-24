@@ -1,4 +1,8 @@
 import logging
+from shared.config import settings
+from langfuse.langchain import CallbackHandler
+from typing import Any
+
 
 from langgraph.graph import StateGraph, START, END
 
@@ -11,10 +15,11 @@ from .....domain.models.report import AnalysisReport
 from .configuration import AnalyseContext
 from .state import AnalysisState
 from .nodes import (
-    execute_analysis_node,
+    execute_resume_analysis_node,
+    execute_portfolio_analysis_node,
     generate_report_node,
     plan_analysis,
-    execute_tech_analyze_node,
+    extracted_tech_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,25 +46,40 @@ class LLMAnalyst(AnalystAgent):
 
         builder = StateGraph(state_schema=AnalysisState, context_schema=AnalyseContext)
         builder.add_node("plan_analysis", plan_analysis)  # type: ignore[call-overload]
-        builder.add_node("execute_analysis_node", execute_analysis_node)  # type: ignore[call-overload]
-        builder.add_node("execute_tech_analyze_node", execute_tech_analyze_node)  # type: ignore[call-overload]
+        builder.add_node("execute_resume_analysis_node", execute_resume_analysis_node)  # type: ignore[call-overload]
+        builder.add_node("extracted_tech_document", extracted_tech_document)  # type: ignore[call-overload]
+        builder.add_node(
+            "execute_portfolio_analysis_node", execute_portfolio_analysis_node
+        )  # type: ignore[call-overload]
         builder.add_node("generate_report_node", generate_report_node)  # type: ignore[call-overload]
 
         builder.add_edge(START, "plan_analysis")
-        builder.add_edge("execute_analysis_node", "generate_report_node")
-        builder.add_edge("execute_tech_analyze_node", "generate_report_node")
+        builder.add_edge("execute_resume_analysis_node", "generate_report_node")
+        builder.add_edge("execute_portfolio_analysis_node", "generate_report_node")
 
         builder.add_edge("generate_report_node", END)
 
         graph = builder.compile()
 
         # 실행 설정 (모델 변경 등)
-        config = {
+        config: dict[str, Any] = {
             "configurable": {
                 "model_provider": self.model_provider,
                 "model_name": self.model_name,
             }
         }
+
+        # Langfuse Callback 설정 (Key가 존재할 때만 활성화)
+        callbacks = []
+        if settings.LANGFUSE_PUBLIC_KEY and settings.LANGFUSE_SECRET_KEY:
+            # SDK v4는 환경변수(LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST)를 자동으로 참조합니다.
+            langfuse_handler = CallbackHandler()
+            callbacks.append(langfuse_handler)
+            logger.info("📡 Langfuse monitoring enabled.")
+
+        # config에 callbacks 추가
+        if callbacks:
+            config["callbacks"] = callbacks  # type: ignore[typeddict-item]
 
         context_data = AnalyseContext(
             job_info=job_info, doc_type=doc_type, doc_text=document_text

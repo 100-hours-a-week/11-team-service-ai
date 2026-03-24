@@ -51,12 +51,14 @@ async def run_pipeline(request: CompareRequest) -> CompareResponse:
     # --- [Step 1] 데이터 준비 (세션 1) ---
     async for db_session in get_db():
         use_case = _create_use_case(db_session)
-        my_candidate, competitor_candidate, job_info = (
-            await use_case.prepare_comparison_data(
-                my_candidate_id=str(request.user_id),
-                competitor_candidate_id=str(request.competitor),
-                job_posting_id=str(request.job_posting_id),
-            )
+        (
+            my_candidate,
+            competitor_candidate,
+            job_info,
+        ) = await use_case.prepare_comparison_data(
+            my_candidate_id=str(request.user_id),
+            competitor_candidate_id=str(request.competitor),
+            job_posting_id=str(request.job_posting_id),
         )
         await db_session.commit()
         break
@@ -96,17 +98,20 @@ def _create_use_case(db_session) -> ComparisonUseCase:
 
     analyzer: ComparisonAnalyzer
 
+    # 제미나이 호출 고정
     if getattr(settings, "use_mock", False):
         logger.info("🤖 Using Mock Comparison Analyzer")
         analyzer = MockComparisonAnalyzer()
     else:
-        llm_provider = getattr(settings, "LLM_PROVIDER", "openai")
-        if llm_provider == "gemini":
-            model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
-        elif llm_provider == "vllm":
-            model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
-        else:
-            model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+        llm_provider = "gemini"
+        model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+
+        # if llm_provider == "gemini":
+        #     model_name = getattr(settings, "GOOGLE_MODEL", "gemini-3-flash-preview")
+        # elif llm_provider == "vllm":
+        #     model_name = getattr(settings, "VLLM_MODEL", "Qwen/Qwen3-32B-FP8")
+        # else:
+        #     model_name = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
 
         analyzer = LLMAnalyst(model_name=model_name, model_provider=llm_provider)
 

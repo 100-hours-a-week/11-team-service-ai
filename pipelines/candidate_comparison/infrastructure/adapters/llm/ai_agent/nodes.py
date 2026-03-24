@@ -40,7 +40,7 @@ async def agent_me_attack(
 
     # 2. LLM 로드 (AiResponse structured output 사용)
     llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(
-        AiResponse
+        AiResponse, method="json_mode"
     )
 
     # 3. 정보 포맷팅
@@ -90,7 +90,7 @@ async def agent_competitor_attack(
 
     # AiResponse structured output 사용
     llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(
-        AiResponse
+        AiResponse, method="json_mode"
     )
 
     job_info_text = _format_job_info(rtx.job_info)
@@ -148,7 +148,7 @@ async def finalize_evaluation(
 
     # Structured Output 사용 (FinalDecisionOutput)
     llm = load_chat_model(cfg.model_name, cfg.model_provider).with_structured_output(
-        FinalDecisionOutput
+        FinalDecisionOutput, method="json_mode"
     )
 
     job_info_text = _format_job_info(rtx.job_info)
@@ -183,10 +183,10 @@ async def finalize_evaluation(
 def _format_job_info(job: JobInfo) -> str:
     return f"""
     - 직무: {job.job_title}
-    - 주요 업무: {', '.join(job.main_tasks)}
-    - 기술 스택: {', '.join(job.tech_stacks)}
-    - 자격 요건: {', '.join(getattr(job, 'qualifications', []))}
-    - 우대 사항: {', '.join(getattr(job, 'preferred_points', []))}
+    - 주요 업무: {", ".join(job.main_tasks)}
+    - 기술 스택: {", ".join(job.tech_stacks)}
+    - 자격 요건: {", ".join(getattr(job, "qualifications", []))}
+    - 우대 사항: {", ".join(getattr(job, "preferred_points", []))}
     """
 
 

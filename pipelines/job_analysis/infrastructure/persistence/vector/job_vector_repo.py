@@ -6,7 +6,6 @@ JOB_COLLECTION = "JobMaster"
 
 
 class JobVectorRepository(BaseVectorRepository):
-
     COLLECTION_NAME = "JobMaster"
 
     def __init__(self):
